@@ -34,7 +34,7 @@ public class PolarisDatabaseReplicaCustomRepositoryImpl extends BasePolarisCusto
      */
     @Autowired
     public PolarisDatabaseReplicaCustomRepositoryImpl(
-            EntityManager entityManager) {
+        @Qualifier("readerEntityManager") EntityManager entityManager) {
         super(entityManager);
         throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
     }
