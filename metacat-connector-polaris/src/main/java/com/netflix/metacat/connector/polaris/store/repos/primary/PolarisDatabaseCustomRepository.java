@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.polaris.store.repos;
+package com.netflix.metacat.connector.polaris.store.repos.primary;
 
 import com.netflix.metacat.common.dto.Sort;
 
@@ -14,7 +14,13 @@ public interface PolarisDatabaseCustomRepository {
      * @param sort sort
      * @param pageSize db pageSize
      * @param selectAllColumns if true return the PolarisEntity else return name of the entity
+     * @param isAuroraEnabled isAuroraEnabled
      * @return table entities in the database.
      */
-    List<?> getAllDatabases(String dbNamePrefix, Sort sort, int pageSize, boolean selectAllColumns);
+    List<?> getAllDatabases(
+        String dbNamePrefix,
+        Sort sort,
+        int pageSize,
+        boolean selectAllColumns,
+        boolean isAuroraEnabled);
 }

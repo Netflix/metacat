@@ -1,10 +1,11 @@
-package com.netflix.metacat.connector.polaris.store.repos;
+package com.netflix.metacat.connector.polaris.store.repos.primary;
 
-import jakarta.persistence.PersistenceContext;
+import com.netflix.metacat.connector.polaris.store.repos.BasePolarisCustomRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -21,12 +22,25 @@ import java.util.stream.Collectors;
  * Implementation for Custom JPA repository implementation for storing PolarisTableEntity.
  */
 @Repository
-public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepository {
-    @PersistenceContext
-    private EntityManager entityManager;
+public class PolarisTableCustomRepositoryImpl extends BasePolarisCustomRepository
+    implements PolarisTableCustomRepository {
+
+    /**
+     * Initialize {@link PolarisTableCustomRepositoryImpl}.
+     *
+     * @param entityManager - entityManager
+     */
+    @Autowired
+    public PolarisTableCustomRepositoryImpl(
+        final EntityManager entityManager) {
+        super(entityManager);
+    }
 
     private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
-        final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAllColumns) {
+        final String dbName,
+        final String tableNamePrefix,
+        final Pageable page,
+        final boolean selectAllColumns) {
 
         // Generate ORDER BY clause
         String orderBy = "";
@@ -43,9 +57,9 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
 
         Query query;
         if (selectAllColumns) {
-            query = entityManager.createNativeQuery(sql, PolarisTableEntity.class);
+            query = getEntityManager().createNativeQuery(sql, PolarisTableEntity.class);
         } else {
-            query = entityManager.createNativeQuery(sql);
+            query = getEntityManager().createNativeQuery(sql);
         }
         query.setParameter("dbName", dbName);
         query.setParameter("tableNamePrefix", tableNamePrefix + "%");
@@ -64,10 +78,16 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     @Override
     @Transactional
     public List<?> findAllTablesByDbNameAndTablePrefix(
-        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
+        final String dbName,
+        final String tableNamePrefix,
+        final int pageFetchSize,
+        final boolean selectAllColumns,
+        final boolean isAuroraEnabled) {
         Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        if (!isAuroraEnabled) {
+            getEntityManager().createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+                .executeUpdate();
+        }
         final List<Object> retval = new ArrayList<>();
         final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
         Slice<?> tbls;

@@ -4,8 +4,10 @@ import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.connector.polaris.store.entities.AuditEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
-import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
-import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
+import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisDatabaseRepository;
+import com.netflix.metacat.connector.polaris.store.repos.primary.PolarisTableRepository;
+import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisDatabaseReplicaRepository;
+import com.netflix.metacat.connector.polaris.store.repos.replica.PolarisTableReplicaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +27,8 @@ import java.util.Optional;
 public class PolarisStoreConnector implements PolarisStoreService {
     private final PolarisDatabaseRepository dbRepo;
     private final PolarisTableRepository tblRepo;
-
+    private final PolarisDatabaseReplicaRepository replicaDatabaseRepo;
+    private final PolarisTableReplicaRepository replicaTableRepo;
     /**
      * Creates entry for new database.
      * @param databaseName database name
@@ -65,8 +68,15 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<PolarisDatabaseEntity> getDatabases(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true);
+        final int pageSize,
+        final boolean isAuroraEnabled) {
+        return (List<PolarisDatabaseEntity>) replicaDatabaseRepo.getAllDatabases(
+            dbNamePrefix,
+            sort,
+            pageSize,
+            true,
+            isAuroraEnabled
+        );
     }
 
     @Override
@@ -74,8 +84,14 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<String> getDatabaseNames(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false);
+        final int pageSize,
+        final boolean isAuroraEnabled) {
+        return (List<String>) replicaDatabaseRepo.getAllDatabases(
+            dbNamePrefix,
+            sort,
+            pageSize,
+            false,
+            isAuroraEnabled);
     }
 
     /**
@@ -164,15 +180,23 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Fetch table entities for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
+     * @param isAuroraEnabled isAuroraEnabled
      * @return table entities in the database.
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisTableEntity> getTableEntities(final String databaseName,
                                                      final String tableNamePrefix,
-                                                     final int pageFetchSize) {
+                                                     final int pageFetchSize,
+                                                     final boolean isAuroraEnabled) {
         return (List<PolarisTableEntity>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, true);
+            replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
+                databaseName,
+                tableNamePrefix,
+                pageFetchSize,
+                true,
+                isAuroraEnabled
+            );
     }
 
     /**
@@ -215,13 +239,25 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Fetch table names for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
+     * @param isAuroraEnabled isAuroraEnabled
      * @return table names in the database.
      */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public List<String> getTables(final String databaseName, final String tableNamePrefix, final int pageFetchSize) {
+    public List<String> getTables(
+        final String databaseName,
+        final String tableNamePrefix,
+        final int pageFetchSize,
+        final boolean isAuroraEnabled
+    ) {
         return (List<String>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, false);
+            replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
+                databaseName,
+                tableNamePrefix,
+                pageFetchSize,
+                false,
+                isAuroraEnabled
+            );
     }
 
     /**

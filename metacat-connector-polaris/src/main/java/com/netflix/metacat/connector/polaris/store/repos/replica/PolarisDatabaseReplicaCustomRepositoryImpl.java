@@ -1,18 +1,21 @@
-package com.netflix.metacat.connector.polaris.store.repos;
+package com.netflix.metacat.connector.polaris.store.repos.replica;
 
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
-import org.springframework.data.domain.Sort;
+import com.netflix.metacat.connector.polaris.store.repos.BasePolarisCustomRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,9 +23,21 @@ import java.util.stream.Collectors;
 /**
  * Implementation for Custom JPA repository implementation for interacting with PolarisDatabaseEntity.
  */
-public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCustomRepository {
-    @PersistenceContext
-    private EntityManager entityManager;
+@Repository
+public class PolarisDatabaseReplicaCustomRepositoryImpl extends BasePolarisCustomRepository
+    implements PolarisDatabaseReplicaCustomRepository {
+
+    /**
+     * Initialize {@link PolarisDatabaseReplicaCustomRepositoryImpl}.
+     *
+     * @param entityManager - entityManager
+     */
+    @Autowired
+    public PolarisDatabaseReplicaCustomRepositoryImpl(
+        EntityManager entityManager) {
+        super(entityManager);
+        throw new RuntimeException("Hey = " + retrieveJdbcUrl() + " result = ");
+    }
 
     private <T> Slice<T> getAllDatabasesForCurrentPage(
         final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
@@ -42,9 +57,9 @@ public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCusto
 
         Query query;
         if (selectAllColumns) {
-            query = entityManager.createNativeQuery(sql, PolarisDatabaseEntity.class);
+            query = getEntityManager().createNativeQuery(sql, PolarisDatabaseEntity.class);
         } else {
-            query = entityManager.createNativeQuery(sql);
+            query = getEntityManager().createNativeQuery(sql);
         }
         query.setParameter("dbNamePrefix", dbNamePrefix + "%");
         query.setFirstResult(page.getPageNumber() * page.getPageSize());
@@ -67,7 +82,8 @@ public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCusto
         @Nullable final String dbNamePrefix,
         @Nullable final com.netflix.metacat.common.dto.Sort sort,
         final int pageSize,
-        final boolean selectAllColumns) {
+        final boolean selectAllColumns,
+        final boolean isAuroraEnabled) {
         final List<Object> retval = new ArrayList<>();
 
         final String dbPrefix =  dbNamePrefix == null ? "" : dbNamePrefix;
@@ -83,8 +99,10 @@ public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCusto
         }
 
         Pageable page = PageRequest.of(0, pageSize, dbSort);
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        if (!isAuroraEnabled) {
+            getEntityManager().createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+                .executeUpdate();
+        }
         Slice<?> dbs;
         boolean hasNext;
         do {
