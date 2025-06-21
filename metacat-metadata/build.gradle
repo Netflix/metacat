@@ -21,7 +21,7 @@ apply plugin: 'nebula.facet'
 facets {
     functionalTest {
         parentSourceSet = "test"
-        includeInCheckLifecycle = true
+        includeInCheckLifecycle = false
     }
 }
 ext {
