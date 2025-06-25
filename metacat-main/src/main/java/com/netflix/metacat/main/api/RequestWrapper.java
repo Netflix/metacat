@@ -76,6 +76,7 @@ public final class RequestWrapper {
     private final Id requestCounterId;
     private final Id requestFailureCounterId;
     private final Id requestTimerId;
+    private final Id requestPercentileTimerId;
 
     /**
      * Wrapper class for processing the request.
@@ -98,6 +99,7 @@ public final class RequestWrapper {
         requestCounterId = registry.createId(Metrics.CounterRequestCount.getMetricName());
         requestFailureCounterId = registry.createId(Metrics.CounterRequestFailureCount.getMetricName());
         requestTimerId = registry.createId(Metrics.TimerRequest.getMetricName());
+        requestPercentileTimerId = registry.createId(Metrics.PercentileTimerRequest.getMetricName());
     }
 
     /**
@@ -152,11 +154,13 @@ public final class RequestWrapper {
         final Supplier<R> supplier) {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = new HashMap<>(name.parts());
+        final Map<String, String> percentileTags = Maps.newHashMap();
         if (requestTags != null) {
             tags.putAll(requestTags);
         }
         tags.put("request", resourceRequestName);
         tags.put("scheme", MetacatContextManager.getContext().getScheme());
+        percentileTags.put("request", resourceRequestName);
         String clientAppName =  MetacatContextManager.getContext().getClientAppName();
         if (clientAppName == null) {
             clientAppName = "UNKNOWN";
@@ -223,9 +227,8 @@ public final class RequestWrapper {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
             tryAddTableTypeTag(tags, name);
-            PercentileTimer.builder(this.registry)
-                .withId(requestTimerId.withTags(tags))
-                .build()
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            PercentileTimer.get(this.registry, requestTimerId.withTags(tags))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
     }
@@ -251,7 +254,9 @@ public final class RequestWrapper {
         final Supplier<R> supplier) {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = Maps.newHashMap();
+        final Map<String, String> percentileTags = Maps.newHashMap();
         tags.put("request", resourceRequestName);
+        percentileTags.put("request", resourceRequestName);
         String clientAppName =  MetacatContextManager.getContext().getClientAppName();
         if (clientAppName == null) {
             clientAppName = "UNKNOWN";
@@ -287,9 +292,8 @@ public final class RequestWrapper {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 duration);
-            PercentileTimer.builder(this.registry)
-                .withId(requestTimerId.withTags(tags))
-                .build()
+            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            PercentileTimer.get(this.registry, requestTimerId.withTags(tags))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
     }

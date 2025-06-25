@@ -114,6 +114,7 @@ public enum Metrics {
      * Timers.
      */
     TimerRequest(Component.server, Type.timer, "requests"),
+    PercentileTimerRequest(Component.server, Type.percentileTimer, "requests"),
     TimerThriftRequest(Component.server, Type.timer, "requests"),
     TimerElasticSearchRefresh(Component.server, Type.timer, "esRefresh"),
     TimerCatalogTraversal(Component.server, Type.timer, "catalogTraversal"),
@@ -135,6 +136,7 @@ public enum Metrics {
         counter,
         gauge,
         timer,
+        percentileTimer,
         distributionSummary
     }
 
