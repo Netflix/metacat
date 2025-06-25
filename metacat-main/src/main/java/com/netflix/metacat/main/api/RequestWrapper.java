@@ -44,6 +44,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataServiceExcepti
 import com.netflix.metacat.common.server.util.MetacatContextManager;
 import com.netflix.spectator.api.Id;
 import com.netflix.spectator.api.Registry;
+import com.netflix.spectator.api.histogram.PercentileTimer;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -222,7 +223,10 @@ public final class RequestWrapper {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
             tryAddTableTypeTag(tags, name);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            PercentileTimer.builder(this.registry)
+                .withId(requestTimerId.withTags(tags))
+                .build()
+                .record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -283,7 +287,10 @@ public final class RequestWrapper {
             final long duration = registry.clock().wallTime() - start;
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 duration);
-            this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
+            PercentileTimer.builder(this.registry)
+                .withId(requestTimerId.withTags(tags))
+                .build()
+                .record(duration, TimeUnit.MILLISECONDS);
         }
     }
 
