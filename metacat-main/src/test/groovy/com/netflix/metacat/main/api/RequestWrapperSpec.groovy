@@ -30,24 +30,15 @@ import java.util.function.Supplier
 
 class RequestWrapperSpec extends Specification {
 
-    def registry = Mock(Registry)
+    def registry = new NoopRegistry()
     def config = Mock(Config)
     def aliasService = Mock(AliasService)
     def requestGateway = Mock(RequestGateway)
-    def timer = Mock(Timer)
-    def clock = Mock(Clock)
     def counter = Mock(Counter)
-    def id = Mock(Id)
     def supplier = Mock(Supplier)
     def requestWrapper
 
     def setup() {
-        this.registry.clock() >> clock
-        this.clock.wallTime() >> System.currentTimeMillis()
-        this.registry.timer(_, _, _) >> this.timer
-        this.registry.timer(_) >> this.timer
-        this.registry.counter(_) >> counter
-        this.registry.createId(_) >> id
         this.supplier.get() >> null
         requestWrapper = new RequestWrapper(registry, config, aliasService, requestGateway)
     }
