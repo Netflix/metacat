@@ -228,7 +228,7 @@ public final class RequestWrapper {
             log.info("### Time taken to complete {} for {} is {} ms", resourceRequestName, name, duration);
             tryAddTableTypeTag(tags, name);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
-            PercentileTimer.get(this.registry, requestTimerId.withTags(percentileTags))
+            PercentileTimer.get(this.registry, requestPercentileTimerId.withTags(percentileTags))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
     }
@@ -293,7 +293,7 @@ public final class RequestWrapper {
             log.info("### Time taken to complete {} is {} ms", resourceRequestName,
                 duration);
             this.registry.timer(requestTimerId.withTags(tags)).record(duration, TimeUnit.MILLISECONDS);
-            PercentileTimer.get(this.registry, requestTimerId.withTags(percentileTags))
+            PercentileTimer.get(this.registry, requestPercentileTimerId.withTags(percentileTags))
                 .record(duration, TimeUnit.MILLISECONDS);
         }
     }
