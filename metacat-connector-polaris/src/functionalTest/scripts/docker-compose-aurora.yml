@@ -1,0 +1,87 @@
+#
+# Copyright 2016 Netflix, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
+version: '3.8'
+
+x-postgres-common: &postgres-common
+  image: postgres:16
+  platform: linux/x86_64
+  user: postgres
+  restart: always
+  healthcheck:
+    test: ['CMD-SHELL', 'pg_isready -U aurora_user --dbname=aurora_db']
+    interval: 10s
+    timeout: 5s
+    retries: 5
+
+services:
+  polaris-aurora:
+    <<: *postgres-common
+    ports:
+      - '5438:5432'
+    environment:
+      POSTGRES_USER: aurora_user
+      POSTGRES_PASSWORD: aurora_password
+      POSTGRES_DB: aurora_db
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost replication all 0.0.0.0/0 md5"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
+    volumes:
+      - ./datastores/aurora/docker-entrypoint-initdb-primary.d:/docker-entrypoint-initdb.d:ro
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.aurora"
+
+  polaris-aurora-reader:
+    <<: *postgres-common
+    ports:
+      - '5439:5432'
+    environment:
+      PGUSER: aurora_user
+      PGPASSWORD: aurora_password
+    command: |
+      bash -c "
+      until pg_basebackup --pgdata=/var/lib/postgresql/data -R --slot=replication_slot --host=polaris-aurora --port=5432
+      do
+      echo 'Waiting for primary to connect...'
+      sleep 1s
+      done
+      echo 'Backup done, starting replica...'
+      chmod 0700 /var/lib/postgresql/data
+      postgres
+      "
+    depends_on:
+      - polaris-aurora
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.aurora.reader"
+
+  storage-barrier:
+    image: martin/wait:latest
+    platform: linux/x86_64
+    depends_on:
+      - polaris-aurora
+      - polaris-aurora-reader
+    environment:
+      - TARGETS=polaris-aurora:5432,polaris-aurora-reader:5432
+    labels:
+      - "com.netflix.metacat.oss.aurora-barrier"
