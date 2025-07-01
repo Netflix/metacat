@@ -170,6 +170,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             if (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
                     && requestContext.isIncludeMetadataLocationOnly()) {
                 return TableInfo.builder()
+                        .auditInfo(info.getAudit())
                         .metadata(Maps.newHashMap(info.getMetadata()))
                         .fields(Collections.emptyList())
                         .build();
