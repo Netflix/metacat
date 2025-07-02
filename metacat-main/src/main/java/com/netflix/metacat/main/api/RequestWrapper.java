@@ -269,15 +269,18 @@ public final class RequestWrapper {
             return supplier.get();
         } catch (UnsupportedOperationException e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
+            percentileTags.put("request_error", "true");
             log.error(e.getMessage(), e);
             throw new MetacatNotSupportedException("Catalog does not support the operation. " + e.getMessage());
         } catch (IllegalArgumentException e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
+            percentileTags.put("request_error", "true");
             log.error(e.getMessage(), e);
             throw new MetacatBadRequestException(String.format("%s.%s", e.getMessage(),
                 e.getCause() == null ? "" : e.getCause().getMessage()));
         } catch (Exception e) {
             collectRequestExceptionMetrics(tags, e.getClass().getSimpleName());
+            percentileTags.put("request_error", "true");
             final String message = String
                 .format("%s.%s -- %s failed.",
                     e.getMessage(), e.getCause() == null ? "" : e.getCause().getMessage(),
