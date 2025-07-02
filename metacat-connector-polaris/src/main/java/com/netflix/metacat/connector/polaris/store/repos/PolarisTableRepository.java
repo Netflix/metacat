@@ -21,7 +21,7 @@ import java.util.Optional;
  */
 @Repository
 public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity, String>,
-    JpaSpecificationExecutor, PolarisTableCustomRepository, CrudRepository<PolarisTableEntity, String> {
+    JpaSpecificationExecutor, PolarisTableCustomReplicaRepository, CrudRepository<PolarisTableEntity, String> {
 
     /**
      * Delete table entry by name.

@@ -1,41 +1,35 @@
 package com.netflix.metacat.connector.polaris.store.repos;
 
+import com.netflix.metacat.connector.polaris.store.Utils;
+import com.netflix.metacat.connector.polaris.store.base.BasePolarisTableReplicaRepository;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Implementation for Custom JPA repository implementation for storing PolarisTableEntity.
  */
 @Repository
-public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepository {
+public class PolarisTableCustomReplicaRepositoryImpl
+    extends BasePolarisTableReplicaRepository {
+
     @PersistenceContext
     private EntityManager entityManager;
 
-    private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
+    @Override
+    protected  <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
         final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAllColumns) {
 
         // Generate ORDER BY clause
-        String orderBy = "";
-        if (page.getSort().isSorted()) {
-            orderBy = page.getSort().stream()
-                .map(order -> order.getProperty() + " " + order.getDirection())
-                .collect(Collectors.joining(", "));
-            orderBy = " ORDER BY " + orderBy;
-        }
+        final String orderBy = Utils.generateOrderBy(page);
 
         final String selectClause = selectAllColumns ? "t.*" : "t.tbl_name";
         final String sql = "SELECT " + selectClause + " FROM TBLS t "
@@ -61,25 +55,24 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
         return new SliceImpl<>(resultList, page, hasNext);
     }
 
+    /**
+     * Retrieves all tables by database name and table prefix using crdb.
+     * Fetches tables in pages and collects them into a list.
+     *
+     * @param dbName the name of the database
+     * @param tableNamePrefix the prefix of the table name to filter results
+     * @param pageFetchSize the number of records to fetch per page
+     * @param selectAllColumns flag indicating whether to select all columns or just specific ones
+     * @return a List of table results
+     */
     @Override
-    @Transactional
     public List<?> findAllTablesByDbNameAndTablePrefix(
-        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
-        Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
+            final String dbName,
+            final String tableNamePrefix,
+            final int pageFetchSize,
+            final boolean selectAllColumns) {
         entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
-        final List<Object> retval = new ArrayList<>();
-        final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
-        Slice<?> tbls;
-        boolean hasNext;
-        do {
-            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(dbName, tblPrefix, page, selectAllColumns);
-            retval.addAll(tbls.getContent());
-            hasNext = tbls.hasNext();
-            if (hasNext) {
-                page = tbls.nextPageable();
-            }
-        } while (hasNext);
-        return retval;
+                .executeUpdate();
+        return super.findAllTablesByDbNameAndTablePrefix(dbName, tableNamePrefix, pageFetchSize, selectAllColumns);
     }
 }
