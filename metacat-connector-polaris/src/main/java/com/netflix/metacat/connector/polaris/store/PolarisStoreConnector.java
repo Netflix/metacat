@@ -64,7 +64,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisDatabaseEntity> getDatabases(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
@@ -77,7 +77,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<String> getDatabaseNames(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
@@ -179,7 +179,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return table entities in the database.
      */
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<PolarisTableEntity> getTableEntities(final String databaseName,
                                                      final String tableNamePrefix,
                                                      final int pageFetchSize,
@@ -244,7 +244,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return table names in the database.
      */
     @Override
-    @Transactional(propagation = Propagation.REQUIRED)
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<String> getTables(
         final String databaseName,
         final String tableNamePrefix,

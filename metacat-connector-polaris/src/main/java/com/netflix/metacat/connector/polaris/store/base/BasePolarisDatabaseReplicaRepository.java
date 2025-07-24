@@ -2,6 +2,7 @@ package com.netflix.metacat.connector.polaris.store.base;
 
 import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseCustomReplicaRepository;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,7 +30,8 @@ public abstract class BasePolarisDatabaseReplicaRepository
      */
     protected <T> Slice<T> getAllDatabasesForCurrentPage(
         final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
-        return null;
+        throw new
+            NotImplementedException(this.getClass().getName() + " does not implement getAllDatabasesForCurrentPage");
     }
 
     /**
