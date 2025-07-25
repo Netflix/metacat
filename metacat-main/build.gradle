@@ -32,7 +32,7 @@ dependencies {
     api(project(":metacat-thrift"))
     api("org.elasticsearch.client:transport")
 
-    api("com.amazonaws:aws-java-sdk-sns")
+    api("software.amazon.awssdk:sns")
     api("joda-time:joda-time")
 
     /*******************************

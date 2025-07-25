@@ -17,9 +17,6 @@
  */
 package com.netflix.metacat.main.configs;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.services.sns.AmazonSNS;
-import com.amazonaws.services.sns.AmazonSNSClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
@@ -33,6 +30,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.services.sns.SnsClient;
 
 /**
  * Spring configuration for SNS Notifications.
@@ -51,17 +50,19 @@ public class SNSNotificationsConfig {
      *
      * @return The configured SNS client
      */
-    //TODO: See what spring-cloud-aws would provide automatically...
     @Bean
-    @ConditionalOnMissingBean(AmazonSNS.class)
-    public AmazonSNS amazonSNS() {
-        return new AmazonSNSClient(DefaultAWSCredentialsProviderChain.getInstance());
+    @ConditionalOnMissingBean(SnsClient.class)
+    public SnsClient snsClient() {
+        return
+          SnsClient.builder()
+            .credentialsProvider(DefaultCredentialsProvider.builder().build())
+            .build();
     }
 
     /**
      * SNS Notification Publisher.
      *
-     * @param amazonSNS                  The SNS client to use
+     * @param snsClient                  The SNS client to use
      * @param config                     The system configuration abstraction to use
      * @param objectMapper               The object mapper to use
      * @param snsNotificationMetric      The sns notification metric
@@ -70,7 +71,7 @@ public class SNSNotificationsConfig {
      */
     @Bean
     public SNSNotificationServiceImpl snsNotificationService(
-        final AmazonSNS amazonSNS,
+        final SnsClient snsClient,
         final Config config,
         final ObjectMapper objectMapper,
         final SNSNotificationMetric snsNotificationMetric,
@@ -90,7 +91,7 @@ public class SNSNotificationsConfig {
         }
 
         log.info("SNS notifications are enabled. Creating SNSNotificationServiceImpl bean.");
-        return new SNSNotificationServiceImpl(amazonSNS,
+        return new SNSNotificationServiceImpl(snsClient,
             tableArn, partitionArn, objectMapper, config, snsNotificationMetric, snsNotificationServiceUtil);
     }
 
