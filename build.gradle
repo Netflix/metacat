@@ -108,11 +108,14 @@ configure(javaProjects) {
     dependencyManagement {
         imports {
             mavenBom SpringBootPlugin.BOM_COORDINATES
-            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
             mavenBom "org.spockframework:spock-bom:${spock_version}"
             mavenBom "com.google.inject:guice-bom:${google_guice_version}"
         }
         dependencies {
+            dependency("software.amazon.awssdk:sns:${awssdk_v2_version}")
+            dependency("io.github.openfeign:feign-core:${openfeign_version}")
+            dependency("io.github.openfeign:feign-jaxrs:${openfeign_version}")
+            dependency("io.github.openfeign:feign-slf4j:${openfeign_version}")
             dependency("com.github.spotbugs:spotbugs-annotations:4.8.2")
             dependency("org.apache.groovy:groovy:4.0.24")
             dependency("org.apache.groovy:groovy-all:4.0.24")

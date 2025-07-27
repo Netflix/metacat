@@ -89,7 +89,7 @@ public class MetacatErrorDecoder extends feign.codec.ErrorDecoder.Default {
                 case 503: //SERVICE_UNAVAILABLE
                     return new RetryableException(response.status(), message,
                         response.request() == null ? null : response.request().httpMethod(),
-                        new MetacatException(message), null, response.request());
+                        new MetacatException(message), (Date) null, response.request());
                 default:
                     return new MetacatException(message);
             }

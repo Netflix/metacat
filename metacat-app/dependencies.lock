@@ -10,12 +10,6 @@
         }
     },
     "compileClasspath": {
-        "com.amazonaws:aws-java-sdk-sns": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-main"
-            ],
-            "locked": "1.11.792"
-        },
         "com.fasterxml.jackson.core:jackson-databind": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
@@ -205,6 +199,12 @@
                 "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "6.1.15"
+        },
+        "software.amazon.awssdk:sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.31.77"
         }
     },
     "jacocoAgent": {
@@ -224,12 +224,6 @@
             ],
             "locked": "2.1.0.21"
         },
-        "com.amazonaws:aws-java-sdk-sns": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-main"
-            ],
-            "locked": "1.11.792"
-        },
         "com.datastax.cassandra:cassandra-driver-core": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-cassandra"
@@ -693,6 +687,12 @@
                 "com.netflix.metacat:metacat-main"
             ],
             "locked": "3325375"
+        },
+        "software.amazon.awssdk:sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.31.77"
         }
     },
     "runtimeClasspath": {
@@ -702,12 +702,6 @@
             ],
             "locked": "2.1.0.21"
         },
-        "com.amazonaws:aws-java-sdk-sns": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-main"
-            ],
-            "locked": "1.11.792"
-        },
         "com.datastax.cassandra:cassandra-driver-core": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-cassandra"
@@ -1171,6 +1165,12 @@
                 "com.netflix.metacat:metacat-main"
             ],
             "locked": "3325375"
+        },
+        "software.amazon.awssdk:sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.31.77"
         }
     },
     "spotbugs": {
@@ -1191,12 +1191,6 @@
     "testCompileClasspath": {
         "cglib:cglib-nodep": {
             "locked": "3.2.4"
-        },
-        "com.amazonaws:aws-java-sdk-sns": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-main"
-            ],
-            "locked": "1.11.792"
         },
         "com.fasterxml.jackson.core:jackson-databind": {
             "firstLevelTransitive": [
@@ -1408,6 +1402,12 @@
                 "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "6.1.15"
+        },
+        "software.amazon.awssdk:sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.31.77"
         }
     },
     "testRuntimeClasspath": {
@@ -1419,12 +1419,6 @@
                 "com.netflix.metacat:metacat-connector-redshift"
             ],
             "locked": "2.1.0.21"
-        },
-        "com.amazonaws:aws-java-sdk-sns": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-main"
-            ],
-            "locked": "1.11.792"
         },
         "com.datastax.cassandra:cassandra-driver-core": {
             "firstLevelTransitive": [
@@ -1916,6 +1910,12 @@
                 "com.netflix.metacat:metacat-main"
             ],
             "locked": "3325375"
+        },
+        "software.amazon.awssdk:sns": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-main"
+            ],
+            "locked": "2.31.77"
         }
     }
 }

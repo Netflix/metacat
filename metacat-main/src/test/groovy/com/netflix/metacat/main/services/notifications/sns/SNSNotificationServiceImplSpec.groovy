@@ -13,9 +13,6 @@
 
 package com.netflix.metacat.main.services.notifications.sns
 
-import com.amazonaws.services.sns.AmazonSNS
-import com.amazonaws.services.sns.model.NotFoundException
-import com.amazonaws.services.sns.model.PublishResult
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.TextNode
 import com.google.common.collect.Lists
@@ -30,6 +27,10 @@ import com.netflix.metacat.common.server.events.*
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.spectator.api.*
+import software.amazon.awssdk.core.SdkRequest
+import software.amazon.awssdk.services.sns.SnsClient
+import software.amazon.awssdk.services.sns.model.PublishRequest
+import software.amazon.awssdk.services.sns.model.PublishResponse
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -41,7 +42,7 @@ import java.util.concurrent.TimeUnit
  * @since 0.1.47
  */
 class SNSNotificationServiceImplSpec extends Specification {
-    def client = Mock(AmazonSNS)
+    def client = Mock(SnsClient)
     def qName = QualifiedName.fromString(
         UUID.randomUUID().toString()
             + "/"
@@ -63,7 +64,7 @@ class SNSNotificationServiceImplSpec extends Specification {
     def id = Mock(Id)
     def service;
     def clock = Mock(Clock)
-    def result = Mock(PublishResult)
+    def result = GroovyMock(PublishResponse)
     def userMetadata = Mock(UserMetadataService)
 
     def requestContext = MetacatRequestContext.builder().userName(UUID.randomUUID().toString())
@@ -89,7 +90,7 @@ class SNSNotificationServiceImplSpec extends Specification {
             new SNSNotificationMetric(this.registry),
             new SNSNotificationServiceUtil(userMetadata)
         )
-        this.result.getMessageId() >> 'a'
+        this.result.messageId() >> 'a'
     }
 
     def "Will Notify On Partition Creation"() {
@@ -112,12 +113,16 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         3 * this.mapper.writeValueAsString(_ as AddPartitionMessage) >> UUID.randomUUID().toString()
         1 * this.mapper.writeValueAsString(_ as UpdateTablePartitionsMessage) >> UUID.randomUUID().toString()
-        3 * this.client.publish(this.partitionArn, _ as String) >> result
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        3 * this.client.publish({it.topicArn.equals(this.partitionArn)}) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         8 * this.timer.record(_ as Long, _ as TimeUnit)
         1 * config.isSnsNotificationTopicPartitionEnabled() >> true
         2 * config.isSnsNotificationAttachPartitionIdsEnabled() >> true
         1 * this.userMetadata.getDefinitionMetadata(_) >> Optional.ofNullable(null)
+    }
+
+    def v() {
+
     }
 
     def "Will Notify On Partition Deletion"() {
@@ -142,8 +147,8 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         5 * this.mapper.writeValueAsString(_ as DeletePartitionMessage) >> UUID.randomUUID().toString()
         1 * this.mapper.writeValueAsString(_ as UpdateTablePartitionsMessage) >> UUID.randomUUID().toString()
-        5 * this.client.publish(this.partitionArn, _ as String) >> result
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        5 * this.client.publish({it.topicArn.equals(this.partitionArn)}) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         12 * this.timer.record(_ as Long, _ as TimeUnit)
         1 * config.isSnsNotificationTopicPartitionEnabled() >> true
     }
@@ -161,7 +166,7 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
@@ -178,7 +183,7 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as DeleteTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
@@ -197,7 +202,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as RenameTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
@@ -216,7 +221,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
     }
 
@@ -236,7 +241,7 @@ class SNSNotificationServiceImplSpec extends Specification {
         then:
         0 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
         1 * this.mapper.writeValueAsString(_ as SNSMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> result
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
         noExceptionThrown()
     }
@@ -254,7 +259,7 @@ class SNSNotificationServiceImplSpec extends Specification {
 
         then:
         1 * this.mapper.writeValueAsString(_ as CreateTableMessage) >> UUID.randomUUID().toString()
-        1 * this.client.publish(this.tableArn, _ as String) >> { throw new Error("Exception") }
+        1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> { throw new Error("Exception") }
         1 * this.timer.record(_ as Long, _ as TimeUnit)
         thrown(Error)
     }
