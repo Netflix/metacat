@@ -485,9 +485,13 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "Whether to include user metadata information to the response")
         @RequestParam(name = "includeUserMetadata", defaultValue = "true") final boolean includeUserMetadata) {
         final QualifiedName name = this.requestWrapper.qualifyName(() -> QualifiedName.ofCatalog(catalogName));
+        final boolean includeDatabaseNamesEnable = includeDatabaseNames == null
+            ? config.listDatabaseNameByDefaultOnGetCatalog() : includeDatabaseNames;
+
         return this.requestWrapper.processRequest(
             name,
             "getCatalog",
+            Collections.singletonMap("includeDatabaseNames", String.valueOf(includeDatabaseNamesEnable)),
             () -> this.catalogService.get(name, GetCatalogServiceParameters.builder()
                 .includeDatabaseNames(includeDatabaseNames == null
                     ? config.listDatabaseNameByDefaultOnGetCatalog() : includeDatabaseNames)
