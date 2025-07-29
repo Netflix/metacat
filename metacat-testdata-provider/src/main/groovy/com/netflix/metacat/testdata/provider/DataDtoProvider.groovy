@@ -349,7 +349,7 @@ class DataDtoProvider {
 
     def static ConnectorContext newContext(Config conf, Map<String, String> configuration) {
         return new ConnectorContext('testhive', 'testhive', 'hive',
-            conf == null ? new DefaultConfigImpl(new MetacatProperties()): conf, new NoopRegistry(),
+            conf == null ? new DefaultConfigImpl(new MetacatProperties(null)): conf, new NoopRegistry(),
             null,  configuration == null ? Maps.newHashMap() : configuration)
     }
 }

@@ -44,7 +44,7 @@ class MySqlLookupServiceSpec extends Specification{
         dataSource.setPassword(password)
 
         jdbcTemplate = new JdbcTemplate(dataSource)
-        mySqlLookupService = new MySqlLookupService(new DefaultConfigImpl(new MetacatProperties()), jdbcTemplate)
+        mySqlLookupService = new MySqlLookupService(new DefaultConfigImpl(new MetacatProperties(null)), jdbcTemplate)
     }
 
     boolean areLookupsEqual(Lookup l1, Lookup l2) {

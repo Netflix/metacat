@@ -1,4 +1,4 @@
-name: "Run functional tests on pull requests"
+name: "Run [crdb]functional tests on pull requests"
 on:
   pull_request:
 
@@ -31,7 +31,7 @@ jobs:
           restore-keys: |
             - ${{ runner.os }}-gradlewrapper-
       - name: Build with Gradle
-        run: ./gradlew --info --stacktrace functionalTest
+        run: ./gradlew --info --stacktrace functionalTestCRDB
         env:
           CI_NAME: github_actions
           CI_BUILD_NUMBER: ${{ github.sha }}
@@ -42,9 +42,10 @@ jobs:
           - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/catalina.$name.log
           - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/localhost.$name.log
           - cat ./metacat-functional-tests/build/logs/metacat/spring.log
-      # Add a step to upload the test report using version v4
+
+      # Add a step to upload the test report
       - name: Upload Test Report
         uses: actions/upload-artifact@v4
         with:
-          name: test-report-functional
-          path: /home/runner/work/metacat/metacat/metacat-metadata/build/reports/functionalTest
+          name: test-report-crdb
+          path: /home/runner/work/metacat/metacat/metacat-functional-tests/build/reports/tests/functionalTestCRDB
