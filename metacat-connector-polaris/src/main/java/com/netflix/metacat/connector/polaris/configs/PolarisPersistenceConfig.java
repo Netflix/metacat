@@ -126,9 +126,9 @@ public class PolarisPersistenceConfig {
 
         em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
 
-        Properties properties = new Properties();
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"); // or your DB dialect
-        em.setJpaProperties(properties);
+//        Properties properties = new Properties();
+//        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"); // or your DB dialect
+//        em.setJpaProperties(properties);
 
         return em;
     }
