@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.polaris.routing;
+package com.netflix.metacat.connector.polaris.store.routing;
 
 /**
  * DataSourceContextHolder threadlocal to control the datasource.

@@ -1,4 +1,4 @@
-package com.netflix.metacat.connector.polaris.routing;
+package com.netflix.metacat.connector.polaris.store.routing;
 
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;

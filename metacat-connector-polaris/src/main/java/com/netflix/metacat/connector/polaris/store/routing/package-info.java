@@ -19,4 +19,4 @@
 /**
  * Polaris datasource routing classes.
  */
-package com.netflix.metacat.connector.polaris.routing;
+package com.netflix.metacat.connector.polaris.store.routing;

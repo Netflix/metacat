@@ -1,11 +1,12 @@
 package com.netflix.metacat.connector.polaris.configs;
 
-import com.netflix.metacat.connector.polaris.routing.RoutingDataSource;
+import com.netflix.metacat.connector.polaris.store.routing.RoutingDataSource;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreConnector;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import com.zaxxer.hikari.HikariDataSource;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
@@ -15,11 +16,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * The Polaris Store Persistence config.
@@ -109,6 +115,30 @@ public class PolarisPersistenceConfig {
         routingDataSource.setDefaultTargetDataSource(primaryDataSource);
         return routingDataSource;
     }
+
+
+    @Bean
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(
+        @Qualifier("routingDataSource") DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+        em.setDataSource(dataSource);
+        em.setPackagesToScan("com.netflix.metacat.connector.polaris.store.entities");
+
+        em.setJpaVendorAdapter(new HibernateJpaVendorAdapter());
+
+        Properties properties = new Properties();
+        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect"); // or your DB dialect
+        em.setJpaProperties(properties);
+
+        return em;
+    }
+
+    @Bean
+    public PlatformTransactionManager transactionManager(
+        @Qualifier("entityManagerFactory") EntityManagerFactory emf) {
+        return new JpaTransactionManager(emf);
+    }
+
 
     /**
      * Provides the PolarisStoreService bean, which implements the core store logic.
