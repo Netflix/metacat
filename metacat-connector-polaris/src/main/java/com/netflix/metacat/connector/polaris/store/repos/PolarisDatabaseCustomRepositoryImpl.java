@@ -67,7 +67,8 @@ public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCusto
         @Nullable final String dbNamePrefix,
         @Nullable final com.netflix.metacat.common.dto.Sort sort,
         final int pageSize,
-        final boolean selectAllColumns) {
+        final boolean selectAllColumns,
+        final boolean auroraEnabled) {
         final List<Object> retval = new ArrayList<>();
 
         final String dbPrefix =  dbNamePrefix == null ? "" : dbNamePrefix;
@@ -83,8 +84,10 @@ public class PolarisDatabaseCustomRepositoryImpl implements PolarisDatabaseCusto
         }
 
         Pageable page = PageRequest.of(0, pageSize, dbSort);
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        if (!auroraEnabled) {
+            entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+                .executeUpdate();
+        }
         Slice<?> dbs;
         boolean hasNext;
         do {

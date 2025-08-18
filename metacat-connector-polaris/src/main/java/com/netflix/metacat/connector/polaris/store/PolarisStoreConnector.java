@@ -7,7 +7,6 @@ import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
@@ -61,21 +60,25 @@ public class PolarisStoreConnector implements PolarisStoreService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
+    @Transactional(readOnly = true)
     public List<PolarisDatabaseEntity> getDatabases(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true);
+        final int pageSize,
+        final boolean auroraEnabled) {
+        return (List<PolarisDatabaseEntity>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize,
+            true, auroraEnabled);
     }
 
     @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
+    @Transactional(readOnly = true)
     public List<String> getDatabaseNames(
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize) {
-        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false);
+        final int pageSize,
+        final boolean auroraEnabled) {
+        return (List<String>) dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize,
+            false, auroraEnabled);
     }
 
     /**
@@ -100,7 +103,13 @@ public class PolarisStoreConnector implements PolarisStoreService {
         return dbRepo.save(databaseEntity);
     }
 
-    boolean databaseExistsById(final String dbId) {
+    /**
+     * check if a database exists or not.
+     *
+     * @param dbId dbId
+     * @return database exists or not
+     */
+    public boolean databaseExistsById(final String dbId) {
         return dbRepo.existsById(dbId);
     }
 
@@ -167,12 +176,15 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return table entities in the database.
      */
     @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
+    @Transactional(readOnly = true)
     public List<PolarisTableEntity> getTableEntities(final String databaseName,
                                                      final String tableNamePrefix,
-                                                     final int pageFetchSize) {
+                                                     final int pageFetchSize,
+                                                     final boolean auroraEnabled) {
         return (List<PolarisTableEntity>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, true);
+            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize,
+                true,
+                auroraEnabled);
     }
 
     /**
@@ -207,7 +219,13 @@ public class PolarisStoreConnector implements PolarisStoreService {
         return tblRepo.existsByDbNameAndTblName(databaseName, tableName);
     }
 
-    boolean tableExistsById(final String tblId) {
+    /**
+     * Checks if table with the id exists.
+     *
+     * @param tblId tblId to look up.
+     * @return true, if tblId exists. false, otherwise.
+     */
+    public boolean tableExistsById(final String tblId) {
         return tblRepo.existsById(tblId);
     }
 
@@ -218,10 +236,12 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return table names in the database.
      */
     @Override
-    @Transactional(propagation = Propagation.SUPPORTS)
-    public List<String> getTables(final String databaseName, final String tableNamePrefix, final int pageFetchSize) {
+    @Transactional(readOnly = true)
+    public List<String> getTables(final String databaseName, final String tableNamePrefix,
+                                  final int pageFetchSize, final boolean auroraEnabled) {
         return (List<String>)
-            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize, false);
+            tblRepo.findAllTablesByDbNameAndTablePrefix(databaseName, tableNamePrefix, pageFetchSize,
+                false, auroraEnabled);
     }
 
     /**

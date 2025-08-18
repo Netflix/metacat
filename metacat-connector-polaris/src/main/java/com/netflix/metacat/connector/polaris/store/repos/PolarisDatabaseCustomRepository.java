@@ -14,7 +14,9 @@ public interface PolarisDatabaseCustomRepository {
      * @param sort sort
      * @param pageSize db pageSize
      * @param selectAllColumns if true return the PolarisEntity else return name of the entity
+     * @param auroraEnabled if true auroraEnabled is enabled
      * @return table entities in the database.
      */
-    List<?> getAllDatabases(String dbNamePrefix, Sort sort, int pageSize, boolean selectAllColumns);
+    List<?> getAllDatabases(String dbNamePrefix, Sort sort, int pageSize, boolean selectAllColumns,
+                            boolean auroraEnabled);
 }

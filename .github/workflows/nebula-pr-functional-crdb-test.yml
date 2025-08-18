@@ -1,4 +1,4 @@
-name: "Build Pull Request"
+name: "Run [crdb]functional tests on pull requests"
 on:
   pull_request:
 
@@ -9,7 +9,7 @@ jobs:
       matrix:
         # test against JDK 17
         java: [ 17 ]
-    name: CI with Java ${{ matrix.java }}
+    name: Functional tests with Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v1
       - name: Setup jdk
@@ -31,7 +31,7 @@ jobs:
           restore-keys: |
             - ${{ runner.os }}-gradlewrapper-
       - name: Build with Gradle
-        run: ./gradlew --info --stacktrace build
+        run: ./gradlew --info --stacktrace functionalTestCRDB
         env:
           CI_NAME: github_actions
           CI_BUILD_NUMBER: ${{ github.sha }}
@@ -42,11 +42,12 @@ jobs:
           - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/catalina.$name.log
           - name=$(date +"%Y-%m-%d") && cat ./metacat-functional-tests/build/logs/metacat/localhost.$name.log
           - cat ./metacat-functional-tests/build/logs/metacat/spring.log
+
       # Add a step to upload the test report
       - name: Upload Test Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-report
+          name: test-report-crdb
           path: |
-            **/build/reports/tests/test
+            **/build/reports/tests/functionalTestCRDB
