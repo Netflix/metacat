@@ -8,13 +8,13 @@ import com.netflix.metacat.connector.polaris.store.jdbc.PolarisDatabaseReplicaJD
 import com.netflix.metacat.connector.polaris.store.jdbc.PolarisTableReplicaJDBC;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.Nullable;
 
 /**
  * Configuration class for setting up Polaris store-related beans.
  */
 @Configuration
 public class PolarisStoreConfig {
-
     /**
      * Creates a PolarisStoreService bean.
      *
@@ -28,8 +28,8 @@ public class PolarisStoreConfig {
     public PolarisStoreService polarisStoreService(
         final PolarisDatabaseRepository repo,
         final PolarisTableRepository tblRepo,
-        final PolarisDatabaseReplicaJDBC replicaDatabaseRepo,
-        final PolarisTableReplicaJDBC replicaTableRepo
+        @Nullable final PolarisDatabaseReplicaJDBC replicaDatabaseRepo,
+        @Nullable final PolarisTableReplicaJDBC replicaTableRepo
     ) {
         return new PolarisStoreConnector(
             repo,

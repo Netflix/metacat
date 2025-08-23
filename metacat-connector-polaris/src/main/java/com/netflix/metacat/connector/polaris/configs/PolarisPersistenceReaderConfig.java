@@ -1,7 +1,10 @@
 package com.netflix.metacat.connector.polaris.configs;
 
+import com.netflix.metacat.connector.polaris.store.jdbc.PolarisDatabaseReplicaJDBC;
+import com.netflix.metacat.connector.polaris.store.jdbc.PolarisTableReplicaJDBC;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +18,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
  * This configuration is activated when the property 'spring.datasource.reader.url' is set.
  */
 @Configuration
-//@ConditionalOnProperty(prefix = "spring.datasource.reader", name = "url")
+@ConditionalOnProperty(prefix = "spring.datasource.reader", name = "url")
 public class PolarisPersistenceReaderConfig {
 
     /**
@@ -56,5 +59,27 @@ public class PolarisPersistenceReaderConfig {
     @Bean
     public JdbcTemplate readerJdbcTemplate(@Qualifier("readerDataSource") final DataSource dataSource) {
         return new JdbcTemplate(dataSource);
+    }
+
+    /**
+     * Creates a PolarisDatabaseReplicaJDBC.
+     *
+     * @param readerJdbcTemplate the readerJdbcTemplate
+     * @return a JdbcTemplate instance.
+     */
+    @Bean
+    public PolarisDatabaseReplicaJDBC polarisDatabaseReplicaJDBC(final JdbcTemplate readerJdbcTemplate) {
+        return new PolarisDatabaseReplicaJDBC(readerJdbcTemplate);
+    }
+
+    /**
+     * Creates a polarisTableReplicaJDBC.
+     *
+     * @param readerJdbcTemplate the readerJdbcTemplate
+     * @return a JdbcTemplate instance.
+     */
+    @Bean
+    public PolarisTableReplicaJDBC polarisTableReplicaJDBC(final JdbcTemplate readerJdbcTemplate) {
+        return new PolarisTableReplicaJDBC(readerJdbcTemplate);
     }
 }

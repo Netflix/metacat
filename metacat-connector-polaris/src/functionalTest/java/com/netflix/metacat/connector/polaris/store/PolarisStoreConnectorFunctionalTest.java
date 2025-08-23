@@ -7,8 +7,6 @@ import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceReaderCon
 import com.netflix.metacat.connector.polaris.configs.PolarisStoreConfig;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
-import com.netflix.metacat.connector.polaris.store.jdbc.PolarisDatabaseReplicaJDBC;
-import com.netflix.metacat.connector.polaris.store.jdbc.PolarisTableReplicaJDBC;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseRepository;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 
@@ -50,8 +48,8 @@ import java.util.stream.Collectors;
     PolarisStoreConfig.class,
     PolarisPersistenceConfig.class,
     PolarisPersistenceReaderConfig.class,
-    PolarisDatabaseReplicaJDBC.class,
-    PolarisTableReplicaJDBC.class
+//    PolarisDatabaseReplicaJDBC.class,
+//    PolarisTableReplicaJDBC.class
 })
 //@ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa

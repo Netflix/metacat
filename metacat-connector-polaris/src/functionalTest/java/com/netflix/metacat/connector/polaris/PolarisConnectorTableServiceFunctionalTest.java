@@ -31,8 +31,6 @@ import com.netflix.metacat.connector.polaris.configs.PolarisStoreConfig;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
-import com.netflix.metacat.connector.polaris.store.jdbc.PolarisDatabaseReplicaJDBC;
-import com.netflix.metacat.connector.polaris.store.jdbc.PolarisTableReplicaJDBC;
 import com.netflix.spectator.api.NoopRegistry;
 import lombok.Getter;
 import org.apache.iceberg.shaded.org.apache.orc.storage.common.util.SuppressFBWarnings;
@@ -66,8 +64,8 @@ import java.util.stream.Collectors;
     PolarisStoreConfig.class,
     PolarisPersistenceConfig.class,
     PolarisPersistenceReaderConfig.class,
-    PolarisDatabaseReplicaJDBC.class,
-    PolarisTableReplicaJDBC.class,
+//    PolarisDatabaseReplicaJDBC.class,
+//    PolarisTableReplicaJDBC.class,
 })
 //@ActiveProfiles(profiles = {"polaris_functional_test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
