@@ -21,6 +21,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The context of the request to Metacat.
  *
@@ -38,4 +41,5 @@ public class ConnectorRequestContext {
     private boolean includeMetadataLocationOnly;
     //TODO: Move this to a response object.
     private boolean ignoreErrorsAfterUpdate;
+    private Map<String, String> additionalContext = new HashMap<>();
 }

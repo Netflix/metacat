@@ -33,6 +33,7 @@ import com.netflix.metacat.common.json.MetacatJson;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.TableMigrationInProgressException;
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException;
+
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.converter.ConverterUtil;
 import com.netflix.metacat.common.server.events.MetacatCreateTablePostEvent;
@@ -63,6 +64,7 @@ import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.DatabaseService;
 import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
+
 import com.netflix.metacat.main.services.OwnerValidationService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.spectator.api.Registry;
@@ -70,12 +72,15 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
+
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 
 
 
@@ -878,6 +883,8 @@ public class TableServiceImpl implements TableService {
                 MetacatUtils.getIcebergMigrationExceptionMsg("Updates", name.toString()));
         }
 
+
+
         //
         // Check if the table schema info is provided. If provided, we should continue calling the update on the table
         // schema. Uri may exist in the serde when updating data metadata for a table.
@@ -981,4 +988,6 @@ public class TableServiceImpl implements TableService {
         Preconditions.checkNotNull(name, "name cannot be null");
         Preconditions.checkArgument(name.isTableDefinition(), "Definition {} does not refer to a table", name);
     }
+
+
 }

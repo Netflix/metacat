@@ -231,7 +231,12 @@ public class ConverterUtil {
      * @return connector context
      */
     public ConnectorRequestContext toConnectorContext(final MetacatRequestContext metacatRequestContext) {
-        return mapper.map(metacatRequestContext, ConnectorRequestContext.class);
+        final ConnectorRequestContext context = mapper.map(metacatRequestContext, ConnectorRequestContext.class);
+        // Transfer additional context (headers) from MetacatRequestContext
+        if (metacatRequestContext.getAdditionalContext() != null) {
+            context.setAdditionalContext(new java.util.HashMap<>(metacatRequestContext.getAdditionalContext()));
+        }
+        return context;
     }
 
     /**

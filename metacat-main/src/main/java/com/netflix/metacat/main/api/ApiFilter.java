@@ -97,7 +97,7 @@ public class ApiFilter implements Filter {
                                                         final String scheme,
                                                         final String requestUri,
                                                         final HttpServletRequest httpServletRequest) {
-        return MetacatRequestContext.builder()
+        final MetacatRequestContext context = MetacatRequestContext.builder()
                    .userName(userName)
                    .clientAppName(clientAppName)
                    .clientId(clientId)
@@ -106,6 +106,19 @@ public class ApiFilter implements Filter {
                    .scheme(scheme)
                    .apiUri(requestUri)
                    .build();
+        
+        // Capture Iceberg-related headers for branch/tag validation
+        final String icebergBranchesTagsSupport = httpServletRequest.getHeader("X-Iceberg-Branches-Tags-Support");
+        if (icebergBranchesTagsSupport != null) {
+            context.getAdditionalContext().put("X-Iceberg-Branches-Tags-Support", icebergBranchesTagsSupport);
+        }
+        
+        final String clientVersion = httpServletRequest.getHeader("X-Client-Version");
+        if (clientVersion != null) {
+            context.getAdditionalContext().put("X-Client-Version", clientVersion);
+        }
+        
+        return context;
     }
 
     protected void postFilter(final ServletRequest request,
