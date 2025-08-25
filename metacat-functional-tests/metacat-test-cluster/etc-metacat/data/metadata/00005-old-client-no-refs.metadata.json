@@ -1,0 +1,79 @@
+{
+  "format-version" : 1,
+  "table-uuid" : "f9b44b43-f5b7-4000-bf7a-d36b7d08a835",
+  "location" : "file:/tmp/data/old_client_table",
+  "last-updated-ms" : 1640909164815,
+  "last-column-id" : 2,
+  "schema" : {
+    "type" : "struct",
+    "schema-id" : 0,
+    "fields" : [ {
+      "id" : 1,
+      "name" : "build_outcome",
+      "required" : false,
+      "type" : "string"
+    }, {
+      "id" : 2,
+      "name" : "average_number_of_dependency_updates",
+      "required" : false,
+      "type" : "double"
+    } ]
+  },
+  "current-schema-id" : 0,
+  "schemas" : [ {
+    "type" : "struct",
+    "schema-id" : 0,
+    "fields" : [ {
+      "id" : 1,
+      "name" : "build_outcome",
+      "required" : false,
+      "type" : "string"
+    }, {
+      "id" : 2,
+      "name" : "average_number_of_dependency_updates",
+      "required" : false,
+      "type" : "double"
+    } ]
+  } ],
+  "partition-spec" : [ ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ ]
+  } ],
+  "last-assigned-partition-id" : 999,
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "field.metadata.json" : "{\n  \"1\" : { },\n  \"2\" : { }\n}"
+  },
+  "current-snapshot-id" : 2575834434077335177,
+  "snapshots" : [ {
+    "snapshot-id" : 2575834434077335177,
+    "timestamp-ms" : 1640909164752,
+    "summary" : {
+      "operation" : "append",
+      "spark.app.id" : "application_1637687298268_645334",
+      "added-data-files" : "2",
+      "added-records" : "2",
+      "added-files-size" : "2080",
+      "changed-partition-count" : "1",
+      "partition-summaries-included" : "true",
+      "partitions." : "added-data-files=2,added-records=2,added-files-size=2080",
+      "total-records" : "2",
+      "total-data-files" : "2",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/tmp/data/metadata/snap-2575834434077335177-1-old-client.avro"
+  } ],
+  "snapshot-log" : [ {
+    "timestamp-ms" : 1640909164752,
+    "snapshot-id" : 2575834434077335177
+  } ],
+  "metadata-log" : [ ]
+}

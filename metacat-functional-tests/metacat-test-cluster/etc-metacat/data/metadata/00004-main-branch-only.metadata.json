@@ -1,0 +1,86 @@
+{
+  "format-version" : 2,
+  "table-uuid" : "4adba3fa-118d-4e0c-939d-9f4f8f7a34ef",
+  "location" : "file:/tmp/data",
+  "last-updated-ms" : 1612554400000,
+  "last-column-id" : 3,
+  "last-sequence-number" : 1,
+  "last-partition-id" : 1000,
+  "schema" : {
+    "type" : "struct",
+    "fields" : [ {
+      "id" : 1,
+      "name" : "id",
+      "required" : false,
+      "type" : "long",
+      "doc" : "1st field"
+    }, {
+      "id" : 2,
+      "name" : "data",
+      "required" : false,
+      "type" : "string",
+      "doc" : "2nd field"
+    } ]
+  },
+  "current-schema-id" : 0,
+  "schemas" : [ {
+    "schema-id" : 0,
+    "type" : "struct",
+    "fields" : [ {
+      "id" : 1,
+      "name" : "id",
+      "required" : false,
+      "type" : "long",
+      "doc" : "1st field"
+    }, {
+      "id" : 2,
+      "name" : "data",
+      "required" : false,
+      "type" : "string",
+      "doc" : "2nd field"
+    } ]
+  } ],
+  "partition-spec" : [ ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ ]
+  } ],
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "field.metadata.json" : "{\"1\":{\"comment\":\"1st field\"},\"2\":{\"comment\":\"2nd field\"}}"
+  },
+  "current-snapshot-id" : 8158962092416812130,
+  "refs" : {
+    "main" : {
+      "snapshot-id" : 8158962092416812130,
+      "type" : "branch"
+    }
+  },
+  "snapshots" : [ {
+    "snapshot-id" : 8158962092416812130,
+    "timestamp-ms" : 1612554324822,
+    "sequence-number" : 1,
+    "summary" : {
+      "operation" : "append",
+      "added-data-files" : "1",
+      "added-records" : "1",
+      "added-files-size" : "1295",
+      "total-records" : "1",
+      "total-data-files" : "1",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/tmp/data/metadata/snap-8158962092416812130-1-main-only.avro"
+  } ],
+  "snapshot-log" : [ {
+    "timestamp-ms" : 1612554324822,
+    "snapshot-id" : 8158962092416812130
+  } ],
+  "metadata-log" : [ ]
+}

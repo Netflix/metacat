@@ -1,0 +1,111 @@
+{
+  "format-version" : 1,
+  "table-uuid" : "6adba3fa-118d-4e0c-939d-9f4f8f7a34ef",
+  "location" : "file:/tmp/data",
+  "last-updated-ms" : 1612554600000,
+  "last-column-id" : 3,
+  "schema" : {
+    "type" : "struct",
+    "fields" : [ {
+      "id" : 1,
+      "name" : "id",
+      "required" : false,
+      "type" : "long",
+      "doc" : "1st field"
+    }, {
+      "id" : 2,
+      "name" : "data",
+      "required" : false,
+      "type" : "string",
+      "doc" : "2nd field"
+    } ]
+  },
+  "partition-spec" : [ ],
+  "default-spec-id" : 0,
+  "partition-specs" : [ {
+    "spec-id" : 0,
+    "fields" : [ ]
+  } ],
+  "default-sort-order-id" : 0,
+  "sort-orders" : [ {
+    "order-id" : 0,
+    "fields" : [ ]
+  } ],
+  "properties" : {
+    "field.metadata.json" : "{\"1\":{\"comment\":\"1st field\"},\"2\":{\"comment\":\"2nd field\"}}"
+  },
+  "current-snapshot-id" : 8158962092416812150,
+  "refs" : {
+    "main" : {
+      "snapshot-id" : 8158962092416812150,
+      "type" : "branch"
+    },
+    "dev-branch" : {
+      "snapshot-id" : 8158962092416812149,
+      "type" : "branch"
+    },
+    "v3.0.0" : {
+      "snapshot-id" : 8158962092416812148,
+      "type" : "tag"
+    }
+  },
+  "snapshots" : [ {
+    "snapshot-id" : 8158962092416812148,
+    "timestamp-ms" : 1612554324822,
+    "summary" : {
+      "operation" : "append",
+      "added-data-files" : "1",
+      "added-records" : "1",
+      "added-files-size" : "1295",
+      "total-records" : "1",
+      "total-data-files" : "1",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/tmp/data/metadata/snap-8158962092416812148-1-v1-tag.avro"
+  }, {
+    "snapshot-id" : 8158962092416812149,
+    "parent-snapshot-id" : 8158962092416812148,
+    "timestamp-ms" : 1612554400000,
+    "summary" : {
+      "operation" : "append",
+      "added-data-files" : "1",
+      "added-records" : "1",
+      "added-files-size" : "1295",
+      "total-records" : "2",
+      "total-data-files" : "2",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/tmp/data/metadata/snap-8158962092416812149-1-v1-dev.avro"
+  }, {
+    "snapshot-id" : 8158962092416812150,
+    "parent-snapshot-id" : 8158962092416812149,
+    "timestamp-ms" : 1612554500000,
+    "summary" : {
+      "operation" : "append",
+      "added-data-files" : "1",
+      "added-records" : "1",
+      "added-files-size" : "1295",
+      "total-records" : "3",
+      "total-data-files" : "3",
+      "total-delete-files" : "0",
+      "total-position-deletes" : "0",
+      "total-equality-deletes" : "0"
+    },
+    "manifest-list" : "file:/tmp/data/metadata/snap-8158962092416812150-1-v1-main.avro"
+  } ],
+  "snapshot-log" : [ {
+    "timestamp-ms" : 1612554324822,
+    "snapshot-id" : 8158962092416812148
+  }, {
+    "timestamp-ms" : 1612554400000,
+    "snapshot-id" : 8158962092416812149
+  }, {
+    "timestamp-ms" : 1612554500000,
+    "snapshot-id" : 8158962092416812150
+  } ],
+  "metadata-log" : [ ]
+}
