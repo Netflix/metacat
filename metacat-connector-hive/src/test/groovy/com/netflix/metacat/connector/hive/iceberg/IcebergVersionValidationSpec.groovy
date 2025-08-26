@@ -100,8 +100,8 @@ class IcebergVersionValidationSpec extends Specification {
         
         then: "Should indicate we're using version 1.x"
         println "Iceberg version info: ${icebergVersion}"
-        icebergVersion.contains("1.") || icebergVersion.contains("post-0.13")
-        !icebergVersion.contains("0.13.1") // Should not be the old version
+        icebergVersion.contains("1.")
+        !icebergVersion.contains("0.13.1") && !icebergVersion.contains("pre-1.0") // Should not be the older than 1.1
     }
 
     private String getIcebergVersionInfo() {
