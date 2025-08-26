@@ -441,11 +441,11 @@
             ],
             "locked": "5.2.3"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.1.0"
         },
         "org.apache.logging.log4j:log4j-core": {
             "locked": "2.21.1"
@@ -1086,11 +1086,11 @@
             ],
             "locked": "5.2.3"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.3_2.12": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.1.0"
         },
         "org.apache.logging.log4j:log4j-core": {
             "locked": "2.21.1"
