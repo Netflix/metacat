@@ -16,7 +16,12 @@
 
 package com.netflix.metacat.connector.hive.iceberg
 
-import org.apache.iceberg.*
+import org.apache.iceberg.BaseMetastoreTableOperations
+import org.apache.iceberg.ScanSummary
+import org.apache.iceberg.Schema
+import org.apache.iceberg.UpdateSchema
+import org.apache.iceberg.TableMetadata
+import org.apache.iceberg.TableMetadataParser
 import org.apache.iceberg.types.Types
 import spock.lang.Specification
 
@@ -63,8 +68,8 @@ class IcebergVersionValidationSpec extends Specification {
         schema != null
         schema.columns().size() == 3
         schema.findField("name").doc() == "Test comment"
-        schema.findField("id").isRequired() == true
-        schema.findField("name").isOptional() == true
+        schema.findField("id").isRequired()
+        schema.findField("name").isOptional()
     }
 
     def "test TableMetadataParser API exists"() {
