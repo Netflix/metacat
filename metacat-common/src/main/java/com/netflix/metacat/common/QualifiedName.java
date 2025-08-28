@@ -502,7 +502,7 @@ public final class QualifiedName implements Serializable {
     }
 
     /**
-     * Returns the qualified name in parts.
+     * Returns the qualified name with only catalog and database in parts.
      *
      * @return parts of the qualified name as a Map
      */
