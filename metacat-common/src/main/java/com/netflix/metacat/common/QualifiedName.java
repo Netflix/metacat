@@ -506,6 +506,21 @@ public final class QualifiedName implements Serializable {
      *
      * @return parts of the qualified name as a Map
      */
+    public Map<String, String> partsWithCatalogAndDatabase() {
+        final Map<String, String> map = new HashMap<>(2);
+        map.put("catalogName", catalogName);
+
+        if (!databaseName.isEmpty()) {
+            map.put("databaseName", databaseName);
+        }
+        return map;
+    }
+
+    /**
+     * Returns the qualified name in parts.
+     *
+     * @return parts of the qualified name as a Map
+     */
     public Map<String, String> parts() {
         final Map<String, String> map = new HashMap<>(5);
         map.put("catalogName", catalogName);
