@@ -99,6 +99,18 @@ class IcebergVersionValidationSpec extends Specification {
         currentMethods.any { it.returnType == TableMetadata.class }
     }
 
+    def "test Table refs method exists for branching support"() {
+        expect: "Table should have refs() method for branching and tagging functionality"
+        def tableClass = Class.forName('org.apache.iceberg.Table')
+        def refsMethods = tableClass.getMethods().findAll { it.name == 'refs' }
+        refsMethods.size() > 0
+        
+        // Verify the method returns something that could be table references
+        def refsMethod = refsMethods.first()
+        refsMethod.returnType != null
+        refsMethod.parameterCount == 0
+    }
+
     def "test version detection"() {
         when: "Check Iceberg version information"
         def icebergVersion = getIcebergVersionInfo()
