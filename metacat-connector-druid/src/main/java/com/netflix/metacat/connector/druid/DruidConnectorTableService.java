@@ -48,7 +48,7 @@ import java.util.List;
  * @since 1.2.0
  */
 @Slf4j
-public class DruidConnectorTableService implements ConnectorTableService {
+public class  DruidConnectorTableService implements ConnectorTableService {
     private final MetacatDruidClient druidClient;
     private final DruidConnectorInfoConverter druidConnectorInfoConverter;
     /**

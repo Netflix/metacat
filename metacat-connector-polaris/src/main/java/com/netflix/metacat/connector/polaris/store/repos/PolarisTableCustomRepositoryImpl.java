@@ -26,7 +26,8 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     private EntityManager entityManager;
 
     private <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
-        final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAllColumns) {
+        final String dbName, final String tableNamePrefix, final Pageable page,
+        final boolean selectAllColumns) {
 
         // Generate ORDER BY clause
         String orderBy = "";
@@ -64,10 +65,13 @@ public class PolarisTableCustomRepositoryImpl implements PolarisTableCustomRepos
     @Override
     @Transactional
     public List<?> findAllTablesByDbNameAndTablePrefix(
-        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns) {
+        final String dbName, final String tableNamePrefix, final int pageFetchSize, final boolean selectAllColumns,
+        final boolean auroraEnabled) {
         Pageable page = PageRequest.of(0, pageFetchSize, Sort.by("tbl_name").ascending());
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-            .executeUpdate();
+        if (!auroraEnabled) {
+            entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
+                .executeUpdate();
+        }
         final List<Object> retval = new ArrayList<>();
         final String tblPrefix =  tableNamePrefix == null ? "" : tableNamePrefix;
         Slice<?> tbls;

@@ -15,6 +15,14 @@
 #
 #
 
+version: '3.8'
+
+x-postgres-common: &postgres-common
+  image: postgres:16
+  platform: linux/x86_64
+  user: postgres
+  restart: always
+
 services:
   metacat:
     image: tomcat:10.1-jre17
@@ -23,7 +31,8 @@ services:
       - hive-metastore
       - hive-metastore-db
       - postgresql
-      - polaris-crdb-init
+      - polaris-aurora
+      - polaris-aurora-reader
     ports:
       - '8080'
       - '8000'
@@ -53,7 +62,7 @@ services:
                 -Dnetflix.appinfo.vipAddress=
                 -Dnetflix.appinfo.metadata.route53NamePrefix=
                 -Dnetflix.appinfo.metadata.enableRoute53=false
-                -Dmetacat.plugin.config.location=/etc/metacat/catalog
+                -Dmetacat.plugin.config.location=/etc/metacat/catalog-with-aurora
                 -Dmetacat.metrics.default-registry.enabled=true
                 -Dmetacat.mysqlmetadataservice.enabled=true
                 -Dmetacat.type.converter=com.netflix.metacat.connector.pig.converters.PigTypeConverter
@@ -67,7 +76,7 @@ services:
                 -Dmetacat.authorization.createAcl.createAclStr=hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.authorization.deleteAcl.deleteAclStr=hive-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.service.tables.error.list.partitions.threshold=100
-                -Dmetacat.service.auroraDataSourceEnabled=false
+                -Dmetacat.service.auroraDataSourceEnabled=true
                 -Dmetacat.hive.commonview.enabled=true
                 -Dmetacat.hive.commonview.deleteStorageTable=true
                 -Dmetacat.table.delete.noDeleteOnTags=do_not_drop,iceberg_migration_do_not_modify
@@ -81,8 +90,7 @@ services:
     labels:
       - "com.netflix.metacat.oss.test"
       - "com.netflix.metacat.oss.test.war"
-  ##REMOVED cassandra and druid container to reduce the memory demand (orig git hash 43890dd)
-  ##TODO: We need to add them back with light images
+
   hive-metastore-db:
     image: mysql:5.7
     platform: linux/x86_64
@@ -98,6 +106,7 @@ services:
       - '3306:3306'
     labels:
       - "com.netflix.metacat.oss.test"
+
   postgresql:
     image: postgres:9.6
     platform: linux/x86_64
@@ -109,6 +118,7 @@ services:
       - POSTGRES_DB=metacat
     labels:
       - "com.netflix.metacat.oss.test"
+
   hive-metastore:
     image: danielbwatson/metacat-test-hive-metastore:1.0.0
     platform: linux/x86_64
@@ -122,48 +132,67 @@ services:
     labels:
       - "com.netflix.metacat.oss.test"
       - "com.netflix.metacat.oss.test.hive"
-  polaris-crdb:
-    image: cockroachdb/cockroach:v21.2.0
-    platform: linux/x86_64
+
+  polaris-aurora:
+    <<: *postgres-common
     ports:
-      - '26257:26257'
-      - '8081:8080'
-    command: start-single-node --insecure
-    labels:
-      - "com.netflix.metacat.oss.test"
-      - "com.netflix.metacat.oss.polaris.crdb"
-  polaris-crdb-barrier:
-    image: martin/wait:latest
-    platform: linux/x86_64
-    depends_on:
-      - polaris-crdb
+      - '5438:5432'
     environment:
-      - TARGETS=polaris-crdb:8080,polaris-crdb:26257
-    labels:
-      - "com.netflix.metacat.oss.test"
-      - "com.netflix.metacat.oss.polaris.crdb-barrier"
-  polaris-crdb-init:
-    image: cockroachdb/cockroach:v21.2.0
-    platform: linux/x86_64
-    depends_on:
-      - polaris-crdb-barrier
+      POSTGRES_USER: aurora_user
+      POSTGRES_PASSWORD: aurora_password
+      POSTGRES_DB: aurora_db
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256\nhost replication all 0.0.0.0/0 md5"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
     volumes:
-      - ./datastores/crdb/sql:/cockroach/sql
-    command: sql --insecure --host=polaris-crdb:26257 --file /cockroach/sql/schema.sql
+      - ./datastores/aurora/docker-entrypoint-initdb-primary.d:/docker-entrypoint-initdb.d:ro
     labels:
       - "com.netflix.metacat.oss.test"
-      - "com.netflix.metacat.oss.polaris.crdb-init"
+      - "com.netflix.metacat.oss.aurora"
+
+  polaris-aurora-reader:
+    <<: *postgres-common
+    ports:
+      - '5439:5432'
+    environment:
+      PGUSER: aurora_user
+      PGPASSWORD: aurora_password
+    command: |
+      bash -c "
+      until pg_basebackup --pgdata=/var/lib/postgresql/data -R --slot=replication_slot --host=polaris-aurora --port=5432
+      do
+      echo 'Waiting for primary to connect...'
+      sleep 1s
+      done
+      echo 'Backup done, starting replica...'
+      chmod 0700 /var/lib/postgresql/data
+      postgres
+      "
+    depends_on:
+      - polaris-aurora
+    labels:
+      - "com.netflix.metacat.oss.test"
+      - "com.netflix.metacat.oss.aurora.reader"
+
   storage-barrier:
     image: martin/wait:latest
     platform: linux/x86_64
     depends_on:
       - hive-metastore-db
       - postgresql
-      - polaris-crdb-init
+      - polaris-aurora
+      - polaris-aurora-reader
     environment:
-      - TARGETS=postgresql:5432,hive-metastore-db:3306
+      - TARGETS=postgresql:5432,hive-metastore-db:3306,polaris-aurora:5432,polaris-aurora-reader:5432
     labels:
       - "com.netflix.metacat.oss.test"
+
   service-barrier:
     image: martin/wait:latest
     platform: linux/x86_64
@@ -173,6 +202,7 @@ services:
       - TARGETS=hive-metastore:9083
     labels:
       - "com.netflix.metacat.oss.test"
+
   metacat-barrier:
     image: martin/wait:latest
     platform: linux/x86_64

@@ -163,7 +163,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
             final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
-                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseNamesPageSize())
+                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseNamesPageSize(),
+                    connectorContext.getConfig().isAuroraDataSourceEnabled())
                 .stream()
                 .map(dbName -> QualifiedName.ofDatabase(name.getCatalogName(), dbName))
                 .collect(Collectors.toCollection(ArrayList::new));
@@ -190,7 +191,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
 
             final List<PolarisDatabaseEntity> dbs = polarisStoreService.getDatabases(
-                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseEntitiesPageSize()
+                dbPrefix, sort, this.connectorContext.getConfig().getListDatabaseEntitiesPageSize(),
+                connectorContext.getConfig().isAuroraDataSourceEnabled()
             );
 
             return ConnectorUtils.paginate(dbs, pageable).stream()
