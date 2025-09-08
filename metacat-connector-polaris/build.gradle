@@ -16,7 +16,7 @@
  *
  */
 
-apply plugin: 'nebula.facet'
+apply plugin: 'com.netflix.nebula.facet'
 
 facets {
     functionalTest {
