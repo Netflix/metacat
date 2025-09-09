@@ -521,7 +521,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.logging.log4j:log4j-core": {
             "firstLevelTransitive": [
@@ -999,7 +999,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.logging.log4j:log4j-core": {
             "firstLevelTransitive": [
@@ -1723,7 +1723,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.logging.log4j:log4j-core": {
             "firstLevelTransitive": [

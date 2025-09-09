@@ -78,7 +78,7 @@
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -206,7 +206,7 @@
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -358,7 +358,7 @@
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -514,7 +514,7 @@
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [

@@ -178,7 +178,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -418,7 +418,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -654,7 +654,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -856,7 +856,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "1.9.2"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
