@@ -31,7 +31,7 @@ dependencies {
     }
 
     api("commons-dbutils:commons-dbutils")
-    api("org.apache.iceberg:iceberg-spark-runtime")
+    api("org.apache.iceberg:iceberg-spark-runtime-${iceberg_spark_version}_${iceberg_scala_version}")
     /*******************************
      * Provided Dependencies
      *******************************/

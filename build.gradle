@@ -71,7 +71,7 @@ allprojects {
             url "https://repo.spring.io/milestone"
         }
         maven {
-            url "https://redshift-maven-repository.s3-website-us-east-1.amazonaws.com/release"
+            url "https://repository.apache.org/content/repositories/releases"
         }
         maven {
             url 'https://jitpack.io'
@@ -153,7 +153,7 @@ configure(javaProjects) {
             dependency("org.elasticsearch.client:transport:5.4.1")
             dependency("net.snowflake:snowflake-jdbc:3.4.2")
             dependency("com.esotericsoftware.kryo:kryo:2.22")
-            dependency("org.apache.iceberg:iceberg-spark-runtime:${iceberg_version}")
+            dependency("org.apache.iceberg:iceberg-spark-runtime-${iceberg_spark_version}_${iceberg_scala_version}:${iceberg_version}")
             dependency("com.datastax.cassandra:cassandra-driver-core:3.7.2")
             dependency("mysql:mysql-connector-java:8.0.27")
         }

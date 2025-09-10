@@ -109,11 +109,11 @@
             ],
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -284,11 +284,11 @@
             ],
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -490,11 +490,11 @@
             ],
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -709,11 +709,11 @@
             ],
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -903,11 +903,11 @@
             ],
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -1109,11 +1109,11 @@
             ],
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-hive"
             ],
-            "locked": "0.13.1"
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [

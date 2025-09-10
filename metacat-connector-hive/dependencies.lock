@@ -77,8 +77,8 @@
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
-            "locked": "0.13.1"
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -205,8 +205,8 @@
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
-            "locked": "0.13.1"
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -357,8 +357,8 @@
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
-            "locked": "0.13.1"
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -513,8 +513,8 @@
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
         },
-        "org.apache.iceberg:iceberg-spark-runtime": {
-            "locked": "0.13.1"
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
