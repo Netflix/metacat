@@ -239,10 +239,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
-        
+
         // Validate Iceberg branches/tags support for client compatibility
         validateIcebergBranchesTagsSupport(requestContext, name, tableInfo);
-        
+
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
         final boolean isView = HiveTableUtil.isCommonView(tableInfo);
@@ -512,11 +512,12 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             if (StringUtils.isBlank(tableMetadataLocation)) {
                 return; // Can't check without metadata location
             }
-            
+
             // Get the Iceberg table metadata content through IcebergTableHandler
-            final IcebergTableWrapper icebergWrapper = icebergTableHandler.getIcebergTable(name, tableMetadataLocation, true);
+            final IcebergTableWrapper icebergWrapper = icebergTableHandler.getIcebergTable(name,
+                tableMetadataLocation, true);
             final String metadataContent = icebergWrapper.getExtraProperties().get("metadata_content");
-            
+
             // Check if table has branches or tags by parsing the metadata
             tableHasBranchesOrTags = hasIcebergBranchesOrTags(metadataContent);
         } catch (Exception e) {
@@ -552,7 +553,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         }
 
         // Neither header indicates support
-        blockUnsupportedClient(name, String.format("X-Iceberg-Branches-Tags-Support: %s, X-Client-Version: %s", 
+        blockUnsupportedClient(name, String.format("X-Iceberg-Branches-Tags-Support: %s, X-Client-Version: %s",
             branchesTagsSupportHeader, clientVersion));
     }
 
@@ -605,9 +606,9 @@ public class PolarisConnectorTableService implements ConnectorTableService {
 
     /**
      * Checks if the Iceberg table has branches or tags by parsing the metadata JSON.
-     * This approach leverages the IcebergTableHandler to get the metadata content and 
+     * This approach leverages the IcebergTableHandler to get the metadata content and
      * parses it to detect branches/tags in the refs field.
-     * 
+     *
      * @param metadataContent the JSON content of the Iceberg metadata file
      * @return true if branches or tags are found, false otherwise
      */
@@ -619,7 +620,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         try {
             final ObjectMapper objectMapper = new ObjectMapper();
             final JsonNode rootNode = objectMapper.readTree(metadataContent);
-            
+
             // Check for refs field (branches and tags are stored here)
             final JsonNode refsNode = rootNode.get("refs");
             if (refsNode != null && refsNode.isObject()) {
@@ -628,7 +629,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 // A table with branches/tags has refs.size() > 1 OR doesn't have "main" as the only ref
                 return refsNode.size() > 1 || (refsNode.size() == 1 && !refsNode.has("main"));
             }
-            
+
             return false;
         } catch (Exception e) {
             log.warn("Failed to parse Iceberg metadata content for branches/tags detection: {}", e.getMessage());
