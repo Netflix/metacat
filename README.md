@@ -47,7 +47,7 @@ catalog [samples](https://github.com/Netflix/metacat/tree/master/metacat-functio
 * `metacat.usermetadata.config.location`: Path to the configuration file containing the connection properties to store
 user metadata. Please look at this [sample](https://github.com/Netflix/metacat/blob/master/metacat-functional-tests/metacat-test-cluster/etc-metacat/usermetadata.properties).
 
-### Running Locally
+### Running Locallyyy
 
 Take the build WAR in `metacat-war/build/libs` and deploy it to an existing Tomcat as `ROOT.war`.
 
