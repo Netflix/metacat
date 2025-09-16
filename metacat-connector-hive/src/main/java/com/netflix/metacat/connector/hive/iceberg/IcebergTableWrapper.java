@@ -86,13 +86,14 @@ public class IcebergTableWrapper {
     }
 
     /**
-     * Extract branch names from the table references using Iceberg 1.9 native API.
+     * Extract branch names from the table references.
      * @return set of branch names
      */
     private Set<String> extractBranches() {
         try {
-            return table.refs().keySet().stream()
-                .filter(ref -> "branch".equals(table.refs().get(ref)))
+            final var refs = table.refs();
+            return refs.keySet().stream()
+                .filter(ref -> "branch".equals(String.valueOf(refs.get(ref))))
                 .collect(java.util.stream.Collectors.toSet());
         } catch (Exception e) {
             // Fallback to empty set if refs() is not supported or fails
@@ -101,13 +102,14 @@ public class IcebergTableWrapper {
     }
 
     /**
-     * Extract tag names from the table references using Iceberg 1.9 native API.
+     * Extract tag names from the table references.
      * @return set of tag names
      */
     private Set<String> extractTags() {
         try {
-            return table.refs().keySet().stream()
-                .filter(ref -> "tag".equals(table.refs().get(ref)))
+            final var refs = table.refs();
+            return refs.keySet().stream()
+                .filter(ref -> "tag".equals(String.valueOf(refs.get(ref))))
                 .collect(java.util.stream.Collectors.toSet());
         } catch (Exception e) {
             // Fallback to empty set if refs() is not supported or fails
