@@ -6,6 +6,7 @@ import com.netflix.metacat.connector.polaris.store.repos.PolarisDatabaseReposito
 import com.netflix.metacat.connector.polaris.store.repos.PolarisTableRepository;
 import com.netflix.metacat.connector.polaris.store.jdbc.PolarisDatabaseReplicaJDBC;
 import com.netflix.metacat.connector.polaris.store.jdbc.PolarisTableReplicaJDBC;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.Nullable;
@@ -14,6 +15,7 @@ import org.springframework.lang.Nullable;
  * Configuration class for setting up Polaris store-related beans.
  */
 @Configuration
+@Slf4j
 public class PolarisStoreConfig {
     /**
      * Creates a PolarisStoreService bean.
@@ -31,6 +33,7 @@ public class PolarisStoreConfig {
         @Nullable final PolarisDatabaseReplicaJDBC replicaDatabaseRepo,
         @Nullable final PolarisTableReplicaJDBC replicaTableRepo
     ) {
+        log.info("Hey Creating PolarisStoreService" + (replicaDatabaseRepo == null) + (replicaTableRepo == null));
         return new PolarisStoreConnector(
             repo,
             tblRepo,
