@@ -3,6 +3,7 @@ package com.netflix.metacat.connector.polaris.configs;
 import com.netflix.metacat.connector.polaris.store.jdbc.PolarisDatabaseReplicaJDBC;
 import com.netflix.metacat.connector.polaris.store.jdbc.PolarisTableReplicaJDBC;
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -19,6 +20,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
  */
 @Configuration
 @ConditionalOnProperty(prefix = "spring.datasource.reader", name = "url")
+@Slf4j
 public class PolarisPersistenceReaderConfig {
 
     /**
@@ -32,6 +34,7 @@ public class PolarisPersistenceReaderConfig {
     @ConfigurationProperties(prefix = "spring.datasource.reader.hikari")
     public DataSource readerDataSource(@Qualifier("readerDataSourceProperties")
                                            final DataSourceProperties readerDataSourceProperties) {
+        log.info("Hey readerDataSource");
         return readerDataSourceProperties
             .initializeDataSourceBuilder()
             .type(HikariDataSource.class)
@@ -47,6 +50,7 @@ public class PolarisPersistenceReaderConfig {
     @Bean
     @ConfigurationProperties("spring.datasource.reader")
     public DataSourceProperties readerDataSourceProperties() {
+        log.info("Hey readerDataSourceProperties");
         return new DataSourceProperties();
     }
 
@@ -58,6 +62,7 @@ public class PolarisPersistenceReaderConfig {
      */
     @Bean
     public JdbcTemplate readerJdbcTemplate(@Qualifier("readerDataSource") final DataSource dataSource) {
+        log.info("Hey readerJdbcTemplate");
         return new JdbcTemplate(dataSource);
     }
 
@@ -69,6 +74,7 @@ public class PolarisPersistenceReaderConfig {
      */
     @Bean
     public PolarisDatabaseReplicaJDBC polarisDatabaseReplicaJDBC(final JdbcTemplate readerJdbcTemplate) {
+        log.info("Hey PolarisDatabaseReplicaJDBC");
         return new PolarisDatabaseReplicaJDBC(readerJdbcTemplate);
     }
 
@@ -80,6 +86,7 @@ public class PolarisPersistenceReaderConfig {
      */
     @Bean
     public PolarisTableReplicaJDBC polarisTableReplicaJDBC(final JdbcTemplate readerJdbcTemplate) {
+        log.info("Hey polarisTableReplicaJDBC");
         return new PolarisTableReplicaJDBC(readerJdbcTemplate);
     }
 }
