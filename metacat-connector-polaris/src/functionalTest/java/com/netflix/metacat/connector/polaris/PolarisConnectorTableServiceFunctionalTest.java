@@ -63,11 +63,8 @@ import java.util.stream.Collectors;
 @SpringBootTest(classes = {
     PolarisStoreConfig.class,
     PolarisPersistenceConfig.class,
-    PolarisPersistenceReaderConfig.class,
-//    PolarisDatabaseReplicaJDBC.class,
-//    PolarisTableReplicaJDBC.class,
+    PolarisPersistenceReaderConfig.class
 })
-//@ActiveProfiles(profiles = {"polaris_functional_test"})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @AutoConfigureDataJpa
 @Getter

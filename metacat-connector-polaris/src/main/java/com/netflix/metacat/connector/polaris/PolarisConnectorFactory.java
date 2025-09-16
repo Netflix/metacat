@@ -35,8 +35,6 @@ class PolarisConnectorFactory extends SpringConnectorFactory {
         super.registerClazz(PolarisConnectorConfig.class,
                 PolarisPersistenceConfig.class,
             PolarisPersistenceReaderConfig.class,
-//            PolarisTableReplicaJDBC.class,
-//            PolarisDatabaseReplicaJDBC.class,
             PolarisStoreConfig.class);
         super.refresh();
     }
