@@ -33,6 +33,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.ConnectorUtils;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException;
+import com.netflix.metacat.common.server.connectors.exception.UnsupportedClientOperationException;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
@@ -437,5 +438,132 @@ public class IcebergTableHandler {
             partitionName,
             (dataTimestampMillis == null) ? partitionName.hashCode()
                 : Instant.ofEpochMilli(dataTimestampMillis).getEpochSecond());
+    }
+
+    /**
+     * Validates that the client supports Iceberg branches and tags if the table has them.
+     * This prevents older clients (e.g., Iceberg 0.9) from modifying tables that contain
+     * branches or tags, which could result in data loss.
+     *
+     * @param requestContext the connector request context containing headers
+     * @param name the qualified table name
+     * @param tableInfo the table info
+     * @throws UnsupportedClientOperationException if the client doesn't support branches/tags but the table has them
+     */
+    public void validateIcebergBranchesTagsSupport(final ConnectorRequestContext requestContext,
+                                                   final QualifiedName name,
+                                                   final TableInfo tableInfo) {
+        // Only validate for Iceberg tables
+        if (!HiveTableUtil.isIcebergTable(tableInfo)) {
+            return;
+        }
+
+        boolean tableHasBranchesOrTags;
+        try {
+            final String tableMetadataLocation = HiveTableUtil.getIcebergTableMetadataLocation(tableInfo);
+            if (StringUtils.isBlank(tableMetadataLocation)) {
+                return;
+            }
+
+            final IcebergTableWrapper icebergWrapper = this.getIcebergTable(name,
+                tableMetadataLocation, true);
+
+            tableHasBranchesOrTags = icebergWrapper.hasBranchesOrTags();
+
+            log.debug("Table {} has {} branches: {}, {} tags: {}",
+                name, icebergWrapper.getBranches().size(), icebergWrapper.getBranches(),
+                icebergWrapper.getTags().size(), icebergWrapper.getTags());
+        } catch (Exception e) {
+            log.warn("Failed to check for branches/tags in table {}, allowing update to proceed: {}",
+                name, e.getMessage());
+            return;
+        }
+
+        if (!tableHasBranchesOrTags) {
+            return;
+        }
+
+        final Map<String, String> headers = requestContext.getAdditionalContext();
+        if (headers == null) {
+            blockUnsupportedClient(name, "No headers provided");
+            return;
+        }
+
+        final String branchesTagsSupportHeader = headers.get("X-Iceberg-Branches-Tags-Support");
+        if (branchesTagsSupportHeader != null && "true".equalsIgnoreCase(branchesTagsSupportHeader)) {
+            log.debug("Client supports Iceberg branches/tags for table {}", name);
+            return;
+        }
+
+        // Check for Iceberg REST catalog spec version (0.14.1+ supports branches/tags)
+        final String clientVersion = headers.get("X-Client-Version");
+        if (clientVersion != null && isIcebergVersionSupported(clientVersion)) {
+            log.debug("Iceberg REST catalog spec version {} supports branches/tags for table {}", clientVersion, name);
+            return;
+        }
+
+        blockUnsupportedClient(name, String.format("X-Iceberg-Branches-Tags-Support: %s, X-Client-Version: %s",
+            branchesTagsSupportHeader, clientVersion));
+    }
+
+    /**
+     * Checks if the Iceberg REST catalog specification version supports branches and tags.
+     * The X-Client-Version header contains the REST catalog spec version (e.g., "0.14.1").
+     *
+     * @param versionString the REST spec version string (e.g., "0.14.1", "0.15.0")
+     * @return true if the REST spec version supports branches and tags
+     */
+    private boolean isIcebergVersionSupported(final String versionString) {
+        if (StringUtils.isBlank(versionString)) {
+            return false;
+        }
+
+        try {
+            // Parse version string (e.g., "0.14.1" -> [0, 14, 1])
+            final String[] versionParts = versionString.trim().split("\\.");
+            if (versionParts.length < 2) {
+                return false;
+            }
+
+            final int majorVersion = Integer.parseInt(versionParts[0]);
+            final int minorVersion = Integer.parseInt(versionParts[1]);
+
+            // Only handle REST catalog spec versions (0.x.y format)
+            if (majorVersion == 0) {
+                if (minorVersion > 14) {
+                    return true; // 0.15+
+                }
+                if (minorVersion == 14) {
+                    // For 0.14.x, check patch version if available
+                    if (versionParts.length >= 3) {
+                        final int patchVersion = Integer.parseInt(versionParts[2]);
+                        return patchVersion >= 1;  // 0.14.1+
+                    }
+                    return false; // 0.14.0 doesn't support branches/tags
+                }
+                return false; // 0.13.x and below don't support branches/tags
+            }
+
+            // Unexpected major version (not 0.x.y format for REST spec)
+            log.warn("Unexpected REST spec version format '{}', expected 0.x.y format", versionString);
+            return false;
+        } catch (NumberFormatException e) {
+            log.warn("Failed to parse Iceberg REST spec version string '{}': {}", versionString, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Blocks the operation for unsupported clients.
+     */
+    private void blockUnsupportedClient(final QualifiedName name, final String headerInfo) {
+        final String message = String.format(
+            "Table '%s' contains Iceberg branches or tags, but the client does not support them. "
+            + "Please use a client that supports Iceberg branches and tags (REST catalog spec 0.14.1+ "
+            + "or client with X-Iceberg-Branches-Tags-Support header) to modify this table. Client headers: %s",
+            name, headerInfo);
+
+        log.warn("Blocking update to table {} due to unsupported client: {}", name, message);
+        throw new UnsupportedClientOperationException(name, message);
     }
 }
