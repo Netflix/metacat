@@ -33,7 +33,9 @@ public class PolarisStoreConfig {
         @Nullable final PolarisDatabaseReplicaJDBC replicaDatabaseRepo,
         @Nullable final PolarisTableReplicaJDBC replicaTableRepo
     ) {
-        log.info("Hey Creating PolarisStoreService" + (replicaDatabaseRepo == null) + (replicaTableRepo == null));
+        log.info("Creating PolarisStoreService. replicaDatabaseRepo: {}, replicaTableRepo: {}",
+                replicaDatabaseRepo == null ? "null" : "initialized",
+                replicaTableRepo == null ? "null" : "initialized");
         return new PolarisStoreConnector(
             repo,
             tblRepo,

@@ -34,7 +34,6 @@ public class PolarisPersistenceReaderConfig {
     @ConfigurationProperties(prefix = "spring.datasource.reader.hikari")
     public DataSource readerDataSource(@Qualifier("readerDataSourceProperties")
                                            final DataSourceProperties readerDataSourceProperties) {
-        log.info("Hey readerDataSource");
         return readerDataSourceProperties
             .initializeDataSourceBuilder()
             .type(HikariDataSource.class)
@@ -50,7 +49,6 @@ public class PolarisPersistenceReaderConfig {
     @Bean
     @ConfigurationProperties("spring.datasource.reader")
     public DataSourceProperties readerDataSourceProperties() {
-        log.info("Hey readerDataSourceProperties");
         return new DataSourceProperties();
     }
 
@@ -62,7 +60,6 @@ public class PolarisPersistenceReaderConfig {
      */
     @Bean
     public JdbcTemplate readerJdbcTemplate(@Qualifier("readerDataSource") final DataSource dataSource) {
-        log.info("Hey readerJdbcTemplate");
         return new JdbcTemplate(dataSource);
     }
 
@@ -74,7 +71,6 @@ public class PolarisPersistenceReaderConfig {
      */
     @Bean
     public PolarisDatabaseReplicaJDBC polarisDatabaseReplicaJDBC(final JdbcTemplate readerJdbcTemplate) {
-        log.info("Hey PolarisDatabaseReplicaJDBC");
         return new PolarisDatabaseReplicaJDBC(readerJdbcTemplate);
     }
 
@@ -86,7 +82,6 @@ public class PolarisPersistenceReaderConfig {
      */
     @Bean
     public PolarisTableReplicaJDBC polarisTableReplicaJDBC(final JdbcTemplate readerJdbcTemplate) {
-        log.info("Hey polarisTableReplicaJDBC");
         return new PolarisTableReplicaJDBC(readerJdbcTemplate);
     }
 }
