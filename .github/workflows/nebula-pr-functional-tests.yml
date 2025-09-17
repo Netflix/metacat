@@ -48,4 +48,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-report-functional
-          path: /home/runner/work/metacat/metacat/metacat-metadata/build/reports/functionalTest
+          path: |
+            **/build/reports/tests/functionalTest
