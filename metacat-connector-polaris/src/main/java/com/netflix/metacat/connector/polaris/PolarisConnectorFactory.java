@@ -8,6 +8,8 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService;
 import com.netflix.metacat.common.server.connectors.SpringConnectorFactory;
 import com.netflix.metacat.connector.polaris.configs.PolarisConnectorConfig;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
+import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceReaderConfig;
+import com.netflix.metacat.connector.polaris.configs.PolarisStoreConfig;
 import org.springframework.core.env.MapPropertySource;
 
 import java.util.Collections;
@@ -28,10 +30,12 @@ class PolarisConnectorFactory extends SpringConnectorFactory {
         final ConnectorContext connectorContext
     ) {
         super(infoConverter, connectorContext);
-        super.registerClazz(PolarisConnectorConfig.class,
-                PolarisPersistenceConfig.class);
         super.addEnvProperties(new MapPropertySource(
-                "polaris_connector", Collections.unmodifiableMap(connectorContext.getConfiguration())));
+            "polaris_connector", Collections.unmodifiableMap(connectorContext.getConfiguration())));
+        super.registerClazz(PolarisConnectorConfig.class,
+                PolarisPersistenceConfig.class,
+            PolarisPersistenceReaderConfig.class,
+            PolarisStoreConfig.class);
         super.refresh();
     }
 

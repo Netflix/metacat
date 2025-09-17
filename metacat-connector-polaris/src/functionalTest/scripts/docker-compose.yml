@@ -26,7 +26,7 @@ services:
         command: start-single-node --insecure --listen-addr=0.0.0.0
         labels:
           - "com.netflix.metacat.oss.crdb"
-    crdb-barrier:
+    storage-barrier:
         image: martin/wait:latest
         depends_on:
             - crdb
