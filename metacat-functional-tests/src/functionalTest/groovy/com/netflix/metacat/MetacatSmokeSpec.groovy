@@ -238,7 +238,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         if (isIcebergTable) {
-            tableDTO.metadata.get("metadata_location").equals(metadataLocation)
+            tableDTO.metadata.get("metadata_location").equals(metadataLocation + "hey")
         }
         tableDTO.getFields().size() == 2
         def nestedFieldDto = tableDTO.getFields().find { it.name == "info" }
