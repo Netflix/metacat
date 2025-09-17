@@ -118,6 +118,11 @@ public class ApiFilter implements Filter {
             context.getAdditionalContext().put("X-Client-Version", clientVersion);
         }
 
+        final String netflixIcebergVersion = httpServletRequest.getHeader("X-Netflix-Iceberg-Version");
+        if (netflixIcebergVersion != null) {
+            context.getAdditionalContext().put("X-Netflix-Iceberg-Version", netflixIcebergVersion);
+        }
+
         return context;
     }
 

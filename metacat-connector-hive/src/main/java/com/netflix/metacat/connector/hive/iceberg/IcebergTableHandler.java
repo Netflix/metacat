@@ -489,12 +489,6 @@ public class IcebergTableHandler {
             return;
         }
 
-        final String branchesTagsSupportHeader = headers.get("X-Iceberg-Branches-Tags-Support");
-        if (branchesTagsSupportHeader != null && "true".equalsIgnoreCase(branchesTagsSupportHeader)) {
-            log.debug("Client supports Iceberg branches/tags for table {}", name);
-            return;
-        }
-
         // Check for Iceberg REST catalog spec version (0.14.1+ supports branches/tags)
         final String clientVersion = headers.get("X-Client-Version");
         if (clientVersion != null && isIcebergVersionSupported(clientVersion)) {
@@ -502,8 +496,53 @@ public class IcebergTableHandler {
             return;
         }
 
-        blockUnsupportedClient(name, String.format("X-Iceberg-Branches-Tags-Support: %s, X-Client-Version: %s",
-            branchesTagsSupportHeader, clientVersion));
+        // Check for Netflix Iceberg library version (1.9+ supports branches/tags)
+        final String netflixIcebergVersion = headers.get("X-Netflix-Iceberg-Version");
+        if (netflixIcebergVersion != null && isNetflixIcebergVersionSupported(netflixIcebergVersion)) {
+            log.debug("Netflix Iceberg library version {} supports branches/tags for table {}",
+                netflixIcebergVersion, name);
+            return;
+        }
+
+        blockUnsupportedClient(name, String.format(
+            "X-Client-Version: %s, X-Netflix-Iceberg-Version: %s",
+            clientVersion, netflixIcebergVersion));
+    }
+
+    /**
+     * Checks if the Netflix Iceberg library version supports branches and tags.
+     * The X-Netflix-Iceberg-Version header contains the library version from IcebergBuild.version().
+     *
+     * @param versionString the Netflix Iceberg library version string (e.g., "1.9.0", "1.10.1")
+     * @return true if the Netflix Iceberg library version supports branches and tags
+     */
+    @VisibleForTesting
+    private boolean isNetflixIcebergVersionSupported(final String versionString) {
+        if (StringUtils.isBlank(versionString)) {
+            return false;
+        }
+
+        try {
+            // Parse version string (e.g., "1.9.0" -> [1, 9, 0])
+            final String[] versionParts = versionString.trim().split("\\.");
+            if (versionParts.length < 2) {
+                return false;
+            }
+
+            final int majorVersion = Integer.parseInt(versionParts[0]);
+            final int minorVersion = Integer.parseInt(versionParts[1]);
+
+            if (majorVersion > 1) {
+                return true; // Future-proofing
+            }
+            if (majorVersion == 1) {
+                return minorVersion >= 1; // 1.1+
+            }
+            return false; // 0.x or 1.0-1.0.9
+        } catch (NumberFormatException e) {
+            log.warn("Failed to parse Netflix Iceberg library version string '{}': {}", versionString, e.getMessage());
+            return false;
+        }
     }
 
     /**
