@@ -161,7 +161,6 @@ class MetacatFunctionalSpec extends Specification {
 
         catResponse2.definitionMetadata.get("updated_part") == metadata.get("updated_part")
         catResponse2.definitionMetadata == originMetadata
-        assert true == false
 
         where:
         catalog << TestCatalogs.ALL

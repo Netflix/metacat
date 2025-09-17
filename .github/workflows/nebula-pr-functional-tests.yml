@@ -48,5 +48,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-report-functional
-          path: |
-            **/build/reports/tests/functionalTest
+          path: metacat-functional-tests/build/reports/functionalTest/
