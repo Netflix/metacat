@@ -26,6 +26,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
     private final PolarisDatabaseRepository dbRepo;
     private final PolarisTableRepository tblRepo;
 
+
     /**
      * Creates entry for new database.
      * @param databaseName database name
