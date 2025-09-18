@@ -238,6 +238,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final QualifiedName name = tableInfo.getName();
 
         // Validate Iceberg branches/tags support for client compatibility
+        // The validation will use cached metadata from the TableInfo to avoid redundant loading
         icebergTableHandler.validateIcebergBranchesTagsSupport(requestContext, name, tableInfo);
 
         final Config conf = connectorContext.getConfig();
@@ -426,6 +427,9 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                                      final boolean useCache) {
         final IcebergTableWrapper icebergTable =
             this.icebergTableHandler.getIcebergTable(tableName, tableMetadataLocation, includeInfoDetails);
+        
+        // The IcebergTableWrapper branch/tag information is automatically injected into TableInfo metadata
+        // by HiveConnectorInfoConverter.fromIcebergTableToTableInfo() to avoid redundant loading
         return connectorConverter.fromIcebergTableToTableInfo(tableName, icebergTable, tableMetadataLocation, info);
     }
 

@@ -29,8 +29,6 @@ import java.util.Set;
 public class IcebergTableWrapper {
     private final Table table;
     private final Map<String, String> extraProperties;
-    private final Set<String> branches;
-    private final Set<String> tags;
 
     /**
      * Constructor for compatibility with existing code.
@@ -40,15 +38,19 @@ public class IcebergTableWrapper {
     public IcebergTableWrapper(final Table table, final Map<String, String> extraProperties) {
         this.table = table;
         this.extraProperties = extraProperties;
-        this.branches = extractBranches();
-        this.tags = extractTags();
+        
+        // Add branch/tag information to extraProperties to avoid redundant loading during validation
+        // This will be merged into table metadata by HiveConnectorInfoConverter
+        this.extraProperties.put("iceberg.has.branches.or.tags", String.valueOf(hasBranchesOrTags()));
     }
+
 
     /**
      * Check if the table has any branches (excluding the default main branch).
      * @return true if the table has branches other than main
      */
     public boolean hasBranches() {
+        final Set<String> branches = extractBranches();
         return !branches.isEmpty() && !(branches.size() == 1 && branches.contains("main"));
     }
 
@@ -57,6 +59,7 @@ public class IcebergTableWrapper {
      * @return true if the table has tags
      */
     public boolean hasTags() {
+        final Set<String> tags = extractTags();
         return !tags.isEmpty();
     }
 
@@ -73,6 +76,8 @@ public class IcebergTableWrapper {
      * @return formatted string with branch and tag counts and names
      */
     public String getBranchesAndTagsSummary() {
+        final Set<String> branches = extractBranches();
+        final Set<String> tags = extractTags();
         final StringBuilder summary = new StringBuilder();
         summary.append(String.format("branches=%d", branches.size()));
         if (!branches.isEmpty()) {

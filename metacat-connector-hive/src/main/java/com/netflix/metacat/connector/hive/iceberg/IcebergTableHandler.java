@@ -447,7 +447,7 @@ public class IcebergTableHandler {
      *
      * @param requestContext the connector request context containing headers
      * @param name the qualified table name
-     * @param tableInfo the table info
+     * @param tableInfo the table info (should contain iceberg.has.branches.or.tags in metadata)
      * @throws UnsupportedClientOperationException if the client doesn't support branches/tags but the table has them
      */
     public void validateIcebergBranchesTagsSupport(final ConnectorRequestContext requestContext,
@@ -459,24 +459,32 @@ public class IcebergTableHandler {
         }
 
         boolean tableHasBranchesOrTags;
-        try {
-            final String tableMetadataLocation = HiveTableUtil.getIcebergTableMetadataLocation(tableInfo);
-            if (StringUtils.isBlank(tableMetadataLocation)) {
+        
+        // First check if branch/tag information is already cached in metadata to avoid redundant loading
+        final Map<String, String> metadata = tableInfo.getMetadata();
+        if (metadata != null && metadata.containsKey("iceberg.has.branches.or.tags")) {
+            tableHasBranchesOrTags = Boolean.parseBoolean(metadata.get("iceberg.has.branches.or.tags"));
+            
+            log.debug("Using cached branch/tag info for table {}: has branches/tags={} (avoiding redundant load)", 
+                name, tableHasBranchesOrTags);
+        } else {
+            // Fallback to loading metadata if not cached (shouldn't happen normally with IcebergTableWrapper)
+            try {
+                final String tableMetadataLocation = HiveTableUtil.getIcebergTableMetadataLocation(tableInfo);
+                if (StringUtils.isBlank(tableMetadataLocation)) {
+                    return;
+                }
+
+                final IcebergTableWrapper icebergWrapper = this.getIcebergTable(name, tableMetadataLocation, true);
+                tableHasBranchesOrTags = icebergWrapper.hasBranchesOrTags();
+                
+                log.debug("Fallback: Loaded IcebergTable metadata for validation of table {} - has branches/tags: {}", 
+                    name, tableHasBranchesOrTags);
+            } catch (Exception e) {
+                log.warn("Failed to check for branches/tags in table {}, allowing update to proceed: {}",
+                    name, e.getMessage());
                 return;
             }
-
-            final IcebergTableWrapper icebergWrapper = this.getIcebergTable(name,
-                tableMetadataLocation, true);
-
-            tableHasBranchesOrTags = icebergWrapper.hasBranchesOrTags();
-
-            log.debug("Table {} has {} branches: {}, {} tags: {}",
-                name, icebergWrapper.getBranches().size(), icebergWrapper.getBranches(),
-                icebergWrapper.getTags().size(), icebergWrapper.getTags());
-        } catch (Exception e) {
-            log.warn("Failed to check for branches/tags in table {}, allowing update to proceed: {}",
-                name, e.getMessage());
-            return;
         }
 
         if (!tableHasBranchesOrTags) {

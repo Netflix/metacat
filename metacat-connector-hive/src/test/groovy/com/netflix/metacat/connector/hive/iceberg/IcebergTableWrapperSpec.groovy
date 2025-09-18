@@ -37,8 +37,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should detect no branches or tags"
-        wrapper.getBranches().isEmpty()
-        wrapper.getTags().isEmpty()
         !wrapper.hasBranches()
         !wrapper.hasTags()
         !wrapper.hasBranchesOrTags()
@@ -56,8 +54,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should detect main branch but not consider it as having branches"
-        wrapper.getBranches() == ["main"] as Set
-        wrapper.getTags().isEmpty()
         !wrapper.hasBranches() // main branch alone doesn't count as "having branches"
         !wrapper.hasTags()
         !wrapper.hasBranchesOrTags()
@@ -75,8 +71,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should detect multiple branches"
-        wrapper.getBranches() == ["main", "feature-branch", "dev-branch"] as Set
-        wrapper.getTags().isEmpty()
         wrapper.hasBranches() // multiple branches count as "having branches"
         !wrapper.hasTags()
         wrapper.hasBranchesOrTags()
@@ -95,8 +89,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should detect tags only"
-        wrapper.getBranches().isEmpty()
-        wrapper.getTags() == ["v1.0", "v1.1", "release-2024"] as Set
         !wrapper.hasBranches()
         wrapper.hasTags()
         wrapper.hasBranchesOrTags()
@@ -119,8 +111,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should detect both branches and tags"
-        wrapper.getBranches() == ["main", "feature-x"] as Set
-        wrapper.getTags() == ["v1.0", "v2.0"] as Set
         wrapper.hasBranches() // more than just main
         wrapper.hasTags()
         wrapper.hasBranchesOrTags()
@@ -140,8 +130,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should detect the branch as having branches (since it's not main)"
-        wrapper.getBranches() == ["feature-only"] as Set
-        wrapper.getTags().isEmpty()
         wrapper.hasBranches() // single non-main branch counts as having branches
         !wrapper.hasTags()
         wrapper.hasBranchesOrTags()
@@ -159,8 +147,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should handle exception gracefully and return empty sets"
-        wrapper.getBranches().isEmpty()
-        wrapper.getTags().isEmpty()
         !wrapper.hasBranches()
         !wrapper.hasTags()
         !wrapper.hasBranchesOrTags()
@@ -206,8 +192,6 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should work correctly and detect branches/tags"
         wrapper.getTable() == mockTable
         wrapper.getExtraProperties() == extraProperties
-        wrapper.getBranches() == ["main", "feature"] as Set
-        wrapper.getTags() == ["v1.0"] as Set
         wrapper.hasBranches()
         wrapper.hasTags()
         wrapper.hasBranchesOrTags()
@@ -228,8 +212,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should only detect known reference types"
-        wrapper.getBranches() == ["main"] as Set
-        wrapper.getTags() == ["v1.0"] as Set
         !wrapper.hasBranches() // only main branch
         wrapper.hasTags()
         wrapper.hasBranchesOrTags()
@@ -249,8 +231,6 @@ class IcebergTableWrapperSpec extends Specification {
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
         then: "Should only detect valid reference types"
-        wrapper.getBranches() == ["main"] as Set
-        wrapper.getTags().isEmpty()
         !wrapper.hasBranches()
         !wrapper.hasTags()
         !wrapper.hasBranchesOrTags()
