@@ -44,6 +44,10 @@ public class PolarisDatabaseEntity {
     private String dbId;
 
     @Basic
+    @Column(name = "catalog_name", nullable = false, updatable = false)
+    private String catalogName;
+
+    @Basic
     @Column(name = "name", nullable = false, unique = true, updatable = false)
     private String dbName;
 
@@ -57,13 +61,17 @@ public class PolarisDatabaseEntity {
     /**
      * Constructor for Polaris Database Entity.
      *
+     * @param catalogName catalog name
      * @param dbName    database name
      * @param location  database location.
      * @param createdBy user that created this entity.
      */
-    public PolarisDatabaseEntity(final String dbName,
+    public PolarisDatabaseEntity(
+        final String catalogName,
+        final String dbName,
                                  final String location,
                                  final String createdBy) {
+        this.catalogName = catalogName;
         this.dbName = dbName;
         this.location = location;
         this.audit = AuditEntity
