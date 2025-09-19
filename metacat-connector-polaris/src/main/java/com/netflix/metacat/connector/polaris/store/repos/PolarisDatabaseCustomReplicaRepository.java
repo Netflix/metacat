@@ -10,6 +10,7 @@ import java.util.List;
 public interface PolarisDatabaseCustomReplicaRepository {
     /**
      * Fetch db entities for given database using AS OF SYSTEM TIME follower_read_timestamp().
+     * @param catalogName catalogName
      * @param dbNamePrefix db name prefix. can be empty.
      * @param sort sort
      * @param pageSize db pageSize
@@ -17,6 +18,7 @@ public interface PolarisDatabaseCustomReplicaRepository {
      * @return table entities in the database.
      */
     List<?> getAllDatabases(
+            String catalogName,
         String dbNamePrefix,
         Sort sort,
         int pageSize,
