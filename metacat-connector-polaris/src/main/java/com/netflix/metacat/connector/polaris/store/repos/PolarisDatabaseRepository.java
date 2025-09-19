@@ -45,7 +45,7 @@ public interface PolarisDatabaseRepository extends JpaRepository<PolarisDatabase
 
     /**
      * Fetch databases.
-     * @param page pageable.
+     * @param page pageable page.
      * @return database entities.
      */
     @Query("SELECT e FROM PolarisDatabaseEntity e")
