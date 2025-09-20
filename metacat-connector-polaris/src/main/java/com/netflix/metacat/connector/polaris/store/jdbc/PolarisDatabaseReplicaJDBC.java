@@ -39,6 +39,7 @@ public class PolarisDatabaseReplicaJDBC extends BasePolarisDatabaseReplicaReposi
     /**
      * Retrieves a slice of databases filtered by a database name prefix for the current page.
      *
+     * @param catalogName catalog name
      * @param dbNamePrefix the prefix of the database name to filter results
      * @param page the pageable object containing pagination information
      * @param selectAllColumns flag indicating whether to select all columns or just the database name
@@ -47,19 +48,20 @@ public class PolarisDatabaseReplicaJDBC extends BasePolarisDatabaseReplicaReposi
      */
     @Override
     protected <T> Slice<T> getAllDatabasesForCurrentPage(
-        final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
+        final String catalogName, final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
 
         final String orderBy = Utils.generateOrderBy(page);
 
         // Generate Select clause
         final String selectClause = selectAllColumns ? "d.*" : "d.name";
         final String sql = "SELECT " + selectClause + " FROM DBS d "
-            + "WHERE d.name LIKE ? " + orderBy
-            + " LIMIT ? OFFSET ?";
+                + "WHERE d.catalog_name = ? AND d.name LIKE ? " + orderBy
+                + " LIMIT ? OFFSET ?";
 
         final List<T> resultList = jdbcTemplate.query(sql,
-            new Object[]{dbNamePrefix + "%", page.getPageSize() + 1, page.getPageNumber() * page.getPageSize()},
-            new RowMapper<T>() {
+            new Object[]{catalogName, dbNamePrefix + "%", page.getPageSize() + 1,
+                    page.getPageNumber() * page.getPageSize(),
+            }, new RowMapper<T>() {
                 @Override
                 public T mapRow(final ResultSet rs, final int rowNum) throws SQLException {
                     if (selectAllColumns) {
@@ -71,6 +73,7 @@ public class PolarisDatabaseReplicaJDBC extends BasePolarisDatabaseReplicaReposi
                         );
                         return (T) PolarisDatabaseEntity.builder()
                             .dbId(rs.getString("id"))
+                            .catalogName(catalogName)
                             .dbName(rs.getString("name"))
                             .location(rs.getString("location"))
                             .audit(audit)

@@ -22,6 +22,7 @@ public abstract class BasePolarisDatabaseReplicaRepository
     /**
      * Retrieves a slice of databases for the current page.
      *
+     * @param catalogName catalogName
      * @param dbNamePrefix the prefix of the database name to filter results
      * @param page the pageable object containing pagination information
      * @param selectAllColumns flag indicating whether to select all columns or just specific ones
@@ -29,6 +30,7 @@ public abstract class BasePolarisDatabaseReplicaRepository
      * @return a Slice containing the databases for the current page
      */
     protected <T> Slice<T> getAllDatabasesForCurrentPage(
+            final String catalogName,
         final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
         throw new
             NotImplementedException(this.getClass().getName() + " does not implement getAllDatabasesForCurrentPage");
@@ -45,6 +47,7 @@ public abstract class BasePolarisDatabaseReplicaRepository
      */
     @Override
     public List<?> getAllDatabases(
+            final String catalogName,
         @Nullable final String dbNamePrefix,
         @Nullable final com.netflix.metacat.common.dto.Sort sort,
         final int pageSize,
@@ -67,7 +70,7 @@ public abstract class BasePolarisDatabaseReplicaRepository
         Slice<?> dbs;
         boolean hasNext;
         do {
-            dbs = getAllDatabasesForCurrentPage(dbPrefix, page, selectAllColumns);
+            dbs = getAllDatabasesForCurrentPage(catalogName, dbPrefix, page, selectAllColumns);
             retval.addAll(dbs.getContent());
             hasNext = dbs.hasNext();
             if (hasNext) {

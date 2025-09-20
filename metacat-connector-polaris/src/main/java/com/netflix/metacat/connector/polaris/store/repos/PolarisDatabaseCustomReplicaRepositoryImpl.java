@@ -23,13 +23,14 @@ public class PolarisDatabaseCustomReplicaRepositoryImpl extends BasePolarisDatab
 
     @Override
     protected <T> Slice<T> getAllDatabasesForCurrentPage(
+            final String catalogName,
         final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
 
         final String orderBy = Utils.generateOrderBy(page);
 
         final String selectClause = selectAllColumns ? "d.*" : "d.name";
         final String sql = "SELECT " + selectClause + " FROM DBS d "
-            + "WHERE d.name LIKE :dbNamePrefix" + orderBy;
+                + "WHERE d.catalog_name = :catalogName AND d.name LIKE :dbNamePrefix " + orderBy;
 
         Query query;
         if (selectAllColumns) {
@@ -37,6 +38,7 @@ public class PolarisDatabaseCustomReplicaRepositoryImpl extends BasePolarisDatab
         } else {
             query = entityManager.createNativeQuery(sql);
         }
+        query.setParameter("catalogName", catalogName);
         query.setParameter("dbNamePrefix", dbNamePrefix + "%");
         query.setFirstResult(page.getPageNumber() * page.getPageSize());
         query.setMaxResults(page.getPageSize() + 1); // Fetch one extra result to determine if there is a next page
@@ -55,6 +57,7 @@ public class PolarisDatabaseCustomReplicaRepositoryImpl extends BasePolarisDatab
     /**
      * Retrieves all databases with optional filtering and sorting for crdb.
      *
+     * @param catalogName catalogName
      * @param dbNamePrefix the prefix of the database name to filter results, can be null
      * @param sort the sort order and field, can be null
      * @param pageSize the size of each page
@@ -63,12 +66,13 @@ public class PolarisDatabaseCustomReplicaRepositoryImpl extends BasePolarisDatab
      */
     @Override
     public List<?> getAllDatabases(
+            final String catalogName,
             @Nullable final String dbNamePrefix,
             @Nullable final com.netflix.metacat.common.dto.Sort sort,
             final int pageSize,
             final boolean selectAllColumns) {
         entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
                 .executeUpdate();
-        return super.getAllDatabases(dbNamePrefix, sort, pageSize, selectAllColumns);
+        return super.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, selectAllColumns);
     }
 }

@@ -86,7 +86,6 @@ public class PolarisConnectorConfig {
     ) {
         return new PolarisConnectorTableService(
             polarisStoreService,
-            connectorContext.getCatalogName(),
             connectorDatabaseService,
             connectorConverter,
             icebergTableHandler,
@@ -103,7 +102,7 @@ public class PolarisConnectorConfig {
      */
     @Bean
     public PolarisTableMapper polarisTableMapper(final ConnectorContext connectorContext) {
-        return new PolarisTableMapper(connectorContext.getCatalogName());
+        return new PolarisTableMapper();
     }
 
     /**

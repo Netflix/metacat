@@ -34,15 +34,6 @@ public class PolarisTableMapper implements
         DirectSqlTable.PARAM_PARTITION_SPEC,
         DirectSqlTable.PARAM_METADATA_CONTENT
     );
-    private final String catalogName;
-
-    /**
-     * Constructor.
-     * @param catalogName the catalog name
-     */
-    public PolarisTableMapper(final String catalogName) {
-        this.catalogName = catalogName;
-    }
 
     /**
      * {@inheritDoc}.
@@ -74,7 +65,7 @@ public class PolarisTableMapper implements
         }
 
         final TableInfo tableInfo = TableInfo.builder()
-            .name(QualifiedName.ofTable(catalogName, entity.getDbName(), entity.getTblName()))
+            .name(QualifiedName.ofTable(entity.getCatalogName(), entity.getDbName(), entity.getTblName()))
             .metadata(metadata)
             .serde(StorageInfo.builder().inputFormat("org.apache.hadoop.mapred.FileInputFormat")
                 .outputFormat("org.apache.hadoop.mapred.FileOutputFormat")
@@ -119,6 +110,7 @@ public class PolarisTableMapper implements
         }
 
         final PolarisTableEntity tableEntity = PolarisTableEntity.builder()
+            .catalogName(info.getName().getCatalogName())
             .dbName(info.getName().getDatabaseName())
             .tblName(info.getName().getTableName())
             .metadataLocation(location)

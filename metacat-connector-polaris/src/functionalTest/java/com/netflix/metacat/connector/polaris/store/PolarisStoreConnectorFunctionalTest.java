@@ -48,13 +48,15 @@ import java.util.stream.Collectors;
     PolarisStoreConfig.class,
     PolarisPersistenceConfig.class,
     PolarisPersistenceReaderConfig.class,
-//    PolarisDatabaseReplicaJDBC.class,
-//    PolarisTableReplicaJDBC.class
 })
-//@ActiveProfiles(profiles = {"polaris_functional_test"})
 @AutoConfigureDataJpa
 @Getter
 public class PolarisStoreConnectorFunctionalTest {
+    /**
+     * The name of the catalog used in the application.
+     */
+    private static final String CATALOG_NAME_TEST = "test";
+
     /**
      * The name of the database used in the application.
      */
@@ -138,16 +140,18 @@ public class PolarisStoreConnectorFunctionalTest {
     /**
      * Creates a database with the specified name and verifies its existence.
      *
+     * @param catalogName the name of the catalog
      * @param dbName the name of the database to create.
      * @return the created PolarisDatabaseEntity.
      */
-    public PolarisDatabaseEntity createDB(final String dbName) {
+    public PolarisDatabaseEntity createDB(final String catalogName, final String dbName) {
         final String location = "file://temp";
-        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(dbName, location, "metacat_user");
+        final PolarisDatabaseEntity entity = polarisConnector.createDatabase(
+                CATALOG_NAME_TEST, dbName, location, "metacat_user");
 
         // assert that database exists, post-creation.
         Assert.assertTrue(polarisConnector.databaseExistsById(entity.getDbId()));
-        Assert.assertTrue(polarisConnector.databaseExists(dbName));
+        Assert.assertTrue(polarisConnector.databaseExists(catalogName, dbName));
 
         Assert.assertEquals(0L, entity.getVersion().longValue());
         Assert.assertTrue(entity.getDbId().length() > 0);
@@ -155,7 +159,7 @@ public class PolarisStoreConnectorFunctionalTest {
         Assert.assertEquals(location, entity.getLocation());
         Assert.assertEquals(DEFAULT_METACAT_USER, entity.getAudit().getCreatedBy());
 
-        final Optional<PolarisDatabaseEntity> fetchedEntity = polarisConnector.getDatabase(dbName);
+        final Optional<PolarisDatabaseEntity> fetchedEntity = polarisConnector.getDatabase(catalogName, dbName);
         Assert.assertTrue(fetchedEntity.isPresent());
         Assert.assertEquals(entity, fetchedEntity.get());
         return entity;
@@ -183,11 +187,12 @@ public class PolarisStoreConnectorFunctionalTest {
     public PolarisTableEntity createTable(
         final String dbName, final String tblName, final Map<String, String> tblParams
     ) {
-        final PolarisTableEntity entity = polarisStoreService.createTable(dbName, tblName,
+        final PolarisTableEntity entity = polarisStoreService.createTable(
+            CATALOG_NAME_TEST, dbName, tblName,
             "loc", tblParams, PolarisUtils.DEFAULT_METACAT_USER);
 
         Assert.assertTrue(polarisConnector.tableExistsById(entity.getTblId()));
-        Assert.assertTrue(polarisConnector.tableExists(dbName, tblName));
+        Assert.assertTrue(polarisConnector.tableExists(CATALOG_NAME_TEST, dbName, tblName));
 
         Assert.assertTrue(entity.getTblId().length() > 0);
         Assert.assertTrue(entity.getVersion() >= 0);
@@ -196,7 +201,8 @@ public class PolarisStoreConnectorFunctionalTest {
         Assert.assertEquals(tblName, entity.getTblName());
         Assert.assertEquals(tblParams, entity.getParams());
 
-        final Optional<PolarisTableEntity> fetchedEntity = polarisConnector.getTable(dbName, tblName);
+        final Optional<PolarisTableEntity> fetchedEntity =
+                polarisConnector.getTable(CATALOG_NAME_TEST, dbName, tblName);
         Assert.assertTrue(fetchedEntity.isPresent());
         Assert.assertEquals(entity, fetchedEntity.get());
 
@@ -208,7 +214,7 @@ public class PolarisStoreConnectorFunctionalTest {
      */
     @Test
     public void testCreateDB() {
-        createDB(generateDatabaseName());
+        createDB(CATALOG_NAME_TEST, generateDatabaseName());
     }
 
     /**
@@ -217,7 +223,7 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void testTableCreationFailIfDatabaseIsAbsent() {
         Assertions.assertThrows(DataAccessException.class, () ->
-            polarisConnector.createTable(generateDatabaseName(), generateTableName(),
+            polarisConnector.createTable(CATALOG_NAME_TEST, generateDatabaseName(), generateTableName(),
                 "loc", PolarisUtils.DEFAULT_METACAT_USER));
     }
 
@@ -229,10 +235,10 @@ public class PolarisStoreConnectorFunctionalTest {
     public void testTableCreationAndDeletion() {
         final String dbName = generateDatabaseName();
         final String tblName = generateTableName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
         final PolarisTableEntity tblEntity = createTable(dbName, tblName);
 
-        polarisConnector.deleteTable(dbName, tblName);
+        polarisConnector.deleteTable(CATALOG_NAME_TEST, dbName, tblName);
         Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
     }
 
@@ -244,10 +250,10 @@ public class PolarisStoreConnectorFunctionalTest {
     public void testTableCreationAndDeletionWithParams() {
         final String dbName = generateDatabaseName();
         final String tblName = generateTableName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
         final PolarisTableEntity tblEntity = createTable(dbName, tblName, TBL_PARAMS);
 
-        polarisConnector.deleteTable(dbName, tblName);
+        polarisConnector.deleteTable(CATALOG_NAME_TEST, dbName, tblName);
         Assert.assertFalse(polarisConnector.tableExistsById(tblEntity.getTblId()));
     }
 
@@ -259,7 +265,7 @@ public class PolarisStoreConnectorFunctionalTest {
         // Create Table Entity in DB
         final String dbName = generateDatabaseName();
         final String tblName = generateTableName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
         final PolarisTableEntity tblEntity = createTable(dbName, tblName);
 
         // Update table name
@@ -276,11 +282,11 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void createTableWithSaveApi() {
         final String dbName = generateDatabaseName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
 
         final String tblName = generateTableName();
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
+        final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
 
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
@@ -293,11 +299,11 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void updateMetadataLocation() {
         final String dbName = generateDatabaseName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
 
         final String tblName = generateTableName();
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
+        final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
         polarisConnector.saveTable(e);
 
@@ -305,20 +311,25 @@ public class PolarisStoreConnectorFunctionalTest {
 
         // update should fail since the expected location is not going to match.
         boolean updatedSuccess = polarisConnector.updateTableMetadataLocation(
+                CATALOG_NAME_TEST,
             dbName, tblName, "unexpected_location",
             newLocation, PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);
 
         // successful update should happen.
-        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation,
+        updatedSuccess = polarisConnector.updateTableMetadataLocation(
+                CATALOG_NAME_TEST,
+                dbName, tblName, metadataLocation,
             newLocation, "new_user");
         Assert.assertTrue(updatedSuccess);
         final PolarisTableEntity updatedEntity = polarisConnector.
-            getTable(dbName, tblName).orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
+            getTable(CATALOG_NAME_TEST, dbName, tblName).orElseThrow(()
+                        -> new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(updatedEntity.getPreviousMetadataLocation(), metadataLocation);
 
         // after the successful update, the same call should fail, since the current metadataLocation has changed.
-        updatedSuccess = polarisConnector.updateTableMetadataLocation(dbName, tblName, metadataLocation,
+        updatedSuccess = polarisConnector.updateTableMetadataLocation(
+                CATALOG_NAME_TEST, dbName, tblName, metadataLocation,
             newLocation, PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);
     }
@@ -329,11 +340,11 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void updateMetadataLocationWithInterleavedSave() {
         final String dbName = generateDatabaseName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
 
         final String tblName = generateTableName();
         final String location0 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location0";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
+        final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(location0);
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
 
@@ -341,7 +352,8 @@ public class PolarisStoreConnectorFunctionalTest {
 
         // update the metadata location.
         final boolean updatedSuccess =
-            polarisConnector.updateTableMetadataLocation(dbName, tblName, location0, location1, "new_user");
+            polarisConnector.updateTableMetadataLocation(
+                    CATALOG_NAME_TEST, dbName, tblName, location0, location1, "new_user");
         Assert.assertTrue(updatedSuccess);
 
         final String location2 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location2";
@@ -359,11 +371,11 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void updateMetadataLocationAndParams() {
         final String dbName = generateDatabaseName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
 
         final String tblName = generateTableName();
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
+        final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
         polarisConnector.saveTable(e);
 
@@ -371,13 +383,14 @@ public class PolarisStoreConnectorFunctionalTest {
 
         // update should fail since the expected location is not going to match.
         boolean updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(
-            dbName, tblName, "unexpected_location",
+                CATALOG_NAME_TEST, dbName, tblName, "unexpected_location",
             newLocation, null, new HashMap<>(), PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);
 
         // there should be no table params since update failed
         final PolarisTableEntity failedUpdateEntity = polarisConnector.
-            getTable(dbName, tblName).orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
+            getTable(CATALOG_NAME_TEST, dbName, tblName).orElseThrow(() ->
+                        new RuntimeException("Expected to find saved entity"));
         Assert.assertTrue(failedUpdateEntity.getParams().isEmpty());
 
         final HashMap<String, String> params = new HashMap<>();
@@ -386,11 +399,13 @@ public class PolarisStoreConnectorFunctionalTest {
             params.put("key-" + i, "value-" + i);
         }
         // successful update should happen.
-        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(dbName, tblName, metadataLocation,
+        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(
+                CATALOG_NAME_TEST, dbName, tblName, metadataLocation,
             newLocation, null, params, "new_user");
         Assert.assertTrue(updatedSuccess);
         final PolarisTableEntity updatedEntity = polarisConnector.
-            getTable(dbName, tblName).orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
+            getTable(CATALOG_NAME_TEST, dbName, tblName).orElseThrow(() ->
+                        new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(updatedEntity.getPreviousMetadataLocation(), metadataLocation);
         Assert.assertEquals(updatedEntity.getParams(), params);
 
@@ -399,22 +414,26 @@ public class PolarisStoreConnectorFunctionalTest {
             updatedParams.put("key-" + i, "value-" + i + "-updated");
         }
         // successful update should happen.
-        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(dbName, tblName, newLocation,
+        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(
+                CATALOG_NAME_TEST, dbName, tblName, newLocation,
             newLocation, params, updatedParams, "new_user");
         Assert.assertTrue(updatedSuccess);
         final PolarisTableEntity updatedEntity2 = polarisConnector.
-            getTable(dbName, tblName).orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
+            getTable(CATALOG_NAME_TEST, dbName, tblName).orElseThrow(() ->
+                        new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(updatedEntity2.getMetadataLocation(), newLocation);
         Assert.assertEquals(updatedEntity2.getParams(), updatedParams);
 
         // after the successful update, this call should succeed, since we don't validate params.
-        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(dbName, tblName, newLocation,
+        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(
+                CATALOG_NAME_TEST, dbName, tblName, newLocation,
             newLocation, params, new HashMap<>(), PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertTrue(updatedSuccess);
         Assert.assertEquals(updatedEntity.getMetadataLocation(), newLocation);
 
         // This call should fail, since the current metadata has changed.
-        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(dbName, tblName, metadataLocation,
+        updatedSuccess = polarisConnector.updateTableMetadataLocationAndParams(
+                CATALOG_NAME_TEST, dbName, tblName, metadataLocation,
             newLocation, updatedParams, new HashMap<>(), PolarisUtils.DEFAULT_METACAT_USER);
         Assert.assertFalse(updatedSuccess);
     }
@@ -425,11 +444,11 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void updateMetadataLocationWithParamsAndInterleavedSave() {
         final String dbName = generateDatabaseName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
 
         final String tblName = generateTableName();
         final String location0 = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/location0";
-        final PolarisTableEntity e = new PolarisTableEntity(dbName, tblName, "metacatuser");
+        final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(location0);
         final PolarisTableEntity savedEntity = polarisConnector.saveTable(e);
 
@@ -438,11 +457,12 @@ public class PolarisStoreConnectorFunctionalTest {
         // update the metadata location.
         final boolean updatedSuccess =
             polarisConnector.updateTableMetadataLocationAndParams(
-                dbName, tblName, location0, location1, null, TBL_PARAMS, "new_user");
+                    CATALOG_NAME_TEST, dbName, tblName,
+                    location0, location1, null, TBL_PARAMS, "new_user");
         Assert.assertTrue(updatedSuccess);
 
         // confirm updated params
-        final PolarisTableEntity updatedEntity = polarisConnector.getTable(dbName, tblName)
+        final PolarisTableEntity updatedEntity = polarisConnector.getTable(CATALOG_NAME_TEST, dbName, tblName)
             .orElseThrow(() -> new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(TBL_PARAMS, updatedEntity.getParams());
         Assert.assertEquals(location1, updatedEntity.getMetadataLocation());
@@ -468,8 +488,9 @@ public class PolarisStoreConnectorFunctionalTest {
         final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         final String dbName = generateDatabaseName();
-        createDB(dbName);
-        List<String> tblNames = getPolarisConnector().getTables(dbName, "", 1000, isAuroraEnabled);
+        createDB(CATALOG_NAME_TEST, dbName);
+        List<String> tblNames = getPolarisConnector().getTables(CATALOG_NAME_TEST,
+                dbName, "", 1000, isAuroraEnabled);
         Assert.assertEquals(0, tblNames.size());
 
         final String tblNameA = "A_" + generateTableName();
@@ -481,7 +502,8 @@ public class PolarisStoreConnectorFunctionalTest {
 
         TestUtil.simulateDelay();
 
-        tblNames = getPolarisConnector().getTables(dbName, "", 1000, isAuroraEnabled);
+        tblNames = getPolarisConnector().getTables(CATALOG_NAME_TEST, dbName,
+                "", 1000, isAuroraEnabled);
         Assert.assertEquals(3, tblNames.size());
         Assert.assertEquals(tblNameA, tblNames.get(0));
         Assert.assertEquals(tblNameB, tblNames.get(1));
@@ -499,12 +521,13 @@ public class PolarisStoreConnectorFunctionalTest {
         final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         final String dbName = generateDatabaseName();
-        createDB(dbName);
+        createDB(CATALOG_NAME_TEST, dbName);
 
         TestUtil.simulateDelay();
 
         // Test when db is empty
-        List<PolarisTableEntity> entities = getPolarisConnector().getTableEntities(dbName, "", 1, isAuroraEnabled);
+        List<PolarisTableEntity> entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
+                dbName, "", 1, isAuroraEnabled);
         Assert.assertEquals(0, entities.size());
 
         // Add some tables
@@ -518,25 +541,29 @@ public class PolarisStoreConnectorFunctionalTest {
         TestUtil.simulateDelay();
 
         // Test pagination and sort
-        entities = getPolarisConnector().getTableEntities(dbName, "", 1, isAuroraEnabled);
+        entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
+                dbName, "", 1, isAuroraEnabled);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
 
-        entities = getPolarisConnector().getTableEntities(dbName, "", 2, isAuroraEnabled);
+        entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
+                dbName, "", 2, isAuroraEnabled);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
 
-        entities = getPolarisConnector().getTableEntities(dbName, "", 3, isAuroraEnabled);
+        entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
+                dbName, "", 3, isAuroraEnabled);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
 
-        entities = getPolarisConnector().getTableEntities(dbName, "", 4, isAuroraEnabled);
+        entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
+                dbName, "", 4, isAuroraEnabled);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
@@ -552,32 +579,40 @@ public class PolarisStoreConnectorFunctionalTest {
         assert activeProfiles.length  == 1;
         final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
-        createDB("db1");
-        createDB("db2");
-        createDB("db3");
+        createDB(CATALOG_NAME_TEST, "db1");
+        createDB(CATALOG_NAME_TEST, "db2");
+        createDB(CATALOG_NAME_TEST, "db3");
 
         TestUtil.simulateDelay();
 
-        List<String> dbNames = getPolarisConnector().getDatabaseNames("db", null, 1, isAuroraEnabled);
-        List<PolarisDatabaseEntity> dbs = getPolarisConnector().getDatabases("db", null, 1, isAuroraEnabled);
+        List<String> dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
+                "db", null, 1, isAuroraEnabled);
+        List<PolarisDatabaseEntity> dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
+                "db", null, 1, isAuroraEnabled);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
-        dbNames = getPolarisConnector().getDatabaseNames("db", null, 2, isAuroraEnabled);
-        dbs = getPolarisConnector().getDatabases("db", null, 2, isAuroraEnabled);
+        dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
+                "db", null, 2, isAuroraEnabled);
+        dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
+                "db", null, 2, isAuroraEnabled);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
-        dbNames = getPolarisConnector().getDatabaseNames("db", null, 3, isAuroraEnabled);
-        dbs = getPolarisConnector().getDatabases("db", null, 3, isAuroraEnabled);
+        dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
+                "db", null, 3, isAuroraEnabled);
+        dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
+                "db", null, 3, isAuroraEnabled);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
-        dbNames = getPolarisConnector().getDatabaseNames("db", null, 4, isAuroraEnabled);
-        dbs = getPolarisConnector().getDatabases("db", null, 4, isAuroraEnabled);
+        dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
+                "db", null, 4, isAuroraEnabled);
+        dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
+                "db", null, 4, isAuroraEnabled);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));

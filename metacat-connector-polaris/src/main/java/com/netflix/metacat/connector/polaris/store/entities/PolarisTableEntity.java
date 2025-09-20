@@ -48,6 +48,10 @@ public class PolarisTableEntity {
     private String tblId;
 
     @Basic
+    @Column(name = "catalog_name", nullable = false, updatable = false)
+    private String catalogName;
+
+    @Basic
     @Column(name = "db_name", nullable = false, updatable = false)
     private String dbName;
 
@@ -73,13 +77,17 @@ public class PolarisTableEntity {
     /**
      * Constructor for Polaris Table Entity.
      *
+     * @param catalogName catalog name
      * @param dbName    database name
      * @param tblName   table name
      * @param createdBy user that created this entity.
      */
-    public PolarisTableEntity(final String dbName,
+    public PolarisTableEntity(
+         final String catalogName,
+                              final String dbName,
                               final String tblName,
                               final String createdBy) {
+        this.catalogName = catalogName;
         this.dbName = dbName;
         this.tblName = tblName;
         this.audit = AuditEntity

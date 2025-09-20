@@ -44,6 +44,7 @@ public class PolarisTableReplicaJDBC extends BasePolarisTableReplicaRepository {
      */
     @Override
     protected <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
+            final String catalogName,
         final String dbName,
         final String tableNamePrefix,
         final Pageable page,
@@ -53,20 +54,22 @@ public class PolarisTableReplicaJDBC extends BasePolarisTableReplicaRepository {
 
         final String selectClause = selectAllColumns ? "t.*" : "t.tbl_name";
         final String sql = "SELECT " + selectClause + " FROM TBLS t "
-            + "WHERE t.db_name = ? AND t.tbl_name LIKE ?" + orderBy
+            + "WHERE t.catalog_name = ? AND t.db_name = ? AND t.tbl_name LIKE ?" + orderBy
             + " LIMIT ? OFFSET ?";
 
         final List<T> resultList = jdbcTemplate.query(sql, new Object[]{
+                catalogName,
             dbName,
             tableNamePrefix + "%",
             page.getPageSize() + 1,
-            page.getPageNumber() * page.getPageSize(), // Add a trailing comma here
+            page.getPageNumber() * page.getPageSize(),
         }, new RowMapper<T>() {
             @Override
             public T mapRow(final ResultSet rs, final int rowNum) throws SQLException {
                 if (selectAllColumns) {
                     // Map the result set to PolarisTableEntity
                     final PolarisTableEntity entity = new PolarisTableEntity();
+                    entity.setCatalogName(rs.getString("catalog_name"));
                     entity.setTblId(rs.getString("id"));
                     entity.setDbName(rs.getString("db_name"));
                     entity.setTblName(rs.getString("tbl_name"));
