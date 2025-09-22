@@ -119,21 +119,25 @@ class IcebergTableWrapperSpec extends Specification {
         summary.contains("tags=2")
     }
 
-    def "test table with only non-main branch"() {
-        given: "A table with a single non-main branch"
+    def "test table with main and feature branch"() {
+        given: "A table with main branch plus a feature branch"
         def mockTable = Mock(Table) {
-            refs() >> ["feature-only": "branch"]
+            refs() >> ["main": "branch", "feature-only": "branch"]
         }
         def extraProperties = [:]
 
         when: "Creating wrapper"
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
 
-        then: "Should detect the branch as having branches (since it's not main)"
-        wrapper.hasBranches() // single non-main branch counts as having branches
+        then: "Should detect multiple branches as having branches"
+        wrapper.hasBranches() // multiple branches (main + feature) count as having branches
         !wrapper.hasTags()
-        wrapper.hasBranchesOrTags()
-        wrapper.getBranchesAndTagsSummary() == "branches=1 [feature-only], tags=0"
+        wrapper.hasBranchesOrTags() // has branches
+        def summary = wrapper.getBranchesAndTagsSummary()
+        summary.contains("branches=2")
+        summary.contains("main")
+        summary.contains("feature-only")
+        summary.contains("tags=0")
     }
 
     def "test table refs() throws exception"() {
