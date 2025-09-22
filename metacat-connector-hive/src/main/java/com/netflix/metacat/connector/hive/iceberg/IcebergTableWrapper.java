@@ -51,7 +51,7 @@ public class IcebergTableWrapper {
      */
     public boolean hasBranches() {
         final Set<String> branches = extractBranches();
-        return !branches.isEmpty() && !(branches.size() == 1 && branches.contains("main"));
+        return branches.size() > 1;
     }
 
     /**

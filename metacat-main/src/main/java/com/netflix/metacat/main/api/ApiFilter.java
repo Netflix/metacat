@@ -97,7 +97,7 @@ public class ApiFilter implements Filter {
                                                         final String scheme,
                                                         final String requestUri,
                                                         final HttpServletRequest httpServletRequest) {
-        final MetacatRequestContext context = MetacatRequestContext.builder()
+        return MetacatRequestContext.builder()
                    .userName(userName)
                    .clientAppName(clientAppName)
                    .clientId(clientId)
@@ -106,18 +106,6 @@ public class ApiFilter implements Filter {
                    .scheme(scheme)
                    .apiUri(requestUri)
                    .build();
-
-        final String clientVersion = httpServletRequest.getHeader("X-Client-Version");
-        if (clientVersion != null) {
-            context.getAdditionalContext().put("X-Client-Version", clientVersion);
-        }
-
-        final String netflixIcebergVersion = httpServletRequest.getHeader("X-Netflix-Iceberg-Version");
-        if (netflixIcebergVersion != null) {
-            context.getAdditionalContext().put("X-Netflix-Iceberg-Version", netflixIcebergVersion);
-        }
-
-        return context;
     }
 
     protected void postFilter(final ServletRequest request,
