@@ -27,7 +27,7 @@ import java.util.function.Supplier
  * @since 1.2.0
  */
 class DirectSqlTableSpec extends Specification {
-    def config = new DefaultConfigImpl(new MetacatProperties(null))
+    def config = new DefaultConfigImpl(new MetacatProperties())
     def registry = new NoopRegistry()
     def context = DataDtoProvider.newContext(config, null)
     def metric = new HiveConnectorFastServiceMetric(registry)

@@ -657,12 +657,5 @@ public interface Config {
      * @return True if it should be.
      */
     boolean isDefinitionMetadataSelectForUpdateEnabled();
-
-    /**
-     * Whether aurora data source is enabled.
-     *
-     * @return True if it is.
-     */
-    boolean isAuroraDataSourceEnabled();
 }
 

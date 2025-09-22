@@ -29,18 +29,8 @@ apply plugin: 'nebula.facet'
 facets {
     functionalTest {
         parentSourceSet = "test"
-        testTaskName = 'functionalTestWithDifferentDB'
+        testTaskName = 'functionalTest'
         includeInCheckLifecycle = false
-    }
-}
-
-sourceSets {
-    functionalTest {
-        groovy {
-            srcDir 'src/functionalTest/groovy'
-        }
-        compileClasspath += sourceSets.main.output + sourceSets.test.output
-        runtimeClasspath += sourceSets.main.output + sourceSets.test.output
     }
 }
 
@@ -49,6 +39,7 @@ configurations {
 
     all*.exclude group: 'javax.ws.rs', module: 'javax.ws.rs-api'
 }
+
 
 dependencies {
     testImplementation project(path: ':metacat-metadata-mysql')
@@ -90,66 +81,7 @@ task expandWar(type: Copy) {
     into file("${buildDir}/metacat-war-expanded/ROOT")
 }
 
-// Aurora configuration tasks
-task startMetacatClusterAurora(type: Exec) {
-    dependsOn 'expandWar'
-    if (project.ext.startCluster) {
-        commandLine 'sh', rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose-aurora.yml')
-    } else {
-        commandLine '/bin/echo', 'skipping cluster start'
-    }
-}
-
-task stopMetacatClusterAurora(type: Exec) {
-    if (project.ext.stopCluster) {
-        commandLine 'sh', rootProject.file('scripts/stop_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose-aurora.yml')
-    } else {
-        commandLine '/bin/echo', 'skipping cluster stop'
-    }
-}
-
-task metacatPortsAurora {
-    dependsOn 'startMetacatClusterAurora'
-    ext.http_port = null
-    ext.metacat_http_debug_port = null
-    ext.metacat_hive_thrift_port = null
-    ext.metacat_embedded_hive_thrift_port = null
-    ext.metacat_embedded_fast_hive_thrift_port = null
-    ext.hive_thrift_port = null
-    ext.hive_debug_port = null
-
-    doLast {
-        def get_docker_port = { String label, int exposed_port ->
-            new ByteArrayOutputStream().withStream { os ->
-                exec {
-                    commandLine 'sh', rootProject.file('scripts/print_docker_port.sh'), "label=${label}", exposed_port
-                    standardOutput = os
-                }
-                return os.toString().trim()
-            }
-        }
-
-        ext.http_port = get_docker_port('com.netflix.metacat.oss.test.war', 8080)
-        ext.metacat_http_debug_port = get_docker_port('com.netflix.metacat.oss.test.war', 8000)
-        ext.metacat_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12001)
-        ext.metacat_embedded_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12003)
-        ext.metacat_embedded_fast_hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.war', 12004)
-        ext.hive_thrift_port = get_docker_port('com.netflix.metacat.oss.test.hive', 9083)
-        ext.hive_debug_port = get_docker_port('com.netflix.metacat.oss.test.hive', 8005)
-
-        println '++ Container Exposed ports ++'
-        println '+++ Metacat Web Port: [' + ext.http_port + ']'
-        println '+++ Metacat Web Debug Port: [' + ext.metacat_http_debug_port + ']'
-        println '+++ Metacat Hive Thrift Port: [' + ext.metacat_hive_thrift_port + ']'
-        println '+++ Metacat Embedded Hive Thrift Port: [' + ext.metacat_embedded_hive_thrift_port + ']'
-        println '+++ Metacat Embedded Fast Hive Thrift Port: [' + ext.metacat_embedded_fast_hive_thrift_port + ']'
-        println '+++ Metacat Hive Metastore Port: [' + ext.hive_thrift_port + ']'
-        println '+++ Metacat Hive Metastore Debug Port: [' + ext.hive_debug_port + ']'
-    }
-}
-
-// CRDB configuration tasks
-task startMetacatClusterCRDB(type: Exec) {
+task startMetacatCluster(type: Exec) {
     dependsOn 'expandWar'
     if (project.ext.startCluster) {
         commandLine 'sh', rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
@@ -158,7 +90,7 @@ task startMetacatClusterCRDB(type: Exec) {
     }
 }
 
-task stopMetacatClusterCRDB(type: Exec) {
+task stopMetacatCluster(type: Exec) {
     if (project.ext.stopCluster) {
         commandLine 'sh', rootProject.file('scripts/stop_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose.yml')
     } else {
@@ -166,8 +98,8 @@ task stopMetacatClusterCRDB(type: Exec) {
     }
 }
 
-task metacatPortsCRDB {
-    dependsOn 'startMetacatClusterCRDB'
+task metacatPorts {
+    dependsOn 'startMetacatCluster'
     ext.http_port = null
     ext.metacat_http_debug_port = null
     ext.metacat_hive_thrift_port = null
@@ -206,20 +138,16 @@ task metacatPortsCRDB {
     }
 }
 
-// Functional test tasks for Aurora
-task functionalTestAurora(type: Test) {
+functionalTest {
     outputs.upToDateWhen { false }
-
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath = sourceSets.functionalTest.runtimeClasspath
 
     doFirst {
         def properties = [
-                'metacat_http_port'                     : metacatPortsAurora.http_port as String,
-                'metacat_hive_thrift_port'              : metacatPortsAurora.metacat_hive_thrift_port as String,
-                'hive_thrift_port'                      : metacatPortsAurora.hive_thrift_port as String,
-                'metacat_embedded_hive_thrift_port'     : metacatPortsAurora.metacat_embedded_hive_thrift_port as String,
-                'metacat_embedded_fast_hive_thrift_port': metacatPortsAurora.metacat_embedded_fast_hive_thrift_port as String,
+                'metacat_http_port'                     : metacatPorts.http_port as String,
+                'metacat_hive_thrift_port'              : metacatPorts.metacat_hive_thrift_port as String,
+                'hive_thrift_port'                      : metacatPorts.hive_thrift_port as String,
+                'metacat_embedded_hive_thrift_port'     : metacatPorts.metacat_embedded_hive_thrift_port as String,
+                'metacat_embedded_fast_hive_thrift_port': metacatPorts.metacat_embedded_fast_hive_thrift_port as String,
                 'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
         ]
         System.properties.stringPropertyNames().findAll { it?.toLowerCase()?.contains("metacat") }.each {
@@ -233,41 +161,13 @@ task functionalTestAurora(type: Test) {
         showStandardStreams = true
     }
 
-    dependsOn 'expandWar', 'startMetacatClusterAurora', 'metacatPortsAurora'
-    finalizedBy 'stopMetacatClusterAurora'
-}
-
-// Functional test tasks for CRDB
-task functionalTestCRDB(type: Test) {
-    outputs.upToDateWhen { false }
-
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath = sourceSets.functionalTest.runtimeClasspath
-
-    doFirst {
-        def properties = [
-                'metacat_http_port'                     : metacatPortsCRDB.http_port as String,
-                'metacat_hive_thrift_port'              : metacatPortsCRDB.metacat_hive_thrift_port as String,
-                'hive_thrift_port'                      : metacatPortsCRDB.hive_thrift_port as String,
-                'metacat_embedded_hive_thrift_port'     : metacatPortsCRDB.metacat_embedded_hive_thrift_port as String,
-                'metacat_embedded_fast_hive_thrift_port': metacatPortsCRDB.metacat_embedded_fast_hive_thrift_port as String,
-                'org.slf4j.simpleLogger.defaultLogLevel': 'debug'
-        ]
-        System.properties.stringPropertyNames().findAll { it?.toLowerCase()?.contains("metacat") }.each {
-            properties[it] = System.getProperty(it)
-        }
-        systemProperties = properties
-    }
-
-    testLogging {
-        showStandardStreams = true
-    }
-
-    dependsOn 'expandWar', 'startMetacatClusterCRDB', 'metacatPortsCRDB'
-    finalizedBy 'stopMetacatClusterCRDB'
+    dependsOn 'expandWar', 'startMetacatCluster', 'metacatPorts'
+    finalizedBy 'stopMetacatCluster'
 }
 
 clean {
     delete "derby.log"
     delete "metastore_db"
 }
+
+spotbugsTest.enabled = false

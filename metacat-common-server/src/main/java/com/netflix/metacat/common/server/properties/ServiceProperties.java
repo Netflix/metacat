@@ -37,7 +37,6 @@ public class ServiceProperties {
     private Tables tables = new Tables();
     private boolean listTableNamesByDefaultOnGetDatabase = true;
     private boolean listDatabaseNameByDefaultOnGetCatalog = true;
-    private boolean auroraDataSourceEnabled;
     private int listTableEntitiesPageSize = 1000;
     private int listTableNamesPageSize = 10000;
     private int listDatabaseEntitiesPageSize = 1000;
