@@ -236,11 +236,6 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public void update(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
-
-        // Validate Iceberg branches/tags support for client compatibility
-        // The validation will use cached metadata from the TableInfo to avoid redundant loading
-        icebergTableHandler.validateIcebergBranchesTagsSupport(requestContext, name, tableInfo);
-
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
         final boolean isView = HiveTableUtil.isCommonView(tableInfo);

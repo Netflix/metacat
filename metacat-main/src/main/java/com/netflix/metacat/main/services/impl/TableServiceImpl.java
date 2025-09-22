@@ -883,8 +883,6 @@ public class TableServiceImpl implements TableService {
                 MetacatUtils.getIcebergMigrationExceptionMsg("Updates", name.toString()));
         }
 
-
-
         //
         // Check if the table schema info is provided. If provided, we should continue calling the update on the table
         // schema. Uri may exist in the serde when updating data metadata for a table.

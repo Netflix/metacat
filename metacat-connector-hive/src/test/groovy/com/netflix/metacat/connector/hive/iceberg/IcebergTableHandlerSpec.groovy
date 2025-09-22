@@ -8,7 +8,6 @@ import com.netflix.metacat.common.server.connectors.ConnectorContext
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.connectors.exception.TablePreconditionFailedException
-import com.netflix.metacat.common.server.connectors.exception.UnsupportedClientOperationException
 import com.netflix.metacat.common.server.connectors.model.AuditInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.connector.hive.configs.HiveConnectorFastServiceConfig
@@ -101,56 +100,5 @@ class IcebergTableHandlerSpec extends Specification{
         ["p=3", "p=1"] | null                                    || ["p=1", "p=3"]
         null           | null                                    || ["p=1", "p=2", "p=3", "p=4", "p=5"]
         []             | null                                    || []
-    }
-
-    def "test Netflix Iceberg version validation through public API"() {
-        given:
-        def mockTableInfo = new TableInfo(
-            name: qualifiedName, 
-            metadata: [
-                'table_type': 'ICEBERG',
-                'metadata_location': 's3://test-bucket/metadata.json'
-            ]
-        )
-        def mockRequestContext = new ConnectorRequestContext(timestamp: 1)
-        mockRequestContext.additionalContext = ["X-Netflix-Iceberg-Version": versionString] as Map<String, String>
-
-        // Mock the iceberg table wrapper to indicate it has branches/tags
-        def mockWrapper = Mock(IcebergTableWrapper) {
-            hasBranchesOrTags() >> true
-            getBranches() >> ["main", "feature"]
-            getTags() >> ["v1.0", "v2.0"]
-        }
-
-        when:
-        def exceptionThrown = false
-        try {
-            icebergTableHandler.validateIcebergBranchesTagsSupport(mockRequestContext, qualifiedName, mockTableInfo)
-        } catch (UnsupportedClientOperationException e) {
-            exceptionThrown = true
-        }
-
-        then:
-        1 * icebergTableHandler.getIcebergTable(_, _, _) >> mockWrapper
-        exceptionThrown == shouldThrowException
-
-        where:
-        versionString || shouldThrowException
-        // Supported Netflix Iceberg versions (1.1+) - should NOT throw exception
-        "1.1.0"      || false
-        "1.2.5"      || false
-        "1.10.1"     || false
-        "2.0.0"      || false
-        "3.1.0"      || false
-
-        // Unsupported Netflix Iceberg versions (< 1.1) - should throw exception
-        "0.14.1"     || true
-        "1.0.0"      || true
-        "1.0.9"      || true
-
-        // Invalid version formats - should throw exception
-        "invalid"    || true
-        "1"          || true
-        ""           || true
     }
 }
