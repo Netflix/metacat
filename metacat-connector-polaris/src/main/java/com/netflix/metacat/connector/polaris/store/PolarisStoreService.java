@@ -40,20 +40,18 @@ public interface PolarisStoreService {
      * @param dbNamePrefix dbNamePrefix to return
      * @param pageSize db page size
      * @param sort the order of the result
-     * @param isAuroraEnabled isAuroraEnabled
      * @return Polaris Database entities
      */
-    List<PolarisDatabaseEntity> getDatabases(String dbNamePrefix, Sort sort, int pageSize, boolean isAuroraEnabled);
+    List<PolarisDatabaseEntity> getDatabases(String dbNamePrefix, Sort sort, int pageSize);
 
     /**
      * Fetches all database entities.
      * @param dbNamePrefix dbNamePrefix to return
      * @param sort the order of the result
      * @param pageSize db page size
-     * @param isAuroraEnabled isAuroraEnabled
      * @return Polaris Database entities
      */
-    List<String> getDatabaseNames(String dbNamePrefix, Sort sort, int pageSize, boolean isAuroraEnabled);
+    List<String> getDatabaseNames(String dbNamePrefix, Sort sort, int pageSize);
 
     /**
      * Checks if database with the name exists.
@@ -104,15 +102,9 @@ public interface PolarisStoreService {
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
      * @param pageFetchSize  target size for each page
-     * @param isAuroraEnabled isAuroraEnabled
      * @return table entities in the database.
      */
-    List<PolarisTableEntity> getTableEntities(
-        String databaseName,
-        String tableNamePrefix,
-        int pageFetchSize,
-        boolean isAuroraEnabled
-    );
+    List<PolarisTableEntity> getTableEntities(String databaseName, String tableNamePrefix, int pageFetchSize);
 
     /**
      * Updates existing or creates new table entry.
@@ -141,10 +133,9 @@ public interface PolarisStoreService {
      * @param databaseName database name
      * @param tableNamePrefix table name prefix
      * @param pageFetchSize size of each page
-     * @param isAuroraEnabled isAuroraEnabled
      * @return list of table names in the database with the table name prefix.
      */
-    List<String> getTables(String databaseName, String tableNamePrefix, int pageFetchSize, boolean isAuroraEnabled);
+    List<String> getTables(String databaseName, String tableNamePrefix, int pageFetchSize);
 
     /**
      * Do an atomic compare-and-swap to update the table's metadata location.

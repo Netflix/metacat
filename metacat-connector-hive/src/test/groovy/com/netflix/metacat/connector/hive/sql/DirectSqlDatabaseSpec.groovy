@@ -40,7 +40,7 @@ import spock.lang.Specification
  * @since 1.3.0
  */
 class DirectSqlDatabaseSpec extends Specification {
-    def config = new DefaultConfigImpl(new MetacatProperties(null))
+    def config = new DefaultConfigImpl(new MetacatProperties())
     def registry = new NoopRegistry()
     def context = DataDtoProvider.newContext(config, null)
     def metric = new HiveConnectorFastServiceMetric(registry)

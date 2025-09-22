@@ -30,7 +30,7 @@ import spock.lang.Specification
  * @since 1.1.0
  */
 class DirectSqlSavePartitionSpec extends Specification {
-    def config = new DefaultConfigImpl(new MetacatProperties(null))
+    def config = new DefaultConfigImpl(new MetacatProperties())
     def typeFactory = new TypeConverterFactory(new DefaultTypeConverter())
     def converter = new ConverterUtil(new DozerTypeConverter(typeFactory), new DozerJsonTypeConverter(typeFactory))
     def registry = new NoopRegistry()

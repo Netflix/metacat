@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://127.0.0.1:26257/defaultdb?sslmode=disable&stringtype=unspecified
+    url: jdbc:postgresql://127.0.0.1:26257/defaultdb?sslmode=disable
     username: admin
     password:
     driverClassName: org.postgresql.Driver

@@ -15,7 +15,7 @@ import spock.lang.Specification
  * @author amajumdar
  */
 class MetadataServiceSpec extends Specification {
-    def config = new DefaultConfigImpl(new MetacatProperties(null))
+    def config = new DefaultConfigImpl(new MetacatProperties())
     def registry = new NoopRegistry()
     def tableService = Mock(TableService)
     def partitionService = Mock(PartitionService)
