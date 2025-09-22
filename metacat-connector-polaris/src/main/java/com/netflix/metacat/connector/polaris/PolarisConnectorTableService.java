@@ -422,7 +422,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                                      final boolean useCache) {
         final IcebergTableWrapper icebergTable =
             this.icebergTableHandler.getIcebergTable(tableName, tableMetadataLocation, includeInfoDetails);
-        
+
         // The IcebergTableWrapper branch/tag information is automatically injected into TableInfo metadata
         // by HiveConnectorInfoConverter.fromIcebergTableToTableInfo() to avoid redundant loading
         return connectorConverter.fromIcebergTableToTableInfo(tableName, icebergTable, tableMetadataLocation, info);

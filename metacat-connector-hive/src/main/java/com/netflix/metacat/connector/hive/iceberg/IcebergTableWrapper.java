@@ -38,7 +38,7 @@ public class IcebergTableWrapper {
     public IcebergTableWrapper(final Table table, final Map<String, String> extraProperties) {
         this.table = table;
         this.extraProperties = extraProperties;
-        
+
         // Add branch/tag information to extraProperties to avoid redundant loading during validation
         // This will be merged into table metadata by HiveConnectorInfoConverter
         this.extraProperties.put("iceberg.has.branches.or.tags", String.valueOf(hasBranchesOrTags()));
