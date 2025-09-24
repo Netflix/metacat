@@ -197,7 +197,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         tableParameters.putAll(table.properties());
 
         // Populate branch/tag metadata for optimization purposes
-        tableWrapper.populateBranchTagMetadata();
+        tableParameters.putAll(tableWrapper.populateBranchTagMetadata());
         tableParameters.putAll(tableWrapper.getExtraProperties());
         final StorageInfo.StorageInfoBuilder storageInfoBuilder = StorageInfo.builder();
         if (tableInfo.getSerde() != null) {

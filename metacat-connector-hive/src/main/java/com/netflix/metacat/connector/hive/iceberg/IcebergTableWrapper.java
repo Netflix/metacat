@@ -19,6 +19,8 @@ package com.netflix.metacat.connector.hive.iceberg;
 import org.apache.iceberg.Table;
 import lombok.Data;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,20 +55,15 @@ public class IcebergTableWrapper {
     }
 
     /**
-     * Check if the table has any non-main branches or tags.
-     * @return true if the table has non-main branches or tags
-     */
-    public boolean hasNonMainBranchesOrTags() {
-        return hasNonMainBranches() || hasTags();
-    }
-
-    /**
-     * Populate branch/tag metadata into extraProperties.
+     * Populate and return branch/tag metadata properties.
      * This should be called explicitly when metadata injection is needed.
+     * @return map containing branch/tag metadata properties
      */
-    public void populateBranchTagMetadata() {
-        this.extraProperties.put(ICEBERG_HAS_NON_MAIN_BRANCHES_KEY, String.valueOf(hasNonMainBranches()));
-        this.extraProperties.put(ICEBERG_HAS_TAGS_KEY, String.valueOf(hasTags()));
+    public Map<String, String> populateBranchTagMetadata() {
+        final Map<String, String> branchTagMetadata = new HashMap<>();
+        branchTagMetadata.put(ICEBERG_HAS_NON_MAIN_BRANCHES_KEY, String.valueOf(hasNonMainBranches()));
+        branchTagMetadata.put(ICEBERG_HAS_TAGS_KEY, String.valueOf(hasTags()));
+        return branchTagMetadata;
     }
 
     /**
@@ -94,10 +91,13 @@ public class IcebergTableWrapper {
      * @throws RuntimeException if unable to read table references
      */
     private Set<String> extractBranches() {
-            final var refs = table.refs();
-            return refs.keySet().stream()
-                .filter(ref -> refs.get(ref).isBranch())
-                .collect(java.util.stream.Collectors.toSet());
+        final var refs = table.refs();
+        if (refs == null || refs.isEmpty()) {
+            return Collections.emptySet();
+        }
+        return refs.keySet().stream()
+            .filter(ref -> refs.get(ref).isBranch())
+            .collect(java.util.stream.Collectors.toSet());
     }
 
     /**
@@ -106,9 +106,12 @@ public class IcebergTableWrapper {
      * @throws RuntimeException if unable to read table references
      */
     private Set<String> extractTags() {
-            final var refs = table.refs();
-            return refs.keySet().stream()
-                .filter(ref -> refs.get(ref).isTag())
-                .collect(java.util.stream.Collectors.toSet());
+        final var refs = table.refs();
+            if (refs == null || refs.isEmpty()) {
+                return Collections.emptySet();
+            }
+        return refs.keySet().stream()
+            .filter(ref -> refs.get(ref).isTag())
+            .collect(java.util.stream.Collectors.toSet());
     }
 }

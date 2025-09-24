@@ -40,7 +40,6 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect no non-main branches or tags"
         !wrapper.hasNonMainBranches()
         !wrapper.hasTags()
-        !wrapper.hasNonMainBranchesOrTags()
         wrapper.getBranchesAndTagsSummary() == "branches=0, tags=0"
     }
 
@@ -61,7 +60,6 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect main branch but not consider it as having non-main branches"
         !wrapper.hasNonMainBranches() // main branch alone doesn't count as "having non-main branches"
         !wrapper.hasTags()
-        !wrapper.hasNonMainBranchesOrTags()
         wrapper.getBranchesAndTagsSummary() == "branches=1 [main], tags=0"
     }
 
@@ -82,7 +80,7 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect multiple branches"
         wrapper.hasNonMainBranches() // multiple branches count as "having non-main branches"
         !wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags()
+
         wrapper.getBranchesAndTagsSummary().startsWith("branches=3")
         wrapper.getBranchesAndTagsSummary().contains("tags=0")
     }
@@ -104,7 +102,6 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect tags only"
         !wrapper.hasNonMainBranches()
         wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags()
         wrapper.getBranchesAndTagsSummary().startsWith("branches=0, tags=3")
     }
 
@@ -134,7 +131,7 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect both non-main branches and tags"
         wrapper.hasNonMainBranches() // more than just main
         wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags()
+
         def summary = wrapper.getBranchesAndTagsSummary()
         summary.contains("branches=2")
         summary.contains("tags=2")
@@ -157,7 +154,8 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect multiple branches as having non-main branches"
         wrapper.hasNonMainBranches() // multiple branches (main + feature) count as having non-main branches
         !wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags() // has non-main branches
+
+ // has non-main branches
         def summary = wrapper.getBranchesAndTagsSummary()
         summary.contains("branches=2")
         summary.contains("main")
@@ -182,16 +180,18 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should detect main branch but no additional branches or tags"
         !wrapper.hasNonMainBranches()  // Only main branch (size == 1), no additional branches
         !wrapper.hasTags()             // No tags for pre-0.14.1 client tables  
-        !wrapper.hasNonMainBranchesOrTags() // No additional branches or tags
         wrapper.getBranchesAndTagsSummary() == "branches=1 [main], tags=0"  // Main branch exists
 
         when: "Populating metadata for pre-0.14.1 client table"
-        wrapper.populateBranchTagMetadata()
+        def metadataMap = wrapper.populateBranchTagMetadata()
 
-        then: "Should populate with false values (no additional branches/tags)"
+        then: "Should return correct values"
         noExceptionThrown()
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "false"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "false"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "false"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "false"
+        // extraProperties should NOT be populated by this method
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY)
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY)
     }
 
     // TODO: Fix this test - mock setup issue
@@ -265,11 +265,14 @@ class IcebergTableWrapperSpec extends Specification {
 
         when: "Creating wrapper and populating metadata"
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
-        wrapper.populateBranchTagMetadata()
+        def metadataMap = wrapper.populateBranchTagMetadata()
 
-        then: "Should populate both separate keys correctly"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "true"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "true"
+        then: "Should return both separate keys correctly"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "true"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "true"
+        // extraProperties should NOT be populated by this method - it's a pure function
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY)
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY)
         
         and: "Static constants should have expected values"
         IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY == "iceberg.has.non.main.branches"
@@ -289,11 +292,14 @@ class IcebergTableWrapperSpec extends Specification {
 
         when: "Creating wrapper and populating metadata"
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
-        wrapper.populateBranchTagMetadata()
+        def metadataMap = wrapper.populateBranchTagMetadata()
 
-        then: "Should populate non-main-branches=true, tags=false"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "true"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "false"
+        then: "Should return non-main-branches=true, tags=false"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "true"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "false"
+        // extraProperties should NOT be populated by this method - it's a pure function
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY)
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY)
     }
 
     def "test separate key population - tags only"() {
@@ -309,11 +315,14 @@ class IcebergTableWrapperSpec extends Specification {
 
         when: "Creating wrapper and populating metadata"
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
-        wrapper.populateBranchTagMetadata()
+        def metadataMap = wrapper.populateBranchTagMetadata()
 
-        then: "Should populate non-main-branches=false, tags=true"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "false"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "true"
+        then: "Should return non-main-branches=false, tags=true"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "false"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "true"
+        // extraProperties should NOT be populated by this method - it's a pure function
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY)
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY)
     }
 
     def "test separate key population - neither"() {
@@ -329,11 +338,14 @@ class IcebergTableWrapperSpec extends Specification {
 
         when: "Creating wrapper and populating metadata"
         def wrapper = new IcebergTableWrapper(mockTable, extraProperties)
-        wrapper.populateBranchTagMetadata()
+        def metadataMap = wrapper.populateBranchTagMetadata()
 
-        then: "Should populate both as false"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "false"
-        extraProperties.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "false"
+        then: "Should return both as false"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY) == "false"
+        metadataMap.get(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY) == "false"
+        // extraProperties should NOT be populated by this method - it's a pure function
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_NON_MAIN_BRANCHES_KEY)
+        !extraProperties.containsKey(IcebergTableWrapper.ICEBERG_HAS_TAGS_KEY)
     }
 
     def "test constructor does not populate metadata automatically"() {
@@ -361,7 +373,6 @@ class IcebergTableWrapperSpec extends Specification {
         and: "Methods should still work"
         wrapper.hasNonMainBranches()
         wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags()
     }
 
     def "test legacy constructor compatibility"() {
@@ -387,7 +398,6 @@ class IcebergTableWrapperSpec extends Specification {
         wrapper.getExtraProperties() == extraProperties
         wrapper.hasNonMainBranches()
         wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags()
     }
 
     def "test mixed reference types"() {
@@ -419,7 +429,6 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should only detect known reference types"
         !wrapper.hasNonMainBranches() // only main branch
         wrapper.hasTags()
-        wrapper.hasNonMainBranchesOrTags()
     }
 
     def "test empty string reference type"() {
@@ -446,6 +455,5 @@ class IcebergTableWrapperSpec extends Specification {
         then: "Should only detect valid reference types"
         !wrapper.hasNonMainBranches()
         !wrapper.hasTags()
-        !wrapper.hasNonMainBranchesOrTags()
     }
 }
