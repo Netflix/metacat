@@ -195,6 +195,9 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         tableParameters.put(DirectSqlTable.PARAM_PARTITION_SPEC, table.spec().toString());
         //adding iceberg table properties
         tableParameters.putAll(table.properties());
+
+        // Populate branch/tag metadata for optimization purposes
+        tableParameters.putAll(tableWrapper.populateBranchTagMetadata());
         tableParameters.putAll(tableWrapper.getExtraProperties());
         final StorageInfo.StorageInfoBuilder storageInfoBuilder = StorageInfo.builder();
         if (tableInfo.getSerde() != null) {

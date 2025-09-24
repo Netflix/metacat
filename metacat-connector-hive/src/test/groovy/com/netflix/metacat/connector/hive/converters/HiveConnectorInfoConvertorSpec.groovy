@@ -516,6 +516,10 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         2 * field.transform() >> Mock(Identity)
         1 * icebergTable.properties() >> ["test":"abd"]
         2 * icebergTable.spec() >>  partSpec
+        2 * icebergTable.refs() >> ["main": Mock(org.apache.iceberg.SnapshotRef) {
+            isBranch() >> true
+            isTag() >> false
+        }]
         1 * partSpec.fields() >> [ field]
         1 * icebergTable.schema() >> schema
         1 * schema.columns() >> [nestedField, nestedField2]
@@ -536,5 +540,32 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         tableInfo.getFields().get(0).isPartitionKey() != tableInfo.getFields().get(1).isPartitionKey()
         tableInfo.getFields().get(0).getComment() == 'fieldName doc'
 
+    }
+
+    def "test fromIcebergTableToTableInfo includes branch/tag metadata"() {
+        def icebergTable = Mock(org.apache.iceberg.Table)
+        def icebergTableWrapper = Mock(IcebergTableWrapper)
+        when:
+        def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
+            icebergTableWrapper, "/tmp/test", TableInfo.builder().build() )
+        then:
+        1 * icebergTableWrapper.getTable() >> icebergTable
+        1 * icebergTableWrapper.populateBranchTagMetadata() >> [
+            "iceberg.has.non.main.branches": "true",
+            "iceberg.has.tags": "false"
+        ] // Called by converter and returns metadata map
+        1 * icebergTableWrapper.getExtraProperties() >> [:] // Called by converter for other properties
+        1 * icebergTable.properties() >> [:]
+        1 * icebergTable.schema() >> Mock(Schema) {
+            columns() >> []
+        }
+        2 * icebergTable.spec() >> Mock(PartitionSpec) {
+            fields() >> []
+            toString() >> "[]"
+        }
+        
+        // Verify that non-main-branch/tag metadata is injected via extraProperties
+        tableInfo.getMetadata().get("iceberg.has.non.main.branches") == "true"
+        tableInfo.getMetadata().get("iceberg.has.tags") == "false"
     }
 }
