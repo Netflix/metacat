@@ -4,6 +4,8 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 
+import java.util.HashMap;
+
 /**
  * Database object mapper implementations.
  */
@@ -31,6 +33,7 @@ public class PolarisDatabaseMapper implements
         final DatabaseInfo databaseInfo = DatabaseInfo.builder()
             .name(QualifiedName.ofDatabase(catalogName, entity.getDbName()))
             .auditInfo(mapper.toInfo(entity.getAudit()))
+            .metadata(entity.getParams() != null ? entity.getParams() : new HashMap<>())
             .uri(entity.getLocation())
             .build();
         return databaseInfo;
@@ -44,6 +47,7 @@ public class PolarisDatabaseMapper implements
         final PolarisDatabaseEntity databaseEntity = PolarisDatabaseEntity.builder()
             .dbName(info.getName().getDatabaseName())
             .location(info.getUri())
+            .params(info.getMetadata() != null ? info.getMetadata() : new HashMap<>())
             .build();
         return databaseEntity;
     }
