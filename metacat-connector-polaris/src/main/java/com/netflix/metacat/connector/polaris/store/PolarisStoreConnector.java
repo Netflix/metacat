@@ -39,8 +39,10 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final String catalogName,
                                                 final String databaseName,
                                                 final String location,
-                                                final String createdBy) {
-        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(catalogName, databaseName, location, createdBy);
+                                                final String createdBy,
+                                                final Map<String, String> metadata) {
+        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(
+            catalogName, databaseName, location, createdBy, metadata);
         return dbRepo.save(e);
     }
 

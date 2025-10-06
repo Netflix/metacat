@@ -20,6 +20,7 @@ public class PolarisDatabaseMapper implements
         final DatabaseInfo databaseInfo = DatabaseInfo.builder()
             .name(QualifiedName.ofDatabase(entity.getCatalogName(), entity.getDbName()))
             .auditInfo(mapper.toInfo(entity.getAudit()))
+            .metadata(entity.getParams())
             .uri(entity.getLocation())
             .build();
         return databaseInfo;
@@ -34,6 +35,7 @@ public class PolarisDatabaseMapper implements
             .catalogName(info.getName().getCatalogName())
             .dbName(info.getName().getDatabaseName())
             .location(info.getUri())
+            .params(info.getMetadata())
             .build();
         return databaseEntity;
     }

@@ -16,6 +16,7 @@
 package com.netflix.metacat
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.collect.ImmutableMap
 import com.netflix.metacat.client.Client
 import com.netflix.metacat.client.api.MetacatV1
 import com.netflix.metacat.client.api.MetadataV1
@@ -1162,6 +1163,80 @@ class MetacatSmokeSpec extends Specification {
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
+
+        where:
+        catalogName << ['hive-metastore', 'polaris-metastore']
+    }
+
+    @Unroll
+    def "Test database with empty metadata"() {
+        given:
+        def databaseName = 'iceberg_database'
+
+        when:
+        api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
+        def retrievedDatabase = api.getDatabase(catalogName, databaseName, true, true)
+
+        then:
+        noExceptionThrown()
+        retrievedDatabase.getMetadata().isEmpty()
+
+        cleanup:
+        api.deleteDatabase(catalogName, databaseName)
+
+        where:
+        catalogName << ['hive-metastore', 'polaris-metastore']
+    }
+
+    @Unroll
+    def "Test database with existing metadata"() {
+        given:
+        def databaseName = 'iceberg_database'
+
+        when:
+        def databaseCreateRequestDto = DatabaseCreateRequestDto.builder()
+        .metadata(ImmutableMap.of("key", "value"))
+        .build()
+        api.createDatabase(catalogName, databaseName, databaseCreateRequestDto)
+        def retrievedDatabase = api.getDatabase(catalogName, databaseName, true, true)
+
+        then:
+        noExceptionThrown()
+        retrievedDatabase.getMetadata().containsKey("key")
+        retrievedDatabase.getMetadata().containsValue("value")
+
+        cleanup:
+        api.deleteDatabase(catalogName, databaseName)
+
+        where:
+        catalogName << ['hive-metastore', 'polaris-metastore']
+    }
+
+    @Unroll
+    def "Test database with updated metadata"() {
+        given:
+        def databaseName = 'iceberg_database'
+
+        when:
+        def databaseCreateRequestDto = DatabaseCreateRequestDto.builder()
+            .metadata(ImmutableMap.of("key1", "value1"))
+            .build()
+        api.createDatabase(catalogName, databaseName, databaseCreateRequestDto)
+        def databaseUpdatedRequestDto = DatabaseCreateRequestDto.builder()
+            .metadata(ImmutableMap.of("key2", "value2"))
+            .build()
+        api.updateDatabase(catalogName, databaseName, databaseUpdatedRequestDto)
+        def retrievedDatabase = api.getDatabase(catalogName, databaseName, true, true)
+
+        then:
+        noExceptionThrown()
+        retrievedDatabase.getMetadata().containsKey("key1")
+        retrievedDatabase.getMetadata().containsValue("value1")
+        retrievedDatabase.getMetadata().containsKey("key2")
+        retrievedDatabase.getMetadata().containsValue("value2")
+
+        cleanup:
+        api.deleteDatabase(catalogName, databaseName)
 
         where:
         catalogName << ['hive-metastore', 'polaris-metastore']

@@ -127,8 +127,8 @@ public class PolarisConnectorTableServiceFunctionalTest {
     public void init() {
         final String locationTest = "file://temp_test";
         final String locationProd = "file://temp_prod";
-        polarisStoreService.createDatabase(CATALOG_NAME_TEST, DB_NAME, locationTest, "metacat_user");
-        polarisStoreService.createDatabase(CATALOG_NAME_PROD, DB_NAME, locationProd, "metacat_user");
+        polarisStoreService.createDatabase(CATALOG_NAME_TEST, DB_NAME, locationTest, "metacat_user", ImmutableMap.of());
+        polarisStoreService.createDatabase(CATALOG_NAME_PROD, DB_NAME, locationProd, "metacat_user", ImmutableMap.of());
         final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
 

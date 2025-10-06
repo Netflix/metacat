@@ -13,6 +13,7 @@ CREATE TABLE DBS (
                    catalog_name varchar(255),
                    name varchar(255) NOT NULL,
                    location varchar(8192),
+                   params text,
                    created_by varchar(255),
                    created_date TIMESTAMP NOT NULL,
                    last_updated_by varchar(255),
