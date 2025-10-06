@@ -15,7 +15,7 @@ import spock.lang.Specification
  */
 class MetacatEventBusSpec extends Specification {
     def registry = Mock(Registry)
-    def eventMulticaster = Spy(MetacatApplicationEventMulticaster, constructorArgs:[registry, new MetacatProperties()])
+    def eventMulticaster = Spy(MetacatApplicationEventMulticaster, constructorArgs:[registry, new MetacatProperties(null)])
     def bus = new MetacatEventBus(eventMulticaster, new NoopRegistry())
     def event = Mock(ApplicationEvent)
 
