@@ -210,7 +210,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final String tableFilter = (prefix != null && prefix.isTableDefinition()) ? prefix.getTableName() : "";
             for (String tableName : polarisStoreService.getTables(name.getDatabaseName(),
                 tableFilter,
-                connectorContext.getConfig().getListTableNamesPageSize())
+                connectorContext.getConfig().getListTableNamesPageSize(),
+                connectorContext.getConfig().isAuroraDataSourceEnabled())
             ) {
                 final QualifiedName qualifiedName =
                     QualifiedName.ofTable(name.getCatalogName(), name.getDatabaseName(), tableName);
@@ -385,7 +386,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final List<PolarisTableEntity> tbls =
                 polarisStoreService.getTableEntities(name.getDatabaseName(),
                     tableFilter,
-                    connectorContext.getConfig().getListTableEntitiesPageSize());
+                    connectorContext.getConfig().getListTableEntitiesPageSize(),
+                    connectorContext.getConfig().isAuroraDataSourceEnabled());
             if (sort != null) {
                 ConnectorUtils.sort(tbls, sort, Comparator.comparing(t -> t.getTblName()));
             }
@@ -459,7 +461,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             }
             final List<String> databaseNames = name.isDatabaseDefinition() ? ImmutableList.of(name.getDatabaseName())
                 : polarisStoreService.getDatabaseNames(null, null,
-                connectorContext.getConfig().getListDatabaseNamesPageSize()
+                connectorContext.getConfig().getListDatabaseNamesPageSize(),
+                connectorContext.getConfig().isAuroraDataSourceEnabled()
             );
             int limitSize = limit == null || limit < 0 ? Integer.MAX_VALUE : limit;
             final List<QualifiedName> result = Lists.newArrayList();
@@ -468,7 +471,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 final List<String> tableNames = polarisStoreService.getTables(
                     name.getDatabaseName(),
                     "",
-                    connectorContext.getConfig().getListTableNamesPageSize());
+                    connectorContext.getConfig().getListTableNamesPageSize(),
+                    connectorContext.getConfig().isAuroraDataSourceEnabled());
                 result.addAll(tableNames.stream()
                     .map(n -> QualifiedName.ofTable(name.getCatalogName(), databaseName, n))
                     .limit(limitSize)

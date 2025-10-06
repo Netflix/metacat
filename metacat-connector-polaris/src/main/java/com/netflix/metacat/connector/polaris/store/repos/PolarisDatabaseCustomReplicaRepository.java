@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Custom JPA repository implementation for storing PolarisDatabaseEntity.
  */
-public interface PolarisDatabaseCustomRepository {
+public interface PolarisDatabaseCustomReplicaRepository {
     /**
      * Fetch db entities for given database using AS OF SYSTEM TIME follower_read_timestamp().
      * @param dbNamePrefix db name prefix. can be empty.
@@ -16,5 +16,9 @@ public interface PolarisDatabaseCustomRepository {
      * @param selectAllColumns if true return the PolarisEntity else return name of the entity
      * @return table entities in the database.
      */
-    List<?> getAllDatabases(String dbNamePrefix, Sort sort, int pageSize, boolean selectAllColumns);
+    List<?> getAllDatabases(
+        String dbNamePrefix,
+        Sort sort,
+        int pageSize,
+        boolean selectAllColumns);
 }

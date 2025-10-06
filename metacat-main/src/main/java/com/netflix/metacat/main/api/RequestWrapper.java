@@ -155,6 +155,7 @@ public final class RequestWrapper {
         final long start = registry.clock().wallTime();
         final Map<String, String> tags = new HashMap<>(name.partsWithCatalogAndDatabase());
         final Map<String, String> percentileTags = Maps.newHashMap();
+
         if (requestTags != null) {
             tags.putAll(requestTags);
         }
