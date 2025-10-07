@@ -6,6 +6,7 @@ create table DBS (
   id uuid default gen_random_uuid() not null primary key,
   name varchar(255) not null unique,
   location varchar(8192),
+  params text,
   created_by STRING(255),
   created_date TIMESTAMP not null,
   last_updated_by STRING(255),

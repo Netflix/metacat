@@ -37,8 +37,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
     @Override
     public PolarisDatabaseEntity createDatabase(final String databaseName,
                                                 final String location,
-                                                final String createdBy) {
-        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(databaseName, location, createdBy);
+                                                final String createdBy,
+                                                final Map<String, String> metadata) {
+        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(databaseName, location, createdBy, metadata);
         return dbRepo.save(e);
     }
 

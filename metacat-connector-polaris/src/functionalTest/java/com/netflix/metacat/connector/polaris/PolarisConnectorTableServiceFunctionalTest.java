@@ -114,7 +114,7 @@ public class PolarisConnectorTableServiceFunctionalTest {
     @BeforeEach
     public void init() {
         final String location = "file://temp";
-        polarisStoreService.createDatabase(DB_NAME, location, "metacat_user");
+        polarisStoreService.createDatabase(DB_NAME, location, "metacat_user", ImmutableMap.of());
         final String[] activeProfiles = environment.getActiveProfiles();
         assert activeProfiles.length  == 1;
 
