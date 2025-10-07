@@ -3049,15 +3049,6 @@ class MetacatSmokeSpec extends Specification {
         def initial_metadata = [table_type: 'ICEBERG', metadata_location: metadata_location]
         def updated_metadata = [table_type: 'ICEBERG', metadata_location: updated_metadata_location, previous_metadata_location: metadata_location]
 
-
-        // Create same Database but on different catalogs
-        try{
-            api.createDatabase(polaris_metastore, db_name_1, new DatabaseCreateRequestDto())
-            api.createDatabase(polaris_metastore_test, db_name_1, new DatabaseCreateRequestDto())
-        } catch (Exception e) {
-
-        }
-
         when:
         // Create tables with the same db and tbl name but different catalogs
         createTable(polaris_metastore, db_name_1, tbl_name_1, initial_metadata)
