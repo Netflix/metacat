@@ -3052,6 +3052,7 @@ class MetacatSmokeSpec extends Specification {
         when:
         // Create tables with the same db and tbl name but different catalogs
         createTable(polaris_metastore, db_name_1, tbl_name_1, initial_metadata)
+        Thread.sleep(5000)
         createTable(polaris_metastore, db_name_1, tbl_name_2, initial_metadata)
         createTable(polaris_metastore_test, db_name_1, tbl_name_1, initial_metadata)
 
