@@ -3024,8 +3024,8 @@ class MetacatSmokeSpec extends Specification {
         def polaris_metastore_dto = api.getCatalog(polaris_metastore)
         def polaris_metastore_test_dto = api.getCatalog(polaris_metastore_test)
 
-        def expected_polaris_metastore_databases = ["polaris-metastore/db1"] as Set
-        def expected_polaris_metastore_test_databases = ["polaris-metastore-test/db1", "polaris-metastore-test/db2"] as Set
+        def expected_polaris_metastore_databases = ["db1"] as Set
+        def expected_polaris_metastore_test_databases = ["db1", "db2"] as Set
         assert polaris_metastore_dto.getDatabases().toSet().containsAll(expected_polaris_metastore_databases)
         assert polaris_metastore_test_dto.getDatabases().toSet().containsAll(expected_polaris_metastore_test_databases)
 
@@ -3103,7 +3103,7 @@ class MetacatSmokeSpec extends Specification {
             expected_polaris_metastore_tbls
         )
         Assertions.assertEquals(
-            api.getDatabase(polaris_metastore, db_name_1, true, true).tables.toSet(),
+            api.getDatabase(polaris_metastore_test, db_name_1, true, true).tables.toSet(),
             expected_polaris_metastore_test_tbls
         )
 
