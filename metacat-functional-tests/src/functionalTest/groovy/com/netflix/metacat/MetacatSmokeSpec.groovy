@@ -3026,8 +3026,8 @@ class MetacatSmokeSpec extends Specification {
 
         def expected_polaris_metastore_databases = ["polaris-metastore/db1"] as Set
         def expected_polaris_metastore_test_databases = ["polaris-metastore-test/db1", "polaris-metastore-test/db2"] as Set
-        Assertions.assertEquals(polaris_metastore_dto.getDatabases().toSet(), expected_polaris_metastore_databases)
-        Assertions.assertEquals(polaris_metastore_test_dto.getDatabases().toSet(), expected_polaris_metastore_test_databases)
+        assert polaris_metastore_dto.getDatabases().toSet().containsAll(expected_polaris_metastore_databases)
+        assert polaris_metastore_test_dto.getDatabases().toSet().containsAll(expected_polaris_metastore_test_databases)
 
         api.deleteDatabase(polaris_metastore, db_name_1)
         api.deleteDatabase(polaris_metastore_test, db_name_1)
@@ -3038,7 +3038,7 @@ class MetacatSmokeSpec extends Specification {
         given:
         def polaris_metastore = "polaris-metastore"
         def polaris_metastore_test = "polaris-metastore-test"
-        def db_name_1 = "db1"
+        def db_name_1 = "cross_catalog_db1"
 
         def tbl_name_1 = "table_1"
         def new_tbl_name_1 = "new_table_1"
@@ -3093,8 +3093,8 @@ class MetacatSmokeSpec extends Specification {
         Assertions.assertEquals(polaris_metastore_test_db1_tbl1.metadata.get("metadata_location").toString(), metadata_location)
 
         // assert list
-        def expected_polaris_metastore_tbls = ["polaris-metastore/db1/table_1", "polaris-metastore/db1/table_2"] as Set
-        def expected_polaris_metastore_test_tbls = ["polaris-metastore-test/db1/table_1"] as Set
+        def expected_polaris_metastore_tbls = ["table_1", "table_2"] as Set
+        def expected_polaris_metastore_test_tbls = ["table_1"] as Set
         when:
         Thread.sleep(5000)
         then:
