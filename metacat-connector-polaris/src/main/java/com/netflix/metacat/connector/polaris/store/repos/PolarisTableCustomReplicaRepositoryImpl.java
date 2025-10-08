@@ -26,6 +26,7 @@ public class PolarisTableCustomReplicaRepositoryImpl
 
     @Override
     protected  <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
+        final String catalogName,
         final String dbName, final String tableNamePrefix, final Pageable page, final boolean selectAllColumns) {
 
         // Generate ORDER BY clause
@@ -33,7 +34,8 @@ public class PolarisTableCustomReplicaRepositoryImpl
 
         final String selectClause = selectAllColumns ? "t.*" : "t.tbl_name";
         final String sql = "SELECT " + selectClause + " FROM TBLS t "
-            + "WHERE t.db_name = :dbName AND t.tbl_name LIKE :tableNamePrefix" + orderBy;
+            + "WHERE t.catalog_name = :catalogName AND t.db_name = :dbName AND t.tbl_name LIKE :tableNamePrefix"
+                + orderBy;
 
         Query query;
         if (selectAllColumns) {
@@ -41,6 +43,7 @@ public class PolarisTableCustomReplicaRepositoryImpl
         } else {
             query = entityManager.createNativeQuery(sql);
         }
+        query.setParameter("catalogName", catalogName);
         query.setParameter("dbName", dbName);
         query.setParameter("tableNamePrefix", tableNamePrefix + "%");
         query.setFirstResult(page.getPageNumber() * page.getPageSize());
@@ -59,6 +62,7 @@ public class PolarisTableCustomReplicaRepositoryImpl
      * Retrieves all tables by database name and table prefix using crdb.
      * Fetches tables in pages and collects them into a list.
      *
+     * @param catalogName catalogName
      * @param dbName the name of the database
      * @param tableNamePrefix the prefix of the table name to filter results
      * @param pageFetchSize the number of records to fetch per page
@@ -67,12 +71,19 @@ public class PolarisTableCustomReplicaRepositoryImpl
      */
     @Override
     public List<?> findAllTablesByDbNameAndTablePrefix(
+            final String catalogName,
             final String dbName,
             final String tableNamePrefix,
             final int pageFetchSize,
             final boolean selectAllColumns) {
         entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
                 .executeUpdate();
-        return super.findAllTablesByDbNameAndTablePrefix(dbName, tableNamePrefix, pageFetchSize, selectAllColumns);
+        return super.findAllTablesByDbNameAndTablePrefix(
+                catalogName,
+                dbName,
+                tableNamePrefix,
+                pageFetchSize,
+                selectAllColumns
+        );
     }
 }

@@ -66,7 +66,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String location = databaseInfo.getUri() == null
                 ? this.defaultLocationPrefix + name.getDatabaseName() + DEFAULT_LOCATION_SUFFIX : databaseInfo.getUri();
-            this.polarisStoreService.createDatabase(name.getDatabaseName(), location, createdBy);
+            this.polarisStoreService.createDatabase(name.getCatalogName(), name.getDatabaseName(), location, createdBy);
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -85,7 +85,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             throw new DatabaseNotFoundException(name);
         }
         try {
-            this.polarisStoreService.deleteDatabase(name.getDatabaseName());
+            this.polarisStoreService.deleteDatabase(name.getCatalogName(), name.getDatabaseName());
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -101,7 +101,8 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     public void update(final ConnectorRequestContext context, final DatabaseInfo databaseInfo) {
         final QualifiedName name = databaseInfo.getName();
         try {
-            final PolarisDatabaseEntity db = polarisStoreService.getDatabase(name.getDatabaseName())
+            final PolarisDatabaseEntity db =
+                polarisStoreService.getDatabase(name.getCatalogName(), name.getDatabaseName())
                 .orElseThrow(() -> new DatabaseNotFoundException(name));
             // currently db objects have no mutable fields so this is noop
             db.getAudit().setLastModifiedBy(PolarisUtils.getUserOrDefault(context));
@@ -123,8 +124,9 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     @Override
     public DatabaseInfo get(final ConnectorRequestContext context, final QualifiedName name) {
         try {
-            final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper(name.getCatalogName());
-            final PolarisDatabaseEntity db = polarisStoreService.getDatabase(name.getDatabaseName())
+            final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper();
+            final PolarisDatabaseEntity db =
+                polarisStoreService.getDatabase(name.getCatalogName(), name.getDatabaseName())
                 .orElseThrow(() -> new DatabaseNotFoundException(name));
             return mapper.toInfo(db);
         } catch (DatabaseNotFoundException exception) {
@@ -142,7 +144,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     @Override
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
         try {
-            return polarisStoreService.getDatabase(name.getDatabaseName()).isPresent();
+            return polarisStoreService.getDatabase(name.getCatalogName(), name.getDatabaseName()).isPresent();
         } catch (Exception exception) {
             throw new ConnectorException(
                 String.format("Failed exists polaris database %s", name), exception);
@@ -163,6 +165,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
             final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
+                name.getCatalogName(),
                 dbPrefix, sort,
                     connectorContext.getConfig().getListDatabaseNamesPageSize(),
                     connectorContext.getConfig().isAuroraDataSourceEnabled())
@@ -188,10 +191,11 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         @Nullable final Pageable pageable
     ) {
         try {
-            final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper(name.getCatalogName());
+            final PolarisDatabaseMapper mapper = new PolarisDatabaseMapper();
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
 
             final List<PolarisDatabaseEntity> dbs = polarisStoreService.getDatabases(
+                name.getCatalogName(),
                 dbPrefix, sort,
                 connectorContext.getConfig().getListDatabaseEntitiesPageSize(),
                 connectorContext.getConfig().isAuroraDataSourceEnabled()

@@ -28,6 +28,7 @@ public class BasePolarisTableReplicaRepository
      * @return a Slice of table results, or null if not overridden
      */
     protected <T> Slice<T> findAllTablesByDbNameAndTablePrefixForCurrentPage(
+            final String catalogName,
         final String dbName,
         final String tableNamePrefix,
         final Pageable page,
@@ -47,6 +48,7 @@ public class BasePolarisTableReplicaRepository
      */
     @Override
     public List<?> findAllTablesByDbNameAndTablePrefix(
+            final String catalogName,
         final String dbName,
         final String tableNamePrefix,
         final int pageFetchSize,
@@ -57,7 +59,8 @@ public class BasePolarisTableReplicaRepository
         Slice<?> tbls;
         boolean hasNext;
         do {
-            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(dbName, tblPrefix, page, selectAllColumns);
+            tbls = findAllTablesByDbNameAndTablePrefixForCurrentPage(
+                    catalogName, dbName, tblPrefix, page, selectAllColumns);
             retval.addAll(tbls.getContent());
             hasNext = tbls.hasNext();
             if (hasNext) {

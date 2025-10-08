@@ -43,6 +43,7 @@ import groovy.sql.Sql
 import org.apache.commons.io.FileUtils
 import org.apache.iceberg.PartitionField
 import org.joda.time.Instant
+import org.junit.jupiter.api.Assertions
 import org.skyscreamer.jsonassert.JSONAssert
 import spock.lang.Ignore
 import spock.lang.Shared
@@ -936,16 +937,16 @@ class MetacatSmokeSpec extends Specification {
         def metadataLocation = '/tmp/data/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
-        
+
         when:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         } catch (Exception ignored) {
         }
-        
+
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def retrievedTable = api.getTable(catalogName, databaseName, tableName, true, true, false)
-        
+
         then:
         noExceptionThrown()
         retrievedTable != null
@@ -954,7 +955,7 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.get('table_type') == 'ICEBERG'
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
-        
+
         // Verify that the iceberg.has.non.main.branches and iceberg.has.tags flags are populated correctly
         retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
@@ -962,10 +963,10 @@ class MetacatSmokeSpec extends Specification {
         // This verifies both the injection mechanism AND the logic correctness for simple tables
         retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'false'
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
-        
+
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
-        
+
         where:
         catalogName << ['hive-metastore', 'polaris-metastore']
     }
@@ -978,20 +979,20 @@ class MetacatSmokeSpec extends Specification {
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
-        
+
         def metadataLocation = '/tmp/data/metadata/00003-with-branches-and-tags.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
-        
+
         when:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         } catch (Exception ignored) {
         }
-        
+
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def retrievedTable = api.getTable(catalogName, databaseName, tableName, true, true, false)
-        
+
         then:
         noExceptionThrown()
         retrievedTable != null
@@ -1000,19 +1001,19 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.get('table_type') == 'ICEBERG'
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
-        
+
         // Verify that the metadata flags correctly detect the branches and tags from the real metadata file
         retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-        
+
         // The metadata file has 3 branches (main, feature-branch, experimental) and 3 tags (v1.0.0, v2.0.0, release-2024-01)
         // So both flags should be "true"
         retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'true'
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
-        
+
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
-        
+
         where:
         catalogName << ['hive-metastore', 'polaris-metastore']
     }
@@ -1025,21 +1026,21 @@ class MetacatSmokeSpec extends Specification {
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
-        
+
         // Use the metadata file that contains only the main branch (no additional branches or tags)
         def metadataLocation = '/tmp/data/metadata/00004-main-branch-only.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
-        
+
         when:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         } catch (Exception ignored) {
         }
-        
+
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def retrievedTable = api.getTable(catalogName, databaseName, tableName, true, true, false)
-        
+
         then:
         noExceptionThrown()
         retrievedTable != null
@@ -1048,19 +1049,19 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.get('table_type') == 'ICEBERG'
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
-        
+
         // Verify that the metadata flags correctly detect no additional branches or tags
         retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-        
+
         // The metadata file has only 1 branch (main) and 0 tags
         // So both flags should be "false"
         retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'false'
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
-        
+
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
-        
+
         where:
         catalogName << ['hive-metastore', 'polaris-metastore']
     }
@@ -1073,22 +1074,22 @@ class MetacatSmokeSpec extends Specification {
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
-        
-        // Use REAL metadata file created with Iceberg client < 0.14.1 (Dec 2021, before refs support)  
+
+        // Use REAL metadata file created with Iceberg client < 0.14.1 (Dec 2021, before refs support)
         // Note: This is v1 format but could be any format - client version determines refs support
         def metadataLocation = '/tmp/data/metadata/00005-old-client-no-refs.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
-        
+
         when:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         } catch (Exception ignored) {
         }
-        
+
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def retrievedTable = api.getTable(catalogName, databaseName, tableName, true, true, false)
-        
+
         then:
         noExceptionThrown()
         retrievedTable != null
@@ -1097,11 +1098,11 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.get('table_type') == 'ICEBERG'
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
-        
+
         // Verify that tables created with Iceberg < 0.14.1 are handled correctly
         retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-        
+
         // CRITICAL: JSON metadata has no refs section, but Iceberg runtime auto-creates "main" branch
         // Tables created with Iceberg < 0.14.1: JSON has no refs, but runtime has main branch
         // - hasNonMainBranches() == false (only auto-created main branch, size=1, so 1 > 1 is false)
@@ -1109,10 +1110,10 @@ class MetacatSmokeSpec extends Specification {
         // This ensures backward compatibility with tables created before branches/tags support
         retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'false'
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
-        
+
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
-        
+
         where:
         catalogName << ['hive-metastore', 'polaris-metastore']
     }
@@ -1125,22 +1126,22 @@ class MetacatSmokeSpec extends Specification {
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
-        
+
         // Use v1 format metadata file with branches/tags (created with Iceberg client >= 0.14.1)
         // This proves that format version != client capability - v1 can have refs!
         def metadataLocation = '/tmp/data/metadata/00006-v1-with-branches-tags.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
-        
+
         when:
         try {
             api.createDatabase(catalogName, databaseName, new DatabaseCreateRequestDto())
         } catch (Exception ignored) {
         }
-        
+
         api.createTable(catalogName, databaseName, tableName, tableDto)
         def retrievedTable = api.getTable(catalogName, databaseName, tableName, true, true, false)
-        
+
         then:
         noExceptionThrown()
         retrievedTable != null
@@ -1149,19 +1150,19 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.get('table_type') == 'ICEBERG'
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
-        
+
         // Verify that v1 format tables created with Iceberg >= 0.14.1 DO support branches/tags
         retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-        
+
         // v1 format with refs should detect branches/tags correctly
         // This table has 2 branches (main, dev-branch) + 1 tag (v3.0.0)
         retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'true'
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
-        
+
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
-        
+
         where:
         catalogName << ['hive-metastore', 'polaris-metastore']
     }
@@ -2984,5 +2985,138 @@ class MetacatSmokeSpec extends Specification {
             api.deleteTable(catalogName, databaseName, tableName)
         } catch (Exception ignored) {
         }
+    }
+
+    def "Test cross catalog db operations"() {
+        given:
+        def polaris_metastore = "polaris-metastore"
+        def polaris_metastore_test = "polaris-metastore-test"
+        def db_name_1 = "db1"
+        def db_name_2 = "db2"
+
+        def polaris_metastore_db1_qname = QualifiedName.ofDatabase(polaris_metastore, db_name_1)
+        def polaris_metastore_test_db1_qname = QualifiedName.ofDatabase(polaris_metastore_test, db_name_1)
+        def polaris_metastore_test_db2_qname = QualifiedName.ofDatabase(polaris_metastore_test, db_name_2)
+
+        // Create Database
+        try{
+            api.createDatabase(polaris_metastore, db_name_1, new DatabaseCreateRequestDto())
+            api.createDatabase(polaris_metastore_test, db_name_1, new DatabaseCreateRequestDto())
+            api.createDatabase(polaris_metastore_test, db_name_2, new DatabaseCreateRequestDto())
+        } catch (Exception e) {
+
+        }
+
+        // Get the database
+        when:
+        def polaris_metastore_db_1 = api.getDatabase(polaris_metastore, db_name_1, true, true)
+        def polaris_metastore_test_db_1 = api.getDatabase(polaris_metastore_test, db_name_1, true, true)
+        def polaris_metastore_test_db_2 = api.getDatabase(polaris_metastore_test, db_name_2, true, true)
+        then:
+        Assertions.assertEquals(polaris_metastore_db_1.name, polaris_metastore_db1_qname)
+        Assertions.assertEquals(polaris_metastore_test_db_1.name, polaris_metastore_test_db1_qname)
+        Assertions.assertEquals(polaris_metastore_test_db_2.name, polaris_metastore_test_db2_qname)
+
+        // add update once it is not an no-op
+
+        // list the databases
+        Thread.sleep(5000)
+        def polaris_metastore_dto = api.getCatalog(polaris_metastore)
+        def polaris_metastore_test_dto = api.getCatalog(polaris_metastore_test)
+
+        def expected_polaris_metastore_databases = ["db1"] as Set
+        def expected_polaris_metastore_test_databases = ["db1", "db2"] as Set
+        assert polaris_metastore_dto.getDatabases().toSet().containsAll(expected_polaris_metastore_databases)
+        assert polaris_metastore_test_dto.getDatabases().toSet().containsAll(expected_polaris_metastore_test_databases)
+
+        api.deleteDatabase(polaris_metastore, db_name_1)
+        api.deleteDatabase(polaris_metastore_test, db_name_1)
+        api.deleteDatabase(polaris_metastore_test, db_name_2)
+    }
+
+    def "Test cross catalog table operations"() {
+        given:
+        def polaris_metastore = "polaris-metastore"
+        def polaris_metastore_test = "polaris-metastore-test"
+        def db_name_1 = "cross_catalog_db1"
+
+        def tbl_name_1 = "table_1"
+        def new_tbl_name_1 = "new_table_1"
+        def tbl_name_2 = "table_2"
+
+        def metadata_location = '/tmp/data/metadata/00000-0b60cc39-438f-413e-96c2-2694d7926529.metadata.json'
+        def updated_metadata_location = '/tmp/data/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json'
+        def initial_metadata = [table_type: 'ICEBERG', metadata_location: metadata_location]
+        def updated_metadata = [table_type: 'ICEBERG', metadata_location: updated_metadata_location, previous_metadata_location: metadata_location]
+
+        when:
+        // Create tables with the same db and tbl name but different catalogs
+        createTable(polaris_metastore, db_name_1, tbl_name_1, initial_metadata)
+        Thread.sleep(5000)
+        createTable(polaris_metastore, db_name_1, tbl_name_2, initial_metadata)
+        createTable(polaris_metastore_test, db_name_1, tbl_name_1, initial_metadata)
+
+        then:
+        // check table exists
+        api.tableExists(polaris_metastore, db_name_1, tbl_name_1)
+        api.tableExists(polaris_metastore, db_name_1, tbl_name_2)
+        api.tableExists(polaris_metastore_test, db_name_1, tbl_name_1)
+
+        // get the table
+        when:
+        def polaris_metastore_db1_tbl1 = api.getTable(polaris_metastore, db_name_1, tbl_name_1, true, true, true)
+        def polaris_metastore_db1_tbl2 = api.getTable(polaris_metastore, db_name_1, tbl_name_2, true, true, true)
+        def polaris_metastore_test_db1_tbl1 = api.getTable(polaris_metastore_test, db_name_1, tbl_name_1, true, true, true)
+        then:
+        Assertions.assertEquals(polaris_metastore_db1_tbl1.name, QualifiedName.ofTable(polaris_metastore, db_name_1, tbl_name_1))
+        Assertions.assertEquals(polaris_metastore_db1_tbl2.name, QualifiedName.ofTable(polaris_metastore, db_name_1, tbl_name_2))
+        Assertions.assertEquals(polaris_metastore_test_db1_tbl1.name, QualifiedName.ofTable(polaris_metastore_test, db_name_1, tbl_name_1))
+
+        // assert update by updating polaris_metastore_db1_tbl1
+        when:
+        polaris_metastore_db1_tbl1.setMetadata(updated_metadata)
+        api.updateTable(polaris_metastore, db_name_1, tbl_name_1, polaris_metastore_db1_tbl1)
+        polaris_metastore_db1_tbl1 = api.getTable(polaris_metastore, db_name_1, tbl_name_1, true, true, true)
+        polaris_metastore_db1_tbl2 = api.getTable(polaris_metastore, db_name_1, tbl_name_2, true, true, true)
+        polaris_metastore_test_db1_tbl1 = api.getTable(polaris_metastore_test, db_name_1, tbl_name_1, true, true, true)
+        then:
+        Assertions.assertEquals(polaris_metastore_db1_tbl1.metadata.get("metadata_location").toString(), updated_metadata_location)
+        Assertions.assertEquals(polaris_metastore_db1_tbl2.metadata.get("metadata_location").toString(), metadata_location)
+        Assertions.assertEquals(polaris_metastore_test_db1_tbl1.metadata.get("metadata_location").toString(), metadata_location)
+
+        // assert list
+        def expected_polaris_metastore_tbls = ["table_1", "table_2"] as Set
+        def expected_polaris_metastore_test_tbls = ["table_1"] as Set
+        when:
+        Thread.sleep(5000)
+        then:
+        Assertions.assertEquals(
+            api.getDatabase(polaris_metastore, db_name_1, true, true).tables.toSet(),
+            expected_polaris_metastore_tbls
+        )
+        Assertions.assertEquals(
+            api.getDatabase(polaris_metastore_test, db_name_1, true, true).tables.toSet(),
+            expected_polaris_metastore_test_tbls
+        )
+
+        // assert rename
+        when:
+        api.renameTable(polaris_metastore, db_name_1, tbl_name_1, new_tbl_name_1)
+        then:
+        api.tableExists(polaris_metastore, db_name_1, new_tbl_name_1)
+        api.tableExists(polaris_metastore, db_name_1, tbl_name_2)
+        api.tableExists(polaris_metastore_test, db_name_1, tbl_name_1)
+
+        when:
+        api.tableExists(polaris_metastore, db_name_1, tbl_name_1)
+        then:
+        thrown(Exception)
+
+        // assert delete
+        api.deleteTable(polaris_metastore, db_name_1, new_tbl_name_1)
+        api.deleteTable(polaris_metastore, db_name_1, tbl_name_2)
+        api.deleteTable(polaris_metastore_test, db_name_1, tbl_name_1)
+        api.deleteDatabase(polaris_metastore, db_name_1)
+        api.deleteDatabase(polaris_metastore_test, db_name_1)
     }
 }

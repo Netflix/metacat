@@ -35,10 +35,12 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return entity
      */
     @Override
-    public PolarisDatabaseEntity createDatabase(final String databaseName,
+    public PolarisDatabaseEntity createDatabase(
+        final String catalogName,
+                                                final String databaseName,
                                                 final String location,
                                                 final String createdBy) {
-        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(databaseName, location, createdBy);
+        final PolarisDatabaseEntity e = new PolarisDatabaseEntity(catalogName, databaseName, location, createdBy);
         return dbRepo.save(e);
     }
 
@@ -49,43 +51,45 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return Polaris Database entity
      */
     @Override
-    public Optional<PolarisDatabaseEntity> getDatabase(final String databaseName) {
-        return dbRepo.findByDbName(databaseName);
+    public Optional<PolarisDatabaseEntity> getDatabase(final String catalogName, final String databaseName) {
+        return dbRepo.findByCatalogNameAndDbName(catalogName, databaseName);
     }
 
     /**
      * Deletes the database entry.
-     *
+     * @param catalogName catalogName
      * @param dbName database name.
      */
     @Override
-    public void deleteDatabase(final String dbName) {
-        dbRepo.deleteByName(dbName);
+    public void deleteDatabase(final String catalogName, final String dbName) {
+        dbRepo.deleteByName(catalogName, dbName);
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public List<PolarisDatabaseEntity> getDatabases(
+        final String catalogName,
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
         final int pageSize,
         final boolean isAuroraEnabled) {
         return (List<PolarisDatabaseEntity>)
             (isAuroraEnabled
-                ? replicaDatabaseRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true)
-                : dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, true));
+                ? replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, true)
+                : dbRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, true));
     }
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public List<String> getDatabaseNames(
+        final String catalogName,
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
         final int pageSize,
         final boolean isAuroraEnabled) {
         return (List<String>) (isAuroraEnabled
-            ? replicaDatabaseRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false)
-            : dbRepo.getAllDatabases(dbNamePrefix, sort, pageSize, false)
+            ? replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, false)
+            : dbRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, false)
         );
     }
 
@@ -96,8 +100,8 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return true, if database exists. false, otherwise.
      */
     @Override
-    public boolean databaseExists(final String databaseName) {
-        return dbRepo.existsByDbName(databaseName);
+    public boolean databaseExists(final String catalogName, final String databaseName) {
+        return dbRepo.existsByCatalogNameAndDbName(catalogName, databaseName);
     }
 
     /**
@@ -124,11 +128,13 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return entity corresponding to created table entry
      */
     @Override
-    public PolarisTableEntity createTable(final String dbName,
+    public PolarisTableEntity createTable(
+        final String catalogName,
+            final String dbName,
                                           final String tableName,
                                           final String metadataLocation,
                                           final String createdBy) {
-        return createTable(dbName, tableName, metadataLocation, new HashMap<>(), createdBy);
+        return createTable(catalogName, dbName, tableName, metadataLocation, new HashMap<>(), createdBy);
     }
 
     /**
@@ -141,7 +147,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return entity corresponding to created table entry
      */
     @Override
-    public PolarisTableEntity createTable(final String dbName,
+    public PolarisTableEntity createTable(
+        final String catalogName,
+        final String dbName,
                                           final String tableName,
                                           final String metadataLocation,
                                           final Map<String, String> params,
@@ -152,6 +160,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
                 .build();
         final PolarisTableEntity e = PolarisTableEntity.builder()
                 .audit(auditEntity)
+            .catalogName(catalogName)
                 .dbName(dbName)
                 .tblName(tableName)
                 .metadataLocation(metadataLocation)
@@ -167,8 +176,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return Polaris Table entity
      */
     @Override
-    public Optional<PolarisTableEntity> getTable(final String dbName, final String tableName) {
-        return tblRepo.findByDbNameAndTblName(dbName, tableName);
+    public Optional<PolarisTableEntity> getTable(
+        final String catalogName, final String dbName, final String tableName) {
+        return tblRepo.findByCatalogNameAndDbNameAndTblName(catalogName, dbName, tableName);
     }
 
     /**
@@ -180,19 +190,23 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public List<PolarisTableEntity> getTableEntities(final String databaseName,
+    public List<PolarisTableEntity> getTableEntities(
+        final String catalogName,
+        final String databaseName,
                                                      final String tableNamePrefix,
                                                      final int pageFetchSize,
                                                      final boolean isAuroraEnabled) {
         return (List<PolarisTableEntity>)
             (isAuroraEnabled
                 ? replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
+                catalogName,
                 databaseName,
                 tableNamePrefix,
                 pageFetchSize,
                 true
             )
                 : tblRepo.findAllTablesByDbNameAndTablePrefix(
+                catalogName,
                     databaseName,
                     tableNamePrefix,
                     pageFetchSize,
@@ -217,8 +231,8 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @param tableName table name
      */
     @Override
-    public void deleteTable(final String dbName, final String tableName) {
-        tblRepo.deleteByName(dbName, tableName);
+    public void deleteTable(final String catalogName, final String dbName, final String tableName) {
+        tblRepo.deleteByName(catalogName, dbName, tableName);
     }
 
     /**
@@ -228,8 +242,8 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return true, if table exists. false, otherwise.
      */
     @Override
-    public boolean tableExists(final String databaseName, final String tableName) {
-        return tblRepo.existsByDbNameAndTblName(databaseName, tableName);
+    public boolean tableExists(final String catalogName, final String databaseName, final String tableName) {
+        return tblRepo.existsByCatalogNameAndDbNameAndTblName(catalogName, databaseName, tableName);
     }
 
     boolean tableExistsById(final String tblId) {
@@ -246,6 +260,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public List<String> getTables(
+        final String catalogName,
         final String databaseName,
         final String tableNamePrefix,
         final int pageFetchSize,
@@ -254,12 +269,14 @@ public class PolarisStoreConnector implements PolarisStoreService {
         return (List<String>)
             (isAuroraEnabled
                 ? replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
+                catalogName,
                 databaseName,
                 tableNamePrefix,
                 pageFetchSize,
                 false
                 )
                 : tblRepo.findAllTablesByDbNameAndTablePrefix(
+                catalogName,
                     databaseName,
                     tableNamePrefix,
                     pageFetchSize,
@@ -280,17 +297,19 @@ public class PolarisStoreConnector implements PolarisStoreService {
      */
     @Override
     public boolean updateTableMetadataLocation(
+            final String catalogName,
             final String databaseName, final String tableName,
             final String expectedLocation, final String newLocation,
             final String lastModifiedBy) {
         final int updatedRowCount =
-                tblRepo.updateMetadataLocation(databaseName, tableName,
+                tblRepo.updateMetadataLocation(catalogName, databaseName, tableName,
                         expectedLocation, newLocation, lastModifiedBy, Instant.now());
         return updatedRowCount > 0;
     }
 
     /**
      * Do an atomic compare-and-swap to update the table's metdata location and params.
+     * @param catalogName catalog name of the table
      * @param databaseName database name of the table
      * @param tableName table name
      * @param expectedLocation expected current metadata-location of the table
@@ -301,6 +320,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * @return true, if the location update was successful. false, otherwise
      */
     public boolean updateTableMetadataLocationAndParams(
+        final String catalogName,
         final String databaseName, final String tableName,
         final String expectedLocation, final String newLocation,
         final Map<String, String> existingParams, final Map<String, String> newParams,
@@ -309,7 +329,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
             ? new HashMap<>() : new HashMap<>(existingParams);
         mergedParams.putAll(newParams);
         final int updatedRowCount =
-            tblRepo.updateMetadataLocationAndParams(databaseName, tableName,
+            tblRepo.updateMetadataLocationAndParams(catalogName, databaseName, tableName,
                 expectedLocation, newLocation, mergedParams, lastModifiedBy, Instant.now());
         return updatedRowCount > 0;
     }
