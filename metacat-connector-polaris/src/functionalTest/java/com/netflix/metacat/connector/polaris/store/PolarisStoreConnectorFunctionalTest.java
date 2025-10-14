@@ -1,5 +1,6 @@
 package com.netflix.metacat.connector.polaris.store;
 
+import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.connector.polaris.TestUtil;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
@@ -146,8 +147,9 @@ public class PolarisStoreConnectorFunctionalTest {
      */
     public PolarisDatabaseEntity createDB(final String catalogName, final String dbName) {
         final String location = "file://temp";
+        final Map<String, String> params = ImmutableMap.of("owner", "bdp");
         final PolarisDatabaseEntity entity = polarisConnector.createDatabase(
-                CATALOG_NAME_TEST, dbName, location, "metacat_user");
+                CATALOG_NAME_TEST, dbName, location, "metacat_user", params);
 
         // assert that database exists, post-creation.
         Assert.assertTrue(polarisConnector.databaseExistsById(entity.getDbId()));
@@ -157,6 +159,7 @@ public class PolarisStoreConnectorFunctionalTest {
         Assert.assertTrue(entity.getDbId().length() > 0);
         Assert.assertEquals(dbName, entity.getDbName());
         Assert.assertEquals(location, entity.getLocation());
+        Assert.assertEquals(params,  entity.getParams());
         Assert.assertEquals(DEFAULT_METACAT_USER, entity.getAudit().getCreatedBy());
 
         final Optional<PolarisDatabaseEntity> fetchedEntity = polarisConnector.getDatabase(catalogName, dbName);

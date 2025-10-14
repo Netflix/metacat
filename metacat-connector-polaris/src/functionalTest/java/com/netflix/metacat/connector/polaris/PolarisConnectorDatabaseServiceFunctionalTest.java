@@ -1,6 +1,7 @@
 
 package com.netflix.metacat.connector.polaris;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
@@ -37,6 +38,7 @@ import spock.lang.Shared;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -147,6 +149,7 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         polarisDBService.create(requestContext, info);
         final DatabaseInfo result = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
         Assert.assertEquals(info, result);
+        Assert.assertTrue(result.getMetadata().isEmpty());
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
     }
 
@@ -216,6 +219,49 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         polarisDBService.update(requestContext, info);
         final DatabaseInfo result = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
         Assert.assertEquals(info, result);
+        polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
+    }
+
+    /**
+     * Test create database and update params/metadata.
+     */
+    @Test
+    public void testDbParams() {
+        DatabaseInfo info = DatabaseInfo.builder()
+            .name(DB1_QUALIFIED_NAME_TEST_CATALOG)
+            .metadata(ImmutableMap.of("owner", "bdp"))
+            .build();
+        polarisDBService.create(requestContext, info);
+        final DatabaseInfo infoExpected = DatabaseInfo.builder()
+            .name(DB1_QUALIFIED_NAME_TEST_CATALOG).uri(DB1_NAME + ".db")
+            .metadata(ImmutableMap.of("owner", "bdp"))
+            .build();
+        info = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
+        Assert.assertEquals(infoExpected, info);
+        Assert.assertEquals(info.getMetadata().get("owner"), "bdp");
+
+        info.setMetadata(null);
+        polarisDBService.update(requestContext, info);
+        info = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
+        Assert.assertEquals(info.getMetadata().get("owner"), "bdp");
+
+        info.setMetadata(ImmutableMap.of("owner", "bdp_updated"));
+        polarisDBService.update(requestContext, info);
+        info = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
+        Assert.assertEquals(info.getMetadata().get("owner"), "bdp_updated");
+
+        info.setMetadata(ImmutableMap.of("owner2", "bdp2"));
+        polarisDBService.update(requestContext, info);
+        info = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
+        Assert.assertEquals(info.getMetadata().get("owner"), "bdp_updated");
+        Assert.assertEquals(info.getMetadata().get("owner2"), "bdp2");
+
+        info.setMetadata(new HashMap<>());
+        polarisDBService.update(requestContext, info);
+        info = polarisDBService.get(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
+        Assert.assertEquals(info.getMetadata().get("owner"), "bdp_updated");
+        Assert.assertEquals(info.getMetadata().get("owner2"), "bdp2");
+
         polarisDBService.delete(requestContext, DB1_QUALIFIED_NAME_TEST_CATALOG);
     }
 

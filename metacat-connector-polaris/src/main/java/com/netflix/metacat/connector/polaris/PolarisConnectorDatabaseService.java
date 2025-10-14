@@ -21,7 +21,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -66,7 +68,9 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
         try {
             final String location = databaseInfo.getUri() == null
                 ? this.defaultLocationPrefix + name.getDatabaseName() + DEFAULT_LOCATION_SUFFIX : databaseInfo.getUri();
-            this.polarisStoreService.createDatabase(name.getCatalogName(), name.getDatabaseName(), location, createdBy);
+            final Map<String, String> params = databaseInfo.getMetadata();
+            this.polarisStoreService.createDatabase(
+                name.getCatalogName(), name.getDatabaseName(), location, createdBy, params);
         } catch (DataIntegrityViolationException exception) {
             throw new InvalidMetaException(name, exception);
         } catch (Exception exception) {
@@ -104,7 +108,12 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             final PolarisDatabaseEntity db =
                 polarisStoreService.getDatabase(name.getCatalogName(), name.getDatabaseName())
                 .orElseThrow(() -> new DatabaseNotFoundException(name));
-            // currently db objects have no mutable fields so this is noop
+            final Map<String, String> params = (db.getParams() != null)
+                ? new HashMap<>(db.getParams()) : new HashMap<>();
+            if (databaseInfo.getMetadata() != null) {
+                params.putAll(databaseInfo.getMetadata());
+            }
+            db.setParams(params);
             db.getAudit().setLastModifiedBy(PolarisUtils.getUserOrDefault(context));
             polarisStoreService.saveDatabase(db.toBuilder().build());
         } catch (DatabaseNotFoundException exception) {

@@ -1,10 +1,12 @@
 package com.netflix.metacat.connector.polaris.store.entities;
 
+import jakarta.persistence.Convert;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -18,6 +20,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+
+import java.util.Map;
 
 
 /**
@@ -58,6 +62,11 @@ public class PolarisDatabaseEntity {
     @Embedded
     private AuditEntity audit;
 
+    @Setter
+    @Convert(converter = StringParamsConverter.class)
+    @Column(name = "params", nullable = true, updatable = true)
+    private Map<String, String> params;
+
     /**
      * Constructor for Polaris Database Entity.
      *
@@ -65,15 +74,18 @@ public class PolarisDatabaseEntity {
      * @param dbName    database name
      * @param location  database location.
      * @param createdBy user that created this entity.
+     * @param params metadata for this entity.
      */
     public PolarisDatabaseEntity(
         final String catalogName,
         final String dbName,
                                  final String location,
-                                 final String createdBy) {
+                                 final String createdBy,
+                                 final Map<String, String> params) {
         this.catalogName = catalogName;
         this.dbName = dbName;
         this.location = location;
+        this.params = params;
         this.audit = AuditEntity
                 .builder()
                 .createdBy(createdBy)
