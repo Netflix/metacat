@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -39,7 +40,8 @@ import java.util.Objects;
 @Getter
 public final class QualifiedName implements Serializable {
     private static final long serialVersionUID = -7916364073519921672L;
-    private static final String CATALOG_CDE_NAME_PREFIX = "cde_";
+    private static final List<String> CASE_SENSITIVE_CATALOG_PREFIXES = List.of("cde_");
+    private static final List<String> CASE_SENSITIVE_CATALOG_SUFFIXES = List.of("druid");
     private final String catalogName;
     private final String databaseName;
     private final String partitionName;
@@ -56,7 +58,7 @@ public final class QualifiedName implements Serializable {
     ) {
         this.catalogName = standardizeRequired("catalogName", catalogName);
         // TODO: Temporary hack to support a certain catalog that has mixed case naming.
-        final boolean forceLowerCase = !catalogName.startsWith(CATALOG_CDE_NAME_PREFIX);
+        final boolean forceLowerCase = !isCaseSensitiveCatalog(catalogName);
         this.databaseName = standardizeOptional(databaseName, forceLowerCase);
         this.tableName = standardizeOptional(tableName, forceLowerCase);
         this.partitionName = standardizeOptional(partitionName, false);
@@ -613,6 +615,15 @@ public final class QualifiedName implements Serializable {
      */
     private static boolean isNullOrEmpty(@Nullable final CharSequence cs) {
         return cs == null || cs.length() == 0;
+    }
+
+    /**
+     * Checks whether the catalog supports case-sensitive qualified names.
+     * @param catalogName catalog name
+     */
+    private static boolean isCaseSensitiveCatalog(final String catalogName) {
+        return CASE_SENSITIVE_CATALOG_PREFIXES.stream().anyMatch(catalogName::startsWith)
+               || CASE_SENSITIVE_CATALOG_SUFFIXES.stream().anyMatch(catalogName::endsWith);
     }
 
     /**

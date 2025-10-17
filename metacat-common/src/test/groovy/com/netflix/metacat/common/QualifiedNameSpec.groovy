@@ -257,4 +257,25 @@ class QualifiedNameSpec extends Specification {
         ""          | "database_1" | "abcd"    | "%/database_1/abcd%"
         ""          | ""           | "abcd"    | "%/%/abcd%"
     }
+
+    @Unroll
+    def 'expect case sensitive catalogs to preserve case for #catalogName'() {
+        when:
+        def qualifiedName = QualifiedName.fromString(inputString)
+
+        then:
+        qualifiedName.catalogName == expectedCatalogName
+        qualifiedName.databaseName == expectedDatabaseName
+        qualifiedName.tableName == expectedTableName
+        qualifiedName.toString() == expectedString
+
+        where:
+        catalogName   | inputString                                     | expectedCatalogName | expectedDatabaseName | expectedTableName         | expectedString
+        'testdruid'   | 'testdruid/default/my_CASE_sensitive_table'     | 'testdruid'         | 'default'            | 'my_CASE_sensitive_table' | 'testdruid/default/my_CASE_sensitive_table'
+        'testdruid'   | 'testdruid/DEFAULT/MY_TABLE'                    | 'testdruid'         | 'DEFAULT'            | 'MY_TABLE'                | 'testdruid/DEFAULT/MY_TABLE'
+        'testdruid'   | 'testdruid/Lower_Case_Db/MiXeD_cAsE_tAbLe'      | 'testdruid'         | 'Lower_Case_Db'      | 'MiXeD_cAsE_tAbLe'        | 'testdruid/Lower_Case_Db/MiXeD_cAsE_tAbLe'
+        'cde_catalog' | 'cde_catalog/Test_DB/Test_TABLE'                | 'cde_catalog'       | 'Test_DB'            | 'Test_TABLE'              | 'cde_catalog/Test_DB/Test_TABLE'
+        'cde_catalog' | 'cde_catalog/Test_DB/Test_TABLE'                | 'cde_catalog'       | 'Test_DB'            | 'Test_TABLE'              | 'cde_catalog/Test_DB/Test_TABLE'
+        'prodhive'    | 'prodhive/database_1/Test_TABLE'                | 'prodhive'          | 'database_1'         | 'test_table'              | 'prodhive/database_1/test_table'
+    }
 }
