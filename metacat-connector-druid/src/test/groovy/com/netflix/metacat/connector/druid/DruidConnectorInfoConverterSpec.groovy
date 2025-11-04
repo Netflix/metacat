@@ -65,6 +65,18 @@ class DruidConnectorInfoConverterSpec extends Specification{
             "gps_model,location_row_desc,list_context,nrdportal_device_category,location_group_desc,dateint,country_iso_code")
     }
 
+    def "Test getDatasourceFromJsonObjectWithEmptyDimensionAndMetric" () {
+        def druidInfoConverter = new DruidConnectorInfoConverter("test")
+        def data = new MetacatJsonLocator().parseJsonObject(getDatasourceJsonWithEmptyDimensionAndMetric())
+
+        when:
+        def tbls = druidInfoConverter.getTableInfoFromDatasource(DruidConverterUtil.getDatasourceFromAllSegmentJsonObject(data))
+
+        then:
+        tbls.fields.size() == 0
+        tbls.getName() != null
+    }
+
     private static getDatasourceJson() {
         return "{\n" +
             "\"name\": \"algodash_map_row_report_agg\",\n" +
@@ -109,5 +121,51 @@ class DruidConnectorInfoConverterSpec extends Specification{
             "\"identifier\": \"algodash_map_row_report_agg_2016-09-02T00:00:00.000Z_2016-09-03T00:00:00.000Z_2016-10-10T21:19:50.893Z\"\n" +
             "}]\n" +
             "}";
+    }
+
+    private static getDatasourceJsonWithEmptyDimensionAndMetric() {
+        return "{\n" +
+               "\"name\": \"algodash_map_row_report_agg\",\n" +
+               "\"properties\": {\n" +
+               "\"created\": \"2017-09-27T16:41:15.154Z\"\n" +
+               "},\n" +
+               "\"segments\": [\n" +
+               "{\n" +
+               "\"dataSource\": \"algodash_map_row_report_agg\",\n" +
+               "\"interval\": \"2016-09-01T00:00:00.000Z/2016-09-02T00:00:00.000Z\",\n" +
+               "\"version\": \"2016-10-10T21:19:50.893Z\",\n" +
+               "\"loadSpec\": {\n" +
+               "\"type\": \"s3_zip\",\n" +
+               "\"bucket\": \"netflix-dataoven-prod-users\",\n" +
+               "\"key\": \"druid/bdp_druid_prod/algodash_map_row_report_agg/2016-09-01T00:00:00.000Z_2016-09-02T00:00:00.000Z/2016-10-10T21:19:50.893Z/0/index.zip\"\n" +
+               "},\n" +
+               "\"dimensions\": \"\",\n" +
+               "\"metrics\": \"\",\n" +
+               "\"shardSpec\": {\n" +
+               "\"type\": \"none\"\n" +
+               "},\n" +
+               "\"binaryVersion\": 9,\n" +
+               "\"size\": 19140218,\n" +
+               "\"identifier\": \"algodash_map_row_report_agg_2016-09-01T00:00:00.000Z_2016-09-02T00:00:00.000Z_2016-10-10T21:19:50.893Z\"\n" +
+               "},\n" +
+               "{\n" +
+               "\"dataSource\": \"algodash_map_row_report_agg\",\n" +
+               "\"interval\": \"2016-09-02T00:00:00.000Z/2016-09-03T00:00:00.000Z\",\n" +
+               "\"version\": \"2016-10-10T21:19:50.893Z\",\n" +
+               "\"loadSpec\": {\n" +
+               "\"type\": \"s3_zip\",\n" +
+               "\"bucket\": \"netflix-dataoven-prod-users\",\n" +
+               "\"key\": \"druid/bdp_druid_prod/algodash_map_row_report_agg/2016-09-02T00:00:00.000Z_2016-09-03T00:00:00.000Z/2016-10-10T21:19:50.893Z/0/index.zip\"\n" +
+               "},\n" +
+               "\"dimensions\": \"\",\n" +
+               "\"metrics\": \"\",\n" +
+               "\"shardSpec\": {\n" +
+               "\"type\": \"none\"\n" +
+               "},\n" +
+               "\"binaryVersion\": 9,\n" +
+               "\"size\": 20380105,\n" +
+               "\"identifier\": \"algodash_map_row_report_agg_2016-09-02T00:00:00.000Z_2016-09-03T00:00:00.000Z_2016-10-10T21:19:50.893Z\"\n" +
+               "}]\n" +
+               "}";
     }
 }

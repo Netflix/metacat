@@ -61,19 +61,28 @@ public class DruidConnectorInfoConverter implements ConnectorInfoConverter<Datab
         final Segment latestSegment = segmentList.get(segmentList.size() - 1);
         final List<FieldInfo> fieldInfos = new ArrayList<>();
 
-        for (String dim : latestSegment.getDimensions().split(",")) {
-            fieldInfos.add(FieldInfo.builder()
-                .comment(DruidConfigConstants.DIMENSIONS)
-                .name(dim)
-                .type(BaseType.STRING)
-                .build());
+        // An empty string is returned if there is no dimension.
+        // In this case, we should not add a field with an empty name.
+        if (!latestSegment.getDimensions().isEmpty()) {
+            for (String dim : latestSegment.getDimensions().split(",")) {
+                fieldInfos.add(FieldInfo.builder()
+                                        .comment(DruidConfigConstants.DIMENSIONS)
+                                        .name(dim)
+                                        .type(BaseType.STRING)
+                                        .build());
+            }
         }
-        for (String dim : latestSegment.getMetric().split(",")) {
-            fieldInfos.add(FieldInfo.builder()
-                .comment(DruidConfigConstants.METRICS)
-                .name(dim)
-                .type(BaseType.DOUBLE)
-                .build());
+
+        // An empty string is returned if there is no metric.
+        // In this case, we should not add a field with an empty name.
+        if (!latestSegment.getMetric().isEmpty()) {
+            for (String dim : latestSegment.getMetric().split(",")) {
+                fieldInfos.add(FieldInfo.builder()
+                                        .comment(DruidConfigConstants.METRICS)
+                                        .name(dim)
+                                        .type(BaseType.DOUBLE)
+                                        .build());
+            }
         }
 
         return TableInfo.builder().fields(fieldInfos)
