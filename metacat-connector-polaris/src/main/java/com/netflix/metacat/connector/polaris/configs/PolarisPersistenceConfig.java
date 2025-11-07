@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.configs;
 
 import com.zaxxer.hikari.HikariDataSource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -33,6 +34,7 @@ import javax.sql.DataSource;
 @ImportAutoConfiguration({DataSourceAutoConfiguration.class,
     DataSourceTransactionManagerAutoConfiguration.class, HibernateJpaAutoConfiguration.class,
     TransactionAutoConfiguration.class})
+@Slf4j
 public class PolarisPersistenceConfig {
 
     /**
@@ -60,6 +62,8 @@ public class PolarisPersistenceConfig {
     @Primary
     @ConfigurationProperties("spring.datasource")
     public DataSourceProperties dataSourceProperties() {
+        DataSourceProperties dataSourceProperties = new DataSourceProperties();
+        log.info("Hey passoword = {}", dataSourceProperties.getPassword());
         return new DataSourceProperties();
     }
 }
