@@ -56,7 +56,8 @@ public class PolarisDatabaseEntity {
     private String dbName;
 
     @Basic
-    @Column(name = "location", updatable = false)
+    @Setter
+    @Column(name = "location")
     private String location;
 
     @Embedded

@@ -114,6 +114,13 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
                 params.putAll(databaseInfo.getMetadata());
             }
             db.setParams(params);
+            // Temporarily setting location/audit from databaseInfo for backfill
+            if (databaseInfo.getUri() != null) {
+                db.setLocation(databaseInfo.getUri());
+            }
+            if (databaseInfo.getAudit() != null && databaseInfo.getAudit().getCreatedBy() != null) {
+                db.getAudit().setCreatedBy(databaseInfo.getAudit().getCreatedBy());
+            }
             db.getAudit().setLastModifiedBy(PolarisUtils.getUserOrDefault(context));
             polarisStoreService.saveDatabase(db.toBuilder().build());
         } catch (DatabaseNotFoundException exception) {
