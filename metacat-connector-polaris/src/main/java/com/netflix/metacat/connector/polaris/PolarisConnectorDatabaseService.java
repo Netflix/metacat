@@ -115,10 +115,23 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             }
             db.setParams(params);
             // Temporarily setting location/audit from databaseInfo for backfill
-            if (databaseInfo.getUri() != null) {
+            if (databaseInfo.getUri() != null
+                && !databaseInfo.getUri().equals(db.getLocation())
+            ) {
+                log.warn(
+                    "DBS Update: Updating database {} location from {} to {}",
+                    name.getDatabaseName(), db.getLocation(), databaseInfo.getUri()
+                );
                 db.setLocation(databaseInfo.getUri());
             }
-            if (databaseInfo.getAudit() != null && databaseInfo.getAudit().getCreatedBy() != null) {
+            if (databaseInfo.getAudit() != null
+                && databaseInfo.getAudit().getCreatedBy() != null
+                && !databaseInfo.getAudit().getCreatedBy().equals(db.getAudit().getCreatedBy())
+            ) {
+                log.warn(
+                    "DBS Update: Updating database {} createdby from {} to {}",
+                    name.getDatabaseName(), db.getAudit().getCreatedBy(), databaseInfo.getAudit().getCreatedBy()
+                );
                 db.getAudit().setCreatedBy(databaseInfo.getAudit().getCreatedBy());
             }
             db.getAudit().setLastModifiedBy(PolarisUtils.getUserOrDefault(context));
