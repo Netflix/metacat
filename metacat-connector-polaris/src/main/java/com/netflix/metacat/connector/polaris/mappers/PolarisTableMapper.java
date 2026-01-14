@@ -6,7 +6,7 @@ import com.netflix.metacat.common.server.connectors.exception.InvalidMetaExcepti
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.StorageInfo;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
+import com.netflix.metacat.common.server.connector.sql.DirectSqlTable;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;

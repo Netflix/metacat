@@ -1,0 +1,165 @@
+{
+    "format-version": 1,
+    "table-uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "location": "file:/tmp/data",
+    "last-updated-ms": 1705000000000,
+    "last-column-id": 4,
+    "schema": {
+        "type": "struct",
+        "schema-id": 0,
+        "fields": [
+            {
+                "id": 1,
+                "name": "field1",
+                "required": false,
+                "type": "string",
+                "doc": "added 1st - partition key"
+            },
+            {
+                "id": 2,
+                "name": "field2",
+                "required": false,
+                "type": "string",
+                "doc": "added 2st"
+            },
+            {
+                "id": 3,
+                "name": "field3",
+                "required": false,
+                "type": "string",
+                "doc": "added 3st - partition key"
+            },
+            {
+                "id": 4,
+                "name": "field4",
+                "required": false,
+                "type": {
+                    "type": "list",
+                    "element-id": 5,
+                    "element": {
+                        "type": "struct",
+                        "fields": [
+                            {
+                                "id": 6,
+                                "name": "version",
+                                "required": false,
+                                "type": "string"
+                            },
+                            {
+                                "id": 7,
+                                "name": "ts",
+                                "required": false,
+                                "type": "long"
+                            }
+                        ]
+                    },
+                    "element-required": false
+                },
+                "doc": "added 4st"
+            }
+        ]
+    },
+    "current-schema-id": 0,
+    "schemas": [
+        {
+            "type": "struct",
+            "schema-id": 0,
+            "fields": [
+                {
+                    "id": 1,
+                    "name": "field1",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "id": 2,
+                    "name": "field2",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "id": 3,
+                    "name": "field3",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "id": 4,
+                    "name": "field4",
+                    "required": false,
+                    "type": {
+                        "type": "list",
+                        "element-id": 5,
+                        "element": {
+                            "type": "struct",
+                            "fields": [
+                                {
+                                    "id": 6,
+                                    "name": "version",
+                                    "required": false,
+                                    "type": "string"
+                                },
+                                {
+                                    "id": 7,
+                                    "name": "ts",
+                                    "required": false,
+                                    "type": "long"
+                                }
+                            ]
+                        },
+                        "element-required": false
+                    }
+                }
+            ]
+        }
+    ],
+    "partition-spec": [
+        {
+            "name": "field1",
+            "transform": "identity",
+            "source-id": 1,
+            "field-id": 1000
+        },
+        {
+            "name": "field3",
+            "transform": "identity",
+            "source-id": 3,
+            "field-id": 1001
+        }
+    ],
+    "default-spec-id": 0,
+    "partition-specs": [
+        {
+            "spec-id": 0,
+            "fields": [
+                {
+                    "name": "field1",
+                    "transform": "identity",
+                    "source-id": 1,
+                    "field-id": 1000
+                },
+                {
+                    "name": "field3",
+                    "transform": "identity",
+                    "source-id": 3,
+                    "field-id": 1001
+                }
+            ]
+        }
+    ],
+    "last-partition-id": 1001,
+    "default-sort-order-id": 0,
+    "sort-orders": [
+        {
+            "order-id": 0,
+            "fields": []
+        }
+    ],
+    "properties": {},
+    "current-snapshot-id": -1,
+    "refs": {},
+    "snapshots": [],
+    "statistics": [],
+    "snapshot-log": [],
+    "metadata-log": []
+}

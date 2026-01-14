@@ -33,6 +33,13 @@ dependencies {
     api("org.springframework:spring-jdbc")
     api("com.netflix.spectator:spectator-api")
 
+    // Hadoop and Iceberg dependencies for shared classes
+    api("org.apache.hadoop:hadoop-core")
+    api("com.github.rholder:guava-retrying") {
+        exclude module: "guava"
+    }
+    api("org.apache.iceberg:iceberg-spark-runtime-${iceberg_spark_version}_${iceberg_scala_version}")
+
     /*******************************
      * Implementation Dependencies
      *******************************/
@@ -56,7 +63,9 @@ dependencies {
      *******************************/
 
     testImplementation(project(":metacat-common").sourceSets.test.output)
+    testImplementation(project(":metacat-testdata-provider"))
     testImplementation("commons-logging:commons-logging")
+    testImplementation("joda-time:joda-time:2.10.10")
 }
 
 tasks.withType(Checkstyle) {

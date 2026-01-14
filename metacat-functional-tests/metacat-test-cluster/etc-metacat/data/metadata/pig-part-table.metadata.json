@@ -1,0 +1,84 @@
+{
+    "format-version": 1,
+    "table-uuid": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "location": "file:/tmp/data",
+    "last-updated-ms": 1705000000000,
+    "last-column-id": 2,
+    "schema": {
+        "type": "struct",
+        "schema-id": 0,
+        "fields": [
+            {
+                "id": 1,
+                "name": "two",
+                "required": false,
+                "type": "string",
+                "doc": "testing"
+            },
+            {
+                "id": 2,
+                "name": "one",
+                "required": false,
+                "type": "string"
+            }
+        ]
+    },
+    "current-schema-id": 0,
+    "schemas": [
+        {
+            "type": "struct",
+            "schema-id": 0,
+            "fields": [
+                {
+                    "id": 1,
+                    "name": "two",
+                    "required": false,
+                    "type": "string"
+                },
+                {
+                    "id": 2,
+                    "name": "one",
+                    "required": false,
+                    "type": "string"
+                }
+            ]
+        }
+    ],
+    "partition-spec": [
+        {
+            "name": "one",
+            "transform": "identity",
+            "source-id": 2,
+            "field-id": 1000
+        }
+    ],
+    "default-spec-id": 0,
+    "partition-specs": [
+        {
+            "spec-id": 0,
+            "fields": [
+                {
+                    "name": "one",
+                    "transform": "identity",
+                    "source-id": 2,
+                    "field-id": 1000
+                }
+            ]
+        }
+    ],
+    "last-partition-id": 1000,
+    "default-sort-order-id": 0,
+    "sort-orders": [
+        {
+            "order-id": 0,
+            "fields": []
+        }
+    ],
+    "properties": {},
+    "current-snapshot-id": -1,
+    "refs": {},
+    "snapshots": [],
+    "statistics": [],
+    "snapshot-log": [],
+    "metadata-log": []
+}

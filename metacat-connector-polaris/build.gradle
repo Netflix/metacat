@@ -29,7 +29,6 @@ dependencies {
     /*******************************
      * Compile Dependencies
      *******************************/
-    api(project(":metacat-connector-hive"))
     api(project(":metacat-connector-jdbc"))
     api(project(":metacat-common-server"))
     api('org.springframework.data:spring-data-jpa')

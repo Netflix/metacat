@@ -5,8 +5,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorFactory;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.ConnectorPlugin;
 import com.netflix.metacat.common.server.connectors.ConnectorTypeConverter;
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
+import com.netflix.metacat.common.server.converter.IcebergTypeConverter;
 import lombok.NonNull;
 
 import javax.annotation.Nonnull;
@@ -16,9 +15,8 @@ import javax.annotation.Nonnull;
 public class PolarisConnectorPlugin implements ConnectorPlugin {
 
     private static final String CONNECTOR_TYPE = "polaris";
-    private static final HiveTypeConverter TYPE_CONVERTER = new HiveTypeConverter();
-    private static final HiveConnectorInfoConverter INFO_CONVERTER
-        = new HiveConnectorInfoConverter(TYPE_CONVERTER);
+    private static final IcebergTypeConverter TYPE_CONVERTER = new IcebergTypeConverter();
+    private static final PolarisConnectorInfoConverter INFO_CONVERTER = new PolarisConnectorInfoConverter();
 
     /**
      * {@inheritDoc}

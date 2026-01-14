@@ -19,6 +19,8 @@ package com.netflix.metacat.main.configs;
 
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
+import com.netflix.metacat.common.server.converter.TypeConverterFactory;
+import com.netflix.metacat.thrift.converters.HiveTypeConverter;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.main.manager.ConnectorManager;
 import com.netflix.metacat.main.services.MetacatThriftService;
@@ -31,6 +33,8 @@ import com.netflix.spectator.api.Registry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import jakarta.annotation.PostConstruct;
+
 /**
  * Spring Configuration for the Thrift Module.
  *
@@ -39,6 +43,30 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ThriftConfig {
+
+    private static final String HIVE_TYPE_CONTEXT = "hive";
+
+    private final TypeConverterFactory typeConverterFactory;
+
+    /**
+     * Constructor.
+     *
+     * @param typeConverterFactory The type converter factory for registering converters
+     */
+    public ThriftConfig(final TypeConverterFactory typeConverterFactory) {
+        this.typeConverterFactory = typeConverterFactory;
+    }
+
+    /**
+     * Register the HiveTypeConverter under the "hive" key.
+     * This is required because the Thrift interface sets the data type context to "hive"
+     * for all Thrift requests (in CatalogThriftEventHandler), and we need a corresponding
+     * type converter registered even when the hive connector module is not present.
+     */
+    @PostConstruct
+    public void registerHiveTypeConverter() {
+        typeConverterFactory.register(HIVE_TYPE_CONTEXT, new HiveTypeConverter());
+    }
 
     /**
      * The hive converters implementation to use.

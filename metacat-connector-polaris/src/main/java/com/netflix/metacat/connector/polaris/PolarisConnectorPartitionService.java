@@ -9,7 +9,7 @@ import com.netflix.metacat.common.server.connectors.exception.PartitionNotFoundE
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableHandler;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 

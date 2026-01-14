@@ -18,13 +18,12 @@ import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl;
 import com.netflix.metacat.common.server.properties.MetacatProperties;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
+import com.netflix.metacat.common.server.connector.commonview.CommonViewHandler;
+import com.netflix.metacat.common.server.converter.converters.IcebergTableInfoConverter;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableCriteriaImpl;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableHandler;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableOpWrapper;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceConfig;
 import com.netflix.metacat.connector.polaris.configs.PolarisPersistenceReaderConfig;
 import com.netflix.metacat.connector.polaris.configs.PolarisStoreConfig;
@@ -142,7 +141,7 @@ public class PolarisConnectorTableServiceFunctionalTest {
         polarisTableService = new PolarisConnectorTableService(
             polarisStoreService,
             polarisDBService,
-            new HiveConnectorInfoConverter(new HiveTypeConverter()),
+            new IcebergTableInfoConverter(),
             new IcebergTableHandler(connectorContext,
                 new IcebergTableCriteriaImpl(connectorContext),
                 new IcebergTableOpWrapper(connectorContext, serviceManager),

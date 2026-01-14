@@ -22,6 +22,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.github.spotbugs:spotbugs-annotations": {
             "locked": "4.8.2"
         },
@@ -81,9 +87,16 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-connector-pig"
             ],
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.pig:pig": {
             "firstLevelTransitive": [
@@ -161,6 +174,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -225,9 +244,16 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-connector-pig"
             ],
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.pig:pig": {
             "firstLevelTransitive": [
@@ -321,6 +347,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -383,9 +415,16 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-connector-pig"
             ],
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.pig:pig": {
             "firstLevelTransitive": [
@@ -474,6 +513,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -544,9 +589,16 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-connector-pig"
             ],
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.pig:pig": {
             "firstLevelTransitive": [

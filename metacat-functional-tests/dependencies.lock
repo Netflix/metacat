@@ -59,7 +59,7 @@
         },
         "com.github.rholder:guava-retrying": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "2.0.0"
         },
@@ -68,7 +68,8 @@
                 "com.netflix.metacat:metacat-client",
                 "com.netflix.metacat:metacat-common",
                 "com.netflix.metacat:metacat-common-server",
-                "com.netflix.metacat:metacat-metadata-mysql"
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "31.0.1-jre"
         },
@@ -86,25 +87,26 @@
                 "com.netflix.metacat:metacat-client",
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql",
-                "com.netflix.metacat:metacat-testdata-provider"
+                "com.netflix.metacat:metacat-testdata-provider",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "project": true
         },
         "com.netflix.metacat:metacat-common-server": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
-                "com.netflix.metacat:metacat-testdata-provider"
+                "com.netflix.metacat:metacat-testdata-provider",
+                "com.netflix.metacat:metacat-thrift"
             ],
-            "project": true
-        },
-        "com.netflix.metacat:metacat-connector-hive": {
             "project": true
         },
         "com.netflix.metacat:metacat-metadata-mysql": {
             "project": true
         },
         "com.netflix.metacat:metacat-testdata-provider": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
             "project": true
         },
         "com.netflix.spectator:spectator-api": {
@@ -118,7 +120,6 @@
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
             "locked": "1.6"
@@ -158,25 +159,26 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-exec": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-metastore": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "1.9.1"
         },
@@ -257,6 +259,12 @@
         "cglib:cglib-nodep": {
             "locked": "3.2.4"
         },
+        "com.esotericsoftware.kryo:kryo": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-thrift"
+            ],
+            "locked": "2.22"
+        },
         "com.fasterxml.jackson.core:jackson-databind": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-client",
@@ -284,7 +292,7 @@
         },
         "com.github.rholder:guava-retrying": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "2.0.0"
         },
@@ -293,7 +301,8 @@
                 "com.netflix.metacat:metacat-client",
                 "com.netflix.metacat:metacat-common",
                 "com.netflix.metacat:metacat-common-server",
-                "com.netflix.metacat:metacat-metadata-mysql"
+                "com.netflix.metacat:metacat-metadata-mysql",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "31.0.1-jre"
         },
@@ -311,25 +320,26 @@
                 "com.netflix.metacat:metacat-client",
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql",
-                "com.netflix.metacat:metacat-testdata-provider"
+                "com.netflix.metacat:metacat-testdata-provider",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "project": true
         },
         "com.netflix.metacat:metacat-common-server": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
-                "com.netflix.metacat:metacat-testdata-provider"
+                "com.netflix.metacat:metacat-testdata-provider",
+                "com.netflix.metacat:metacat-thrift"
             ],
-            "project": true
-        },
-        "com.netflix.metacat:metacat-connector-hive": {
             "project": true
         },
         "com.netflix.metacat:metacat-metadata-mysql": {
             "project": true
         },
         "com.netflix.metacat:metacat-testdata-provider": {
+            "project": true
+        },
+        "com.netflix.metacat:metacat-thrift": {
             "project": true
         },
         "com.netflix.spectator:spectator-api": {
@@ -343,15 +353,14 @@
                 "com.netflix.metacat:metacat-client",
                 "com.netflix.metacat:metacat-common",
                 "com.netflix.metacat:metacat-common-server",
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
-                "com.netflix.metacat:metacat-testdata-provider"
+                "com.netflix.metacat:metacat-testdata-provider",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "5.0.1"
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
             "locked": "1.6"
@@ -379,7 +388,6 @@
         },
         "mysql:mysql-connector-java": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
             "locked": "8.0.27"
@@ -398,25 +406,26 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-exec": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-metastore": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "1.9.1"
         },
@@ -488,9 +497,9 @@
                 "com.netflix.metacat:metacat-client",
                 "com.netflix.metacat:metacat-common",
                 "com.netflix.metacat:metacat-common-server",
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
-                "com.netflix.metacat:metacat-testdata-provider"
+                "com.netflix.metacat:metacat-testdata-provider",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "3.2.12"
         },
@@ -558,7 +567,7 @@
         },
         "com.github.rholder:guava-retrying": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "2.0.0"
         },
@@ -586,13 +595,9 @@
         },
         "com.netflix.metacat:metacat-common-server": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
                 "com.netflix.metacat:metacat-testdata-provider"
             ],
-            "project": true
-        },
-        "com.netflix.metacat:metacat-connector-hive": {
             "project": true
         },
         "com.netflix.metacat:metacat-metadata-mysql": {
@@ -612,7 +617,6 @@
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
             "locked": "1.6"
@@ -634,25 +638,13 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
-            ],
-            "locked": "1.2.1"
-        },
-        "org.apache.hive:hive-exec": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
-            ],
-            "locked": "1.2.1"
-        },
-        "org.apache.hive:hive-metastore": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "1.9.1"
         },
@@ -746,7 +738,7 @@
         },
         "com.github.rholder:guava-retrying": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "2.0.0"
         },
@@ -774,13 +766,9 @@
         },
         "com.netflix.metacat:metacat-common-server": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
                 "com.netflix.metacat:metacat-testdata-provider"
             ],
-            "project": true
-        },
-        "com.netflix.metacat:metacat-connector-hive": {
             "project": true
         },
         "com.netflix.metacat:metacat-metadata-mysql": {
@@ -799,7 +787,6 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
                 "com.netflix.metacat:metacat-common-server",
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
                 "com.netflix.metacat:metacat-testdata-provider"
             ],
@@ -807,7 +794,6 @@
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
             "locked": "1.6"
@@ -817,7 +803,6 @@
         },
         "mysql:mysql-connector-java": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
             "locked": "8.0.27"
@@ -836,25 +821,13 @@
         },
         "org.apache.hadoop:hadoop-core": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
-            ],
-            "locked": "1.2.1"
-        },
-        "org.apache.hive:hive-exec": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
-            ],
-            "locked": "1.2.1"
-        },
-        "org.apache.hive:hive-metastore": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "1.2.1"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "1.9.1"
         },
@@ -924,7 +897,6 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
                 "com.netflix.metacat:metacat-common-server",
-                "com.netflix.metacat:metacat-connector-hive",
                 "com.netflix.metacat:metacat-metadata-mysql",
                 "com.netflix.metacat:metacat-testdata-provider"
             ],

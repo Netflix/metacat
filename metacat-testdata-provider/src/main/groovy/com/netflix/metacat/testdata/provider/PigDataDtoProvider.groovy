@@ -25,6 +25,13 @@ import com.netflix.metacat.common.json.MetacatJsonLocator
  */
 class PigDataDtoProvider {
     private static final MetacatJson metacatJson = new MetacatJsonLocator()
+
+    // Iceberg metadata file locations for Polaris connector tests
+    private static final String PIG_TABLE_METADATA = 'file:/tmp/data/metadata/pig-table.metadata.json'
+    private static final String PIG_PART_TABLE_METADATA = 'file:/tmp/data/metadata/pig-part-table.metadata.json'
+    private static final String PIG_PARTS_TABLE_METADATA = 'file:/tmp/data/metadata/pig-parts-table.metadata.json'
+    private static final String METACAT_ALL_TYPES_METADATA = 'file:/tmp/data/metadata/metacat-all-types.metadata.json'
+
     /**
      * Returns a tableDto with the provided information.
      */
@@ -80,7 +87,11 @@ class PigDataDtoProvider {
                                 partition_key: false
                         )
                 ],
-                definitionMetadata: getDefinitionMetadata(owner)
+                definitionMetadata: getDefinitionMetadata(owner),
+                metadata: [
+                        'table_type': 'ICEBERG',
+                        'metadata_location': PIG_TABLE_METADATA
+                ]
         )
     }
 
@@ -171,7 +182,11 @@ class PigDataDtoProvider {
                                 partition_key: true
                         )
                 ],
-                definitionMetadata: getDefinitionMetadata(owner)
+                definitionMetadata: getDefinitionMetadata(owner),
+                metadata: [
+                        'table_type': 'ICEBERG',
+                        'metadata_location': PIG_PART_TABLE_METADATA
+                ]
         )
     }
     /**
@@ -222,7 +237,11 @@ class PigDataDtoProvider {
                     partition_key: true
                 )
             ],
-            definitionMetadata: getDefinitionMetadata(owner)
+            definitionMetadata: getDefinitionMetadata(owner),
+            metadata: [
+                'table_type': 'ICEBERG',
+                'metadata_location': PIG_PARTS_TABLE_METADATA
+            ]
         )
     }
 
@@ -275,7 +294,11 @@ class PigDataDtoProvider {
                                 partition_key: true
                         )
                 ],
-                definitionMetadata: getDefinitionMetadata(owner)
+                definitionMetadata: getDefinitionMetadata(owner),
+                metadata: [
+                        'table_type': 'ICEBERG',
+                        'metadata_location': PIG_PARTS_TABLE_METADATA
+                ]
         )
     }
 
@@ -289,7 +312,14 @@ class PigDataDtoProvider {
             uri = String.format("s3://wh/%s.db/%s", databaseName, 'metacat_all_types');
         }
         def tableJson =  String.format(f.getText(), sourceName, databaseName, 'metacat_all_types', owner, uri)
-        return metacatJson.parseJsonValue(tableJson, TableDto.class)
+        def table = metacatJson.parseJsonValue(tableJson, TableDto.class)
+        // Add Iceberg metadata for Polaris connector
+        if (table.getMetadata() == null) {
+            table.setMetadata([:])
+        }
+        table.getMetadata().put('table_type', 'ICEBERG')
+        table.getMetadata().put('metadata_location', METACAT_ALL_TYPES_METADATA)
+        return table
     }
 
     def static getDefinitionMetadata(String owner){

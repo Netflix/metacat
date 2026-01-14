@@ -64,8 +64,8 @@ services:
                 -Dmetacat.usermetadata.config.location=/etc/metacat/usermetadata.properties
                 -Dmetacat.cache.enabled=true
                 -Dmetacat.authorization.enabled=true
-                -Dmetacat.authorization.createAcl.createAclStr=hive-metastore/fsmoke_acl:metacat-prod
-                -Dmetacat.authorization.deleteAcl.deleteAclStr=hive-metastore/fsmoke_acl:metacat-prod
+                -Dmetacat.authorization.createAcl.createAclStr=polaris-metastore/fsmoke_acl:metacat-prod
+                -Dmetacat.authorization.deleteAcl.deleteAclStr=polaris-metastore/fsmoke_acl:metacat-prod
                 -Dmetacat.service.tables.error.list.partitions.threshold=100
                 -Dmetacat.service.auroraDataSourceEnabled=false
                 -Dmetacat.hive.commonview.enabled=true

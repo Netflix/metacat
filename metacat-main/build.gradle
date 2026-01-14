@@ -63,7 +63,6 @@ dependencies {
      *******************************/
 
     runtimeOnly(project(":metacat-connector-cassandra"))
-    runtimeOnly(project(":metacat-connector-hive"))
     runtimeOnly(project(":metacat-connector-polaris"))
     runtimeOnly(project(":metacat-metadata"))
     runtimeOnly(project(":metacat-connector-mysql"))

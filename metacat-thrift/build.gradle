@@ -47,6 +47,7 @@ dependencies {
      *******************************/
 
     testImplementation("de.danielbechler:java-object-diff")
+    testImplementation("joda-time:joda-time:2.10.10")
 }
 
 // TODO: Remove this once we optimize this task. It running out of memory at times.

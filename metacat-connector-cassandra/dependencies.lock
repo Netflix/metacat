@@ -25,6 +25,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.github.spotbugs:spotbugs-annotations": {
             "locked": "4.8.2"
         },
@@ -64,6 +70,18 @@
                 "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "5.5.1"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -134,6 +152,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -174,6 +198,18 @@
                 "com.netflix.metacat:metacat-common-server"
             ],
             "locked": "5.5.1"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -259,6 +295,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -301,6 +343,18 @@
         },
         "org.apache.groovy:groovy-all": {
             "locked": "4.0.24"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -382,6 +436,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -428,6 +488,18 @@
         },
         "org.apache.groovy:groovy-all": {
             "locked": "4.0.24"
+        },
+        "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [

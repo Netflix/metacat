@@ -3,13 +3,13 @@ package com.netflix.metacat.connector.polaris.configs;
 import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
-import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteria;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
+import com.netflix.metacat.common.server.connector.commonview.CommonViewHandler;
+import com.netflix.metacat.common.server.converter.converters.IcebergTableInfoConverter;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableCriteria;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableCriteriaImpl;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableHandler;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableOpWrapper;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorPartitionService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorTableService;
@@ -62,6 +62,16 @@ public class PolarisConnectorConfig {
     }
 
     /**
+     * Create Iceberg table info converter.
+     *
+     * @return IcebergTableInfoConverter
+     */
+    @Bean
+    public IcebergTableInfoConverter icebergTableInfoConverter() {
+        return new IcebergTableInfoConverter();
+    }
+
+    /**
      * Create polaris connector table service.
      *
      * @param polarisStoreService       polaris connector
@@ -77,7 +87,7 @@ public class PolarisConnectorConfig {
     @ConditionalOnMissingBean(PolarisConnectorTableService.class)
     public PolarisConnectorTableService polarisTableService(
         final PolarisStoreService polarisStoreService,
-        final HiveConnectorInfoConverter connectorConverter,
+        final IcebergTableInfoConverter connectorConverter,
         final PolarisConnectorDatabaseService connectorDatabaseService,
         final IcebergTableHandler icebergTableHandler,
         final CommonViewHandler commonViewHandler,

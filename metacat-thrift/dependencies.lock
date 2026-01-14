@@ -22,6 +22,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.github.spotbugs:spotbugs-annotations": {
             "locked": "4.8.2"
         },
@@ -63,6 +69,9 @@
             "locked": "5.5.1"
         },
         "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-exec": {
@@ -70,6 +79,12 @@
         },
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -140,6 +155,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -182,6 +203,9 @@
             "locked": "5.5.1"
         },
         "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-exec": {
@@ -189,6 +213,12 @@
         },
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -271,6 +301,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -305,6 +341,9 @@
         "de.danielbechler:java-object-diff": {
             "locked": "0.91.1"
         },
+        "joda-time:joda-time": {
+            "locked": "2.10.10"
+        },
         "log4j:log4j": {
             "locked": "1.2.17"
         },
@@ -318,6 +357,9 @@
             "locked": "4.0.24"
         },
         "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-exec": {
@@ -325,6 +367,12 @@
         },
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
@@ -406,6 +454,12 @@
             ],
             "locked": "1.9"
         },
+        "com.github.rholder:guava-retrying": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "2.0.0"
+        },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common",
@@ -444,6 +498,9 @@
         "de.danielbechler:java-object-diff": {
             "locked": "0.91.1"
         },
+        "joda-time:joda-time": {
+            "locked": "2.10.10"
+        },
         "log4j:log4j": {
             "locked": "1.2.17"
         },
@@ -457,6 +514,9 @@
             "locked": "4.0.24"
         },
         "org.apache.hadoop:hadoop-core": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
             "locked": "1.2.1"
         },
         "org.apache.hive:hive-exec": {
@@ -464,6 +524,12 @@
         },
         "org.apache.hive:hive-metastore": {
             "locked": "1.2.1"
+        },
+        "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
+            "firstLevelTransitive": [
+                "com.netflix.metacat:metacat-common-server"
+            ],
+            "locked": "1.9.1"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [

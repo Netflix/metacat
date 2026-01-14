@@ -7,7 +7,7 @@
 
 ## Introduction
 
-Metacat is a unified metadata exploration API service. You can explore Hive, RDS, Teradata, Redshift, S3 and Cassandra.
+Metacat is a unified metadata exploration API service. You can explore Polaris, RDS, Teradata, Redshift, S3 and Cassandra.
 Metacat provides you information about what data you have, where it resides and how to process it. Metadata in the end
 is really data about the data. So the primary purpose of Metacat is to give a place to describe the data so that we
 could do more useful things with it.
@@ -60,7 +60,7 @@ Swagger API documentation can be accessed @ [http://localhost:8080/swagger-ui/in
 **Pre-requisite: Docker compose is installed**
 
 To start a self contained Metacat environment with some sample catalogs run the command below.
-This will start a `docker compose` cluster containing a Metacat container, a Hive Metastore Container, a Cassandra
+This will start a `docker compose` cluster containing a Metacat container, a Cassandra
 container and a PostgreSQL container.
 
 ```

@@ -35,12 +35,11 @@ class TestCatalogs {
         List<QualifiedName> createdTables = []
         String name
         boolean partitionKeysAppearLast
+        String thriftUri
         List<QualifiedName> preExistingDatabases = []
         List<QualifiedName> preExistingTables = []
-        String thriftUri
         String type
         boolean validateCreatedDate = true
-        boolean validateWithHive = true
         boolean validateFilterExpressionBasedOnPartitionKeyType = true
     }
 
@@ -51,22 +50,11 @@ class TestCatalogs {
             createTable: true,
             deleteDatabase: true,
             deleteTable: true,
-            name: 'hive-metastore',
-            partitionKeysAppearLast: true,
-            type: 'hive',
             createView: true,
-            validateFilterExpressionBasedOnPartitionKeyType: false,
-            supportAUDITtables: true
-        ),
-        new TestCatalog(
-            createDatabase: true,
-            createPartition: true,
-            createTable: true,
-            deleteDatabase: true,
-            deleteTable: true,
             name: 's3-mysql-db',
             type: 's3',
-            validateFilterExpressionBasedOnPartitionKeyType: false
+            validateFilterExpressionBasedOnPartitionKeyType: false,
+            supportAUDITtables: true
         ),
         new TestCatalog(
             createDatabase: true,
@@ -104,11 +92,23 @@ class TestCatalogs {
            name: 'polaris-metastore',
            type: 'polaris',
            createDatabase: true,
+           createPartition: false,  // Polaris connector does not support partition write operations
+           createTable: true,  // Tests use ICEBERG_METADATA_LOCATION for Polaris tables
+           deleteDatabase: true,
+           deleteTable: true,  // Can delete tables created with valid Iceberg metadata
+           createView: false,
+           validateFilterExpressionBasedOnPartitionKeyType: false,
         ),
         new TestCatalog(
             name: 'polaris-metastore-test',
             type: 'polaris',
             createDatabase: true,
+            createPartition: false,  // Polaris connector does not support partition write operations
+            createTable: true,  // Polaris requires valid Iceberg metadata files which tests cannot create
+            deleteDatabase: true,
+            deleteTable: true,  // Cannot delete tables that weren't created
+            createView: false,
+            validateFilterExpressionBasedOnPartitionKeyType: false,
         ),
     ]
 
@@ -150,14 +150,6 @@ class TestCatalogs {
 
     static Collection<QualifiedName> getCreatedPartitions(Collection<TestCatalog> source) {
         return source.collect { it.createdPartitions }.flatten() as Collection<QualifiedName>
-    }
-
-    static Collection<TestCatalog> getThriftImplementers(Collection<TestCatalog> source) {
-        return source.findAll { it.thriftUri }
-    }
-
-    static Collection<TestCatalog> getThriftImplementersToValidateWithHive(Collection<TestCatalog> source) {
-        return source.findAll { it.thriftUri && it.validateWithHive}
     }
 
     static Collection<TestCatalog> getCanCreateDatabase(Collection<TestCatalog> source) {
@@ -215,5 +207,9 @@ class TestCatalogs {
             catalog.createdTables.clear()
             catalog.createdPartitions.clear()
         }
+    }
+
+    static Collection<TestCatalog> getThriftImplementers(Collection<TestCatalog> source) {
+        return source.findAll { it.thriftUri != null }
     }
 }

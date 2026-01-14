@@ -72,9 +72,9 @@ dependencies {
 
     // Test that metacat-client can be used with jersey 1
     testImplementation(project(":metacat-common-server"))
-    testImplementation(project(":metacat-connector-hive"))
     testImplementation(project(":metacat-testdata-provider"))
     functionalTestImplementation(project(":metacat-client"))
+    functionalTestImplementation(project(":metacat-thrift"))
     functionalTestImplementation("org.apache.hadoop:hadoop-core")
     functionalTestImplementation("org.apache.hive:hive-exec:${hive_version}") {
         exclude module: "pentaho-aggdesigner-algorithm"

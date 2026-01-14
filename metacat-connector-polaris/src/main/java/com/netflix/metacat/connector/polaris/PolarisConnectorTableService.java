@@ -19,13 +19,13 @@ import com.netflix.metacat.common.server.connectors.exception.TablePreconditionF
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.MetacatUtils;
-import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
-import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
-import com.netflix.metacat.connector.hive.converters.HiveTypeConverter;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
-import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper;
-import com.netflix.metacat.connector.hive.sql.DirectSqlTable;
-import com.netflix.metacat.connector.hive.util.HiveTableUtil;
+import com.netflix.metacat.common.server.connector.commonview.CommonViewHandler;
+import com.netflix.metacat.common.server.converter.IcebergTypeConverter;
+import com.netflix.metacat.common.server.converter.converters.IcebergTableInfoConverter;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableHandler;
+import com.netflix.metacat.common.server.connector.iceberg.IcebergTableWrapper;
+import com.netflix.metacat.common.server.connector.sql.DirectSqlTable;
+import com.netflix.metacat.common.server.util.hive.HiveTableUtil;
 import com.netflix.metacat.connector.polaris.common.PolarisUtils;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 public class PolarisConnectorTableService implements ConnectorTableService {
     protected final PolarisStoreService polarisStoreService;
     protected final PolarisConnectorDatabaseService polarisConnectorDatabaseService;
-    protected final HiveConnectorInfoConverter connectorConverter;
+    protected final IcebergTableInfoConverter connectorConverter;
     protected final ConnectorContext connectorContext;
     protected final IcebergTableHandler icebergTableHandler;
     protected final CommonViewHandler commonViewHandler;
@@ -73,7 +73,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     public PolarisConnectorTableService(
         final PolarisStoreService polarisStoreService,
         final PolarisConnectorDatabaseService polarisConnectorDatabaseService,
-        final HiveConnectorInfoConverter connectorConverter,
+        final IcebergTableInfoConverter connectorConverter,
         final IcebergTableHandler icebergTableHandler,
         final CommonViewHandler commonViewHandler,
         final PolarisTableMapper polarisTableMapper,
@@ -442,7 +442,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                                    final TableInfo info,
                                    final boolean useCache) {
         return commonViewHandler.getCommonViewTableInfo(
-                tableName, tableMetadataLocation, info, new HiveTypeConverter()
+                tableName, tableMetadataLocation, info, new IcebergTypeConverter()
         );
     }
 
