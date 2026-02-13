@@ -345,7 +345,8 @@ class MetacatFunctionalSpec extends Specification {
         else {
             throw new IllegalStateException("Unknown database: ${name.databaseName}")
         }
-        database.definitionMetadata == null
+        database.definitionMetadata != null
+        database.definitionMetadata.isEmpty()
 
         where:
         name << TestCatalogs.getPreExistingDatabases(TestCatalogs.ALL)
@@ -360,7 +361,8 @@ class MetacatFunctionalSpec extends Specification {
         if (name.databaseName.contains('db_metadata')) {
             assert database.definitionMetadata.fieldNames().collect().contains('objectField')
         } else {
-            assert database.definitionMetadata == null
+            assert database.definitionMetadata != null
+            assert database.definitionMetadata.isEmpty()
         }
 
         where:
