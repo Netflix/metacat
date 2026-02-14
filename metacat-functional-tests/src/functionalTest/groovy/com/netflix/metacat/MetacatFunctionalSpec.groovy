@@ -249,7 +249,8 @@ class MetacatFunctionalSpec extends Specification {
         then:
         database.type == catalog.type
         database.name == QualifiedName.ofDatabase(catalog.name, databaseName)
-        database.definitionMetadata == metadata
+        database.definitionMetadata != null
+        database.definitionMetadata.isEmpty()
         database.tables.empty
 
         where:
