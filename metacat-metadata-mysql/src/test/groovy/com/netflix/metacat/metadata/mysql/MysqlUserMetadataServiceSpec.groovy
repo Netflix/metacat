@@ -13,10 +13,18 @@
 
 package com.netflix.metacat.metadata.mysql
 
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.QualifiedName
+import com.netflix.metacat.common.json.MetacatJson
+import com.netflix.metacat.common.server.properties.Config
+import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters
+import com.netflix.metacat.common.server.usermetadata.MetadataInterceptor
+import com.netflix.metacat.common.server.usermetadata.MetadataPreMergeInterceptor
 import com.netflix.metacat.testdata.provider.DataDtoProvider
+import org.springframework.jdbc.core.JdbcTemplate
 import spock.lang.Ignore
+import spock.lang.Specification
 
 import java.time.Instant
 
@@ -25,8 +33,57 @@ import java.time.Instant
  * TODO: Need to move this to integration-test
  * @author amajumdar
  */
-@Ignore
-class MysqlUserMetadataServiceSpec extends BaseSpec {
+class MysqlUserMetadataServiceSpec extends Specification {
+    def jdbcTemplate = Mock(JdbcTemplate)
+    def metacatJson = Mock(MetacatJson)
+    def config = Mock(Config)
+    def metadataInterceptor = Mock(MetadataInterceptor)
+    def metadataPreMergeInterceptor = Mock(MetadataPreMergeInterceptor)
+    def service = new MysqlUserMetadataService(jdbcTemplate, metacatJson, config, metadataInterceptor, metadataPreMergeInterceptor)
+
+    def "getDefinitionMetadataWithInterceptor creates empty node when metadata not present"() {
+        given:
+        def qualifiedName = QualifiedName.ofTable('catalog', 'database', 'table')
+        def emptyNode = Mock(ObjectNode)
+        def interceptorParams = Mock(GetMetadataInterceptorParameters)
+
+        when:
+        def result = service.getDefinitionMetadataWithInterceptor(qualifiedName, interceptorParams)
+
+        then:
+        // Should query for definition metadata and get empty result
+        1 * jdbcTemplate.query(_, _, _, _) >> Optional.empty()
+        // Should create an empty object node when metadata is not present
+        1 * metacatJson.emptyObjectNode() >> emptyNode
+        // Should call the interceptor with the empty node
+        1 * metadataInterceptor.onRead(service, qualifiedName, emptyNode, interceptorParams)
+        // Should return an Optional containing the empty node
+        result.isPresent()
+        result.get() == emptyNode
+    }
+
+    def "getDefinitionMetadataWithInterceptor uses existing node when metadata present"() {
+        given:
+        def qualifiedName = QualifiedName.ofTable('catalog', 'database', 'table')
+        def existingNode = Mock(ObjectNode)
+        def interceptorParams = Mock(GetMetadataInterceptorParameters)
+
+        when:
+        def result = service.getDefinitionMetadataWithInterceptor(qualifiedName, interceptorParams)
+
+        then:
+        // Should query for definition metadata and get existing result
+        1 * jdbcTemplate.query(_, _, _, _) >> Optional.of(existingNode)
+        // Should NOT create an empty object node when metadata is present
+        0 * metacatJson.emptyObjectNode()
+        // Should call the interceptor with the existing node
+        1 * metadataInterceptor.onRead(service, qualifiedName, existingNode, interceptorParams)
+        // Should return an Optional containing the existing node
+        result.isPresent()
+        result.get() == existingNode
+    }
+
+    @Ignore
     def testAll() {
         given:
         def catalogName = 'prodhive'

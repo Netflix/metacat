@@ -120,11 +120,10 @@ public class MysqlUserMetadataService extends BaseUserMetadataService {
     public Optional<ObjectNode> getDefinitionMetadataWithInterceptor(
         @Nonnull final QualifiedName name,
         final GetMetadataInterceptorParameters getMetadataInterceptorParameters) {
-        //not applying interceptor
-        final Optional<ObjectNode> retData = getDefinitionMetadata(name);
-        retData.ifPresent(objectNode ->
-            this.metadataInterceptor.onRead(this, name, objectNode, getMetadataInterceptorParameters));
-        return retData;
+        final Optional<ObjectNode> definitionMetadataOpt = getDefinitionMetadata(name);
+        final ObjectNode definitionMetadata = definitionMetadataOpt.orElseGet(() -> metacatJson.emptyObjectNode());
+        this.metadataInterceptor.onRead(this, name, definitionMetadata, getMetadataInterceptorParameters);
+        return Optional.of(definitionMetadata);
     }
 
 
