@@ -1,3 +1,20 @@
+/*
+ *
+ *  Copyright 2024 Netflix, Inc.
+ *
+ *     Licensed under the Apache License, Version 2.0 (the "License");
+ *     you may not use this file except in compliance with the License.
+ *     You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     Unless required by applicable law or agreed to in writing, software
+ *     distributed under the License is distributed on an "AS IS" BASIS,
+ *     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *     See the License for the specific language governing permissions and
+ *     limitations under the License.
+ *
+ */
 package com.netflix.metacat.common.server.connectors
 
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
@@ -109,5 +126,210 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         ["connector.rate-limiter-exempted": "true"] | null
         null                                        | null
     }
-}
 
+    def "when authorization is enabled with rate limiting"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "false",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "irc,irc-server"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def catalogSvc = factory.getCatalogService()
+
+        then: "outer layer is authorization"
+        catalogSvc instanceof AuthorizingConnectorCatalogService
+        def authCatalogSvc = catalogSvc as AuthorizingConnectorCatalogService
+
+        and: "inner layer is throttling"
+        authCatalogSvc.getDelegate() instanceof ThrottlingConnectorCatalogService
+        def throttleCatalogSvc = authCatalogSvc.getDelegate() as ThrottlingConnectorCatalogService
+
+        and: "innermost is the actual service"
+        throttleCatalogSvc.getDelegate() == catalogService
+
+        when:
+        def dbSvc = factory.getDatabaseService()
+
+        then: "outer layer is authorization"
+        dbSvc instanceof AuthorizingConnectorDatabaseService
+        def authDbSvc = dbSvc as AuthorizingConnectorDatabaseService
+
+        and: "inner layer is throttling"
+        authDbSvc.getDelegate() instanceof ThrottlingConnectorDatabaseService
+        def throttleDbSvc = authDbSvc.getDelegate() as ThrottlingConnectorDatabaseService
+
+        and: "innermost is the actual service"
+        throttleDbSvc.getDelegate() == databaseService
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "outer layer is authorization"
+        tblSvc instanceof AuthorizingConnectorTableService
+        def authTblSvc = tblSvc as AuthorizingConnectorTableService
+
+        and: "inner layer is throttling"
+        authTblSvc.getDelegate() instanceof ThrottlingConnectorTableService
+        def throttleTblSvc = authTblSvc.getDelegate() as ThrottlingConnectorTableService
+
+        and: "innermost is the actual service"
+        throttleTblSvc.getDelegate() == tableService
+
+        when:
+        def partitionSvc = factory.getPartitionService()
+
+        then: "outer layer is authorization"
+        partitionSvc instanceof AuthorizingConnectorPartitionService
+        def authPartitionSvc = partitionSvc as AuthorizingConnectorPartitionService
+
+        and: "inner layer is throttling"
+        authPartitionSvc.getDelegate() instanceof ThrottlingConnectorPartitionService
+        def throttlePartitionSvc = authPartitionSvc.getDelegate() as ThrottlingConnectorPartitionService
+
+        and: "innermost is the actual service"
+        throttlePartitionSvc.getDelegate() == partitionService
+    }
+
+    def "when only authorization is enabled (rate limiting disabled)"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "irc"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def catalogSvc = factory.getCatalogService()
+
+        then: "only authorization layer present"
+        catalogSvc instanceof AuthorizingConnectorCatalogService
+        def authCatalogSvc = catalogSvc as AuthorizingConnectorCatalogService
+
+        and: "directly wraps the actual service"
+        authCatalogSvc.getDelegate() == catalogService
+
+        when:
+        def dbSvc = factory.getDatabaseService()
+
+        then: "only authorization layer present"
+        dbSvc instanceof AuthorizingConnectorDatabaseService
+        def authDbSvc = dbSvc as AuthorizingConnectorDatabaseService
+
+        and: "directly wraps the actual service"
+        authDbSvc.getDelegate() == databaseService
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "only authorization layer present"
+        tblSvc instanceof AuthorizingConnectorTableService
+        def authTblSvc = tblSvc as AuthorizingConnectorTableService
+
+        and: "directly wraps the actual service"
+        authTblSvc.getDelegate() == tableService
+
+        when:
+        def partitionSvc = factory.getPartitionService()
+
+        then: "only authorization layer present"
+        partitionSvc instanceof AuthorizingConnectorPartitionService
+        def authPartitionSvc = partitionSvc as AuthorizingConnectorPartitionService
+
+        and: "directly wraps the actual service"
+        authPartitionSvc.getDelegate() == partitionService
+    }
+
+    def "authorization applied to all services including partition and catalog"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "false",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "irc"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def catalogSvc = factory.getCatalogService()
+        def partitionSvc = factory.getPartitionService()
+
+        then: "catalog service has authorization"
+        catalogSvc instanceof AuthorizingConnectorCatalogService
+
+        and: "partition service has authorization"
+        partitionSvc instanceof AuthorizingConnectorPartitionService
+    }
+
+    def "empty authorized callers list"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": ""
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "authorization still applied with empty callers set"
+        tblSvc instanceof AuthorizingConnectorTableService
+    }
+
+    def "authorization disabled by default"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true"
+            // authorization-required not set
+        ]
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "no authorization wrapper"
+        tblSvc == tableService
+    }
+
+    def "authorized callers list trims whitespace"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "  irc  ,  irc-server  ,spark"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "authorization is applied"
+        tblSvc instanceof AuthorizingConnectorTableService
+        // The whitespace should be trimmed, so "irc", "irc-server", and "spark" should all be valid
+    }
+
+    def "authorized callers with only whitespace entries are filtered"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "irc,   ,,"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "authorization is applied with only non-empty callers"
+        tblSvc instanceof AuthorizingConnectorTableService
+    }
+}
