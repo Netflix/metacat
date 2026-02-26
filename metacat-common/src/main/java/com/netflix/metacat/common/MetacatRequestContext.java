@@ -61,6 +61,11 @@ public class MetacatRequestContext implements Serializable {
     public static final String SSO_DIRECT_CALLER_APP_NAME = "SsoDirectCallerAppName";
 
     /**
+     * Key to skip connector-level authorization checks in additionalContext.
+     */
+    public static final String SKIP_CONNECTOR_AUTHORIZATION = "SkipConnectorAuthorization";
+
+    /**
      * Default if unknown.
      */
     public static final String UNKNOWN = "UNKNOWN";

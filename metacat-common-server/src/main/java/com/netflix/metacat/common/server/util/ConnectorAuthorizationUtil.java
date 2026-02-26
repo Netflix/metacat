@@ -54,6 +54,12 @@ public final class ConnectorAuthorizationUtil {
         final QualifiedName resource
     ) {
         final MetacatRequestContext context = MetacatContextManager.getContext();
+
+        if ("true".equals(context.getAdditionalContext().get(MetacatRequestContext.SKIP_CONNECTOR_AUTHORIZATION))) {
+            log.debug("Authorization bypassed for catalog {}: {} on {}", catalogName, operation, resource);
+            return;
+        }
+
         final String caller = context.getAdditionalContext()
             .get(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME);
 

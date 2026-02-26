@@ -126,6 +126,21 @@ class ConnectorAuthorizationUtilSpec extends Specification {
         thrown(CatalogUnauthorizedException)
     }
 
+    def "checkAuthorization - SKIP_CONNECTOR_AUTHORIZATION flag bypasses auth"() {
+        given:
+        def allowedCallers = ["bdpauthzservice"] as Set
+        def ctx = MetacatRequestContext.builder().build()
+        // No SSO caller set, but bypass flag is set
+        ctx.getAdditionalContext().put(MetacatRequestContext.SKIP_CONNECTOR_AUTHORIZATION, "true")
+        MetacatContextManager.setContext(ctx)
+
+        when:
+        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, operation, resource)
+
+        then:
+        noExceptionThrown()
+    }
+
     def "checkAuthorization - multiple allowed callers - any match succeeds"() {
         given:
         def allowedCallers = ["app1", "app2", "app3"] as Set
