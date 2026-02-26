@@ -61,15 +61,17 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         MetacatContextManager.removeContext()
     }
 
+    private MetacatRequestContext buildContextWithCaller(String caller) {
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, caller)
+        return ctx
+    }
+
     def "create - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.create(context, resource)
@@ -82,11 +84,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("unauthorized-app")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
 
         when:
         service.create(context, resource)
@@ -96,12 +94,12 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         0 * delegate.create(_, _)
     }
 
-    def "create - missing userName throws exception"() {
+    def "create - missing SsoDirectCallerAppName throws exception"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
 
-        // No userName set
+        // No SsoDirectCallerAppName in additionalContext
         def ctx = MetacatRequestContext.builder().build()
         MetacatContextManager.setContext(ctx)
 
@@ -117,11 +115,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.update(context, resource)
@@ -134,11 +128,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.delete(context, partitionName)
@@ -151,11 +141,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.get(context, partitionName)
@@ -168,11 +154,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.exists(context, partitionName)
@@ -185,11 +167,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.list(context, tableName, null, null, null)
@@ -202,11 +180,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.listNames(context, tableName, null, null, null)
@@ -219,11 +193,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.rename(context, partitionName, newName)
@@ -236,11 +206,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.getPartitions(context, tableName, partitionListRequest, tableInfo)
@@ -253,11 +219,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("spark")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("spark"))
 
         when:
         service.getPartitions(context, tableName, partitionListRequest, tableInfo)
@@ -271,11 +233,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.savePartitions(context, tableName, partitionsSaveRequest)
@@ -288,11 +246,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("hive")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("hive"))
 
         when:
         service.savePartitions(context, tableName, partitionsSaveRequest)
@@ -307,11 +261,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         def partitionNames = ["dateint=20240101"]
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.deletePartitions(context, tableName, partitionNames, tableInfo)
@@ -324,11 +274,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.getPartitionCount(context, tableName, tableInfo)
@@ -342,11 +288,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         def uris = ["s3://bucket/path"]
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.getPartitionNames(context, uris, false)
@@ -359,11 +301,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.getPartitionKeys(context, tableName, partitionListRequest, tableInfo)
@@ -376,11 +314,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.getPartitionUris(context, tableName, partitionListRequest, tableInfo)
@@ -393,11 +327,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("bad-actor")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
 
         when:
         service.get(context, partitionName)
@@ -408,7 +338,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         ex.message.contains("ads")
     }
 
-    def "exception message indicates missing userName when no caller"() {
+    def "exception message indicates missing caller when no SsoDirectCallerAppName"() {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
@@ -421,7 +351,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
         then:
         def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("authenticated user")
+        ex.message.contains("authenticated caller")
         ex.message.contains("ads")
     }
 }

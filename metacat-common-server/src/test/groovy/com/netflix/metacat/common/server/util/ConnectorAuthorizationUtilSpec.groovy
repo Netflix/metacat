@@ -36,12 +36,11 @@ class ConnectorAuthorizationUtilSpec extends Specification {
         MetacatContextManager.removeContext()
     }
 
-    def "checkAuthorization - authorized caller succeeds"() {
+    def "checkAuthorization - authorized SsoDirectCallerAppName succeeds"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
+        def allowedCallers = ["bdpauthzservice", "irc-server"] as Set
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, "bdpauthzservice")
         MetacatContextManager.setContext(ctx)
 
         when:
@@ -51,12 +50,11 @@ class ConnectorAuthorizationUtilSpec extends Specification {
         noExceptionThrown()
     }
 
-    def "checkAuthorization - unauthorized caller throws exception"() {
+    def "checkAuthorization - unauthorized SsoDirectCallerAppName throws exception"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
-        def ctx = MetacatRequestContext.builder()
-            .userName("unauthorized-app")
-            .build()
+        def allowedCallers = ["bdpauthzservice", "irc-server"] as Set
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, "unauthorized-app")
         MetacatContextManager.setContext(ctx)
 
         when:
@@ -68,12 +66,11 @@ class ConnectorAuthorizationUtilSpec extends Specification {
         ex.message.contains(catalogName)
     }
 
-    def "checkAuthorization - null caller throws exception"() {
+    def "checkAuthorization - missing SsoDirectCallerAppName throws exception"() {
         given:
-        def allowedCallers = ["irc"] as Set
-        def ctx = MetacatRequestContext.builder()
-            // No userName set - will be null
-            .build()
+        def allowedCallers = ["bdpauthzservice"] as Set
+        def ctx = MetacatRequestContext.builder().build()
+        // No SsoDirectCallerAppName in additionalContext
         MetacatContextManager.setContext(ctx)
 
         when:
@@ -81,16 +78,15 @@ class ConnectorAuthorizationUtilSpec extends Specification {
 
         then:
         def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("authenticated user")
+        ex.message.contains("authenticated caller")
         ex.message.contains(catalogName)
     }
 
     def "checkAuthorization - empty allowed callers set denies all"() {
         given:
         def allowedCallers = [] as Set
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, "bdpauthzservice")
         MetacatContextManager.setContext(ctx)
 
         when:
@@ -98,16 +94,15 @@ class ConnectorAuthorizationUtilSpec extends Specification {
 
         then:
         def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("irc")
+        ex.message.contains("bdpauthzservice")
         ex.message.contains(catalogName)
     }
 
     def "checkAuthorization - case sensitive matching"() {
         given:
-        def allowedCallers = ["irc"] as Set  // lowercase
-        def ctx = MetacatRequestContext.builder()
-            .userName("IRC")  // uppercase
-            .build()
+        def allowedCallers = ["bdpauthzservice"] as Set  // lowercase
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, "BDPAUTHZSERVICE")  // uppercase
         MetacatContextManager.setContext(ctx)
 
         when:
@@ -119,10 +114,9 @@ class ConnectorAuthorizationUtilSpec extends Specification {
 
     def "checkAuthorization - exact match required"() {
         given:
-        def allowedCallers = ["irc-server"] as Set
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")  // partial match
-            .build()
+        def allowedCallers = ["bdpauthzservice"] as Set
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, "bdpauthz")  // partial match
         MetacatContextManager.setContext(ctx)
 
         when:
@@ -135,9 +129,8 @@ class ConnectorAuthorizationUtilSpec extends Specification {
     def "checkAuthorization - multiple allowed callers - any match succeeds"() {
         given:
         def allowedCallers = ["app1", "app2", "app3"] as Set
-        def ctx = MetacatRequestContext.builder()
-            .userName(caller)
-            .build()
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, caller)
         MetacatContextManager.setContext(ctx)
 
         when:
