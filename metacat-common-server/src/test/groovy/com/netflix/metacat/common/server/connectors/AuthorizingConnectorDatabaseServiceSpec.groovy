@@ -50,15 +50,17 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         MetacatContextManager.removeContext()
     }
 
+    private MetacatRequestContext buildContextWithCaller(String caller) {
+        def ctx = MetacatRequestContext.builder().build()
+        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, caller)
+        return ctx
+    }
+
     def "create - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.create(context, resource)
@@ -71,11 +73,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("unauthorized-app")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
 
         when:
         service.create(context, resource)
@@ -85,7 +83,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         0 * delegate.create(_, _)
     }
 
-    def "create - missing userName throws exception"() {
+    def "create - missing SsoDirectCallerAppName throws exception"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
@@ -105,11 +103,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.update(context, resource)
@@ -122,11 +116,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("spark")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("spark"))
 
         when:
         service.update(context, resource)
@@ -140,11 +130,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.delete(context, name)
@@ -157,11 +143,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.get(context, name)
@@ -174,11 +156,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.exists(context, name)
@@ -191,11 +169,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.list(context, name, null, null, null)
@@ -208,11 +182,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.listNames(context, name, null, null, null)
@@ -225,11 +195,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.rename(context, name, newName)
@@ -242,11 +208,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("irc")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.listViewNames(context, name)
@@ -259,11 +221,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         given:
         def allowedCallers = ["irc"] as Set
         service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder()
-            .userName("bad-actor")
-            .build()
-        MetacatContextManager.setContext(ctx)
+        MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
 
         when:
         service.get(context, name)

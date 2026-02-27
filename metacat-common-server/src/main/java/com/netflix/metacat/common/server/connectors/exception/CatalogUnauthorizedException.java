@@ -42,12 +42,12 @@ public class CatalogUnauthorizedException extends ConnectorException {
      * @param catalogName the catalog that was accessed
      */
     public CatalogUnauthorizedException(final String catalogName) {
-        super(String.format("Access to catalog '%s' requires an authenticated user", catalogName));
+        super(String.format("Access to catalog '%s' requires an authenticated caller", catalogName));
     }
 
     private static String buildMessage(final String catalogName, @Nullable final String caller) {
         if (caller == null) {
-            return String.format("Access to catalog '%s' requires an authenticated user", catalogName);
+            return String.format("Access to catalog '%s' requires an authenticated caller", catalogName);
         }
         return String.format("Caller '%s' is not authorized to access catalog '%s'", caller, catalogName);
     }

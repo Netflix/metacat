@@ -39,7 +39,7 @@ public final class ConnectorAuthorizationUtil {
 
     /**
      * Checks if the current caller is authorized to access the specified catalog.
-     * Authorization is based on the userName from the request context.
+     * Authorization is based on the SsoDirectCallerAppName from the request context's additionalContext.
      *
      * @param catalogName    the name of the catalog being accessed
      * @param allowedCallers the set of callers allowed to access this catalog
@@ -54,21 +54,23 @@ public final class ConnectorAuthorizationUtil {
         final QualifiedName resource
     ) {
         final MetacatRequestContext context = MetacatContextManager.getContext();
-        final String caller = context.getUserName();
+        final String caller = context.getAdditionalContext()
+            .get(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME);
 
         if (caller == null) {
-            log.warn("Authorization denied for catalog {}: No userName in request context for {} on {}",
+            log.warn("Authorization denied for catalog {}: No SsoDirectCallerAppName in request context for {} on {}",
                 catalogName, operation, resource);
             throw new CatalogUnauthorizedException(catalogName);
         }
 
         if (!allowedCallers.contains(caller)) {
-            log.warn("Authorization denied for catalog {}: Caller '{}' not in allowed list for {} on {}",
+            log.warn("Authorization denied for catalog {}: "
+                    + "SsoDirectCallerAppName '{}' not in allowed list for {} on {}",
                 catalogName, caller, operation, resource);
             throw new CatalogUnauthorizedException(catalogName, caller);
         }
 
-        log.debug("Authorization granted for catalog {}: Caller '{}' for {} on {}",
+        log.debug("Authorization granted for catalog {}: SsoDirectCallerAppName '{}' for {} on {}",
             catalogName, caller, operation, resource);
     }
 }

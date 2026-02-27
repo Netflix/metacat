@@ -56,6 +56,11 @@ public class MetacatRequestContext implements Serializable {
     public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
 
     /**
+     * Key for the SSO direct caller app name in additionalContext.
+     */
+    public static final String SSO_DIRECT_CALLER_APP_NAME = "SsoDirectCallerAppName";
+
+    /**
      * Default if unknown.
      */
     public static final String UNKNOWN = "UNKNOWN";
