@@ -20,6 +20,7 @@ package com.netflix.metacat.common.server.connectors
 import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException
+import com.netflix.metacat.common.server.connectors.exception.TableLocationUpdateLockException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import spock.lang.Specification
@@ -61,7 +62,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "create - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -74,7 +75,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "create - unauthorized caller throws exception"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
 
         when:
@@ -88,7 +89,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "create - missing SsoDirectCallerAppName throws exception"() {
         given:
         def allowedCallers = ["irc", "irc-server"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
 
         // No SsoDirectCallerAppName in additionalContext
         def ctx = MetacatRequestContext.builder().build()
@@ -105,7 +106,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "update - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -118,7 +119,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "update - unauthorized caller throws exception"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("spark"))
 
         when:
@@ -132,7 +133,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "delete - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -145,7 +146,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "delete - unauthorized caller throws exception"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("hive"))
 
         when:
@@ -159,7 +160,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "get - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -172,7 +173,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "get - unauthorized caller throws exception"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("presto"))
 
         when:
@@ -186,7 +187,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "exists - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -199,7 +200,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "list - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -212,7 +213,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "listNames - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -225,7 +226,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "rename - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -238,7 +239,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "getTableNames with filter - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -251,7 +252,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "getTableNames with URIs - authorized caller succeeds"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
@@ -264,7 +265,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "exception message contains caller name when unauthorized"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
 
         when:
@@ -279,7 +280,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "exception message indicates missing caller when no SsoDirectCallerAppName"() {
         given:
         def allowedCallers = ["irc"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
 
         def ctx = MetacatRequestContext.builder().build()
         MetacatContextManager.setContext(ctx)
@@ -296,7 +297,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "caller matching is case sensitive - uppercase caller rejected"() {
         given:
         def allowedCallers = ["irc"] as Set  // lowercase
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("IRC"))  // uppercase
 
         when:
@@ -310,7 +311,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "caller matching is case sensitive - lowercase caller accepted"() {
         given:
         def allowedCallers = ["irc"] as Set  // lowercase
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))  // lowercase matches
 
         when:
@@ -323,7 +324,7 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
     def "multiple allowed callers - second caller in list succeeds"() {
         given:
         def allowedCallers = ["irc", "irc-server", "spark"] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, false)
         MetacatContextManager.setContext(buildContextWithCaller("spark"))
 
         when:
@@ -331,5 +332,155 @@ class AuthorizingConnectorTableServiceSpec extends Specification {
 
         then:
         1 * delegate.get(context, name)
+    }
+
+    // --- Location update lock tests ---
+
+    def "update with metadata_location and lock enabled throws TableLocationUpdateLockException"() {
+        given:
+        def allowedCallers = [] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, false, true)
+        def lockedResource = new TableInfo(name: name, metadata: ["metadata_location": "s3://bucket/new-path"])
+
+        when:
+        service.update(context, lockedResource)
+
+        then:
+        def ex = thrown(TableLocationUpdateLockException)
+        ex.message.contains(catalogName)
+        ex.message.contains(name.toString())
+        0 * delegate.update(_, _)
+    }
+
+    def "update without metadata_location and lock enabled passes through"() {
+        given:
+        def allowedCallers = [] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, false, true)
+        def safeResource = new TableInfo(name: name, metadata: ["some_other_key": "value"])
+
+        when:
+        service.update(context, safeResource)
+
+        then:
+        1 * delegate.update(context, safeResource)
+    }
+
+    def "update with null metadata and lock enabled passes through"() {
+        given:
+        def allowedCallers = [] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, false, true)
+        def noMetadataResource = new TableInfo(name: name)
+
+        when:
+        service.update(context, noMetadataResource)
+
+        then:
+        1 * delegate.update(context, noMetadataResource)
+    }
+
+    def "update with metadata_location and lock disabled passes through"() {
+        given:
+        def allowedCallers = [] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, false, false)
+        def lockedResource = new TableInfo(name: name, metadata: ["metadata_location": "s3://bucket/new-path"])
+
+        when:
+        service.update(context, lockedResource)
+
+        then:
+        1 * delegate.update(context, lockedResource)
+    }
+
+    def "lock enabled with auth disabled - non-update operations pass through without auth check"() {
+        given:
+        def allowedCallers = [] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, false, true)
+        // No caller context set — would fail auth if auth were enabled
+
+        when:
+        service.create(context, resource)
+
+        then:
+        1 * delegate.create(context, resource)
+
+        when:
+        service.delete(context, name)
+
+        then:
+        1 * delegate.delete(context, name)
+
+        when:
+        service.get(context, name)
+
+        then:
+        1 * delegate.get(context, name)
+
+        when:
+        service.exists(context, name)
+
+        then:
+        1 * delegate.exists(context, name)
+
+        when:
+        service.list(context, name, null, null, null)
+
+        then:
+        1 * delegate.list(context, name, null, null, null)
+
+        when:
+        service.listNames(context, name, null, null, null)
+
+        then:
+        1 * delegate.listNames(context, name, null, null, null)
+
+        when:
+        service.rename(context, name, newName)
+
+        then:
+        1 * delegate.rename(context, name, newName)
+    }
+
+    def "both auth and lock enabled - unauthorized caller blocked by auth before lock check"() {
+        given:
+        def allowedCallers = ["irc"] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, true)
+        MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
+        def lockedResource = new TableInfo(name: name, metadata: ["metadata_location": "s3://bucket/new-path"])
+
+        when:
+        service.update(context, lockedResource)
+
+        then:
+        thrown(CatalogUnauthorizedException)
+        0 * delegate.update(_, _)
+    }
+
+    def "both auth and lock enabled - authorized caller blocked by lock on metadata_location update"() {
+        given:
+        def allowedCallers = ["irc"] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, true)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        def lockedResource = new TableInfo(name: name, metadata: ["metadata_location": "s3://bucket/new-path"])
+
+        when:
+        service.update(context, lockedResource)
+
+        then:
+        thrown(TableLocationUpdateLockException)
+        0 * delegate.update(_, _)
+    }
+
+    def "both auth and lock enabled - authorized caller update without metadata_location succeeds"() {
+        given:
+        def allowedCallers = ["irc"] as Set
+        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName, true, true)
+        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        def safeResource = new TableInfo(name: name, metadata: ["some_key": "value"])
+
+        when:
+        service.update(context, safeResource)
+
+        then:
+        1 * delegate.update(context, safeResource)
     }
 }

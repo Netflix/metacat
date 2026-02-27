@@ -20,12 +20,12 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.exception.TableLocationUpdateLockException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.util.ConnectorAuthorizationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -33,13 +33,20 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Connector decorator that authorizes calls based on SSO caller context.
- * Only callers in the allowed list can access this connector's operations.
+ * Connector decorator that authorizes calls based on SSO caller context
+ * and/or locks table location updates.
+ *
+ * <p>Two independent features:</p>
+ * <ul>
+ *   <li><b>Authorization</b> — gates all operations by caller identity</li>
+ *   <li><b>Location update lock</b> — blocks any update containing {@code metadata_location}</li>
+ * </ul>
  *
  * @author jursetta
  */
-@RequiredArgsConstructor
 public class AuthorizingConnectorTableService implements ConnectorTableService {
+
+    private static final String METADATA_LOCATION_KEY = "metadata_location";
 
     @Getter
     @NonNull
@@ -51,34 +58,76 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
     @NonNull
     private final String catalogName;
 
+    private final boolean authorizationEnabled;
+
+    private final boolean locationUpdateLocked;
+
+    /**
+     * Creates a new authorizing/locking table service decorator.
+     *
+     * @param delegate              the underlying table service
+     * @param allowedCallers        set of caller names allowed when authorization is enabled
+     * @param catalogName           the catalog name for error messages
+     * @param authorizationEnabled  whether caller-based authorization is enabled
+     * @param locationUpdateLocked  whether metadata_location updates are blocked
+     */
+    public AuthorizingConnectorTableService(
+        @NonNull final ConnectorTableService delegate,
+        @NonNull final Set<String> allowedCallers,
+        @NonNull final String catalogName,
+        final boolean authorizationEnabled,
+        final boolean locationUpdateLocked
+    ) {
+        this.delegate = delegate;
+        this.allowedCallers = allowedCallers;
+        this.catalogName = catalogName;
+        this.authorizationEnabled = authorizationEnabled;
+        this.locationUpdateLocked = locationUpdateLocked;
+    }
+
     @Override
     public void create(final ConnectorRequestContext context, final TableInfo resource) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "create", resource.getName());
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "create", resource.getName());
+        }
         delegate.create(context, resource);
     }
 
     @Override
     public void update(final ConnectorRequestContext context, final TableInfo resource) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "update", resource.getName());
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "update", resource.getName());
+        }
+        if (locationUpdateLocked
+            && resource.getMetadata() != null
+            && resource.getMetadata().containsKey(METADATA_LOCATION_KEY)) {
+            throw new TableLocationUpdateLockException(catalogName, resource.getName());
+        }
         delegate.update(context, resource);
     }
 
     @Override
     public void delete(final ConnectorRequestContext context, final QualifiedName name) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "delete", name);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "delete", name);
+        }
         delegate.delete(context, name);
     }
 
     @Override
     public TableInfo get(final ConnectorRequestContext context, final QualifiedName name) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "get", name);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "get", name);
+        }
         return delegate.get(context, name);
     }
 
     @Override
     @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "exists", name);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "exists", name);
+        }
         return delegate.exists(context, name);
     }
 
@@ -90,7 +139,9 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "list", name);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "list", name);
+        }
         return delegate.list(context, name, prefix, sort, pageable);
     }
 
@@ -102,7 +153,9 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "listNames", name);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "listNames", name);
+        }
         return delegate.listNames(context, name, prefix, sort, pageable);
     }
 
@@ -112,7 +165,9 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
         final QualifiedName oldName,
         final QualifiedName newName
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "rename", oldName);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "rename", oldName);
+        }
         delegate.rename(context, oldName, newName);
     }
 
@@ -122,9 +177,11 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
         final List<String> uris,
         final boolean prefixSearch
     ) {
-        // No specific resource name available, check catalog-level access
-        ConnectorAuthorizationUtil.checkAuthorization(
-            catalogName, allowedCallers, "getTableNames", QualifiedName.ofCatalog(catalogName));
+        if (authorizationEnabled) {
+            // No specific resource name available, check catalog-level access
+            ConnectorAuthorizationUtil.checkAuthorization(
+                catalogName, allowedCallers, "getTableNames", QualifiedName.ofCatalog(catalogName));
+        }
         return delegate.getTableNames(context, uris, prefixSearch);
     }
 
@@ -135,7 +192,9 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
         final String filter,
         final Integer limit
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "getTableNames", name);
+        if (authorizationEnabled) {
+            ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "getTableNames", name);
+        }
         return delegate.getTableNames(context, name, filter, limit);
     }
 

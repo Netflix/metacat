@@ -44,6 +44,11 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     public static final String CONFIG_AUTHORIZED_CALLERS = "connector.authorized-callers";
 
     /**
+     * Configuration key to lock table location updates for a catalog.
+     */
+    public static final String CONFIG_LOCATION_UPDATE_LOCKED = "connector.location-update-locked";
+
+    /**
      * Configuration key to exempt a connector from rate limiting.
      */
     public static final String CONFIG_RATE_LIMITER_EXEMPTED = "connector.rate-limiter-exempted";
@@ -56,6 +61,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     private final boolean rateLimiterEnabled;
     private final boolean authorizationRequired;
     private final Set<String> authorizedCallers;
+    private final boolean locationUpdateLocked;
 
     /**
      * Creates the decorated connector factory that wraps connector services
@@ -79,10 +85,16 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         this.rateLimiterEnabled = isRateLimiterEnabled();
         this.authorizationRequired = isAuthorizationRequired();
         this.authorizedCallers = getAuthorizedCallers();
+        this.locationUpdateLocked = isLocationUpdateLocked();
 
         if (this.authorizationRequired) {
             log.info("Authorization enabled for catalog {} with allowed callers: {}",
                 connectorContext.getCatalogName(), this.authorizedCallers);
+        }
+
+        if (this.locationUpdateLocked) {
+            log.info("Location update lock enabled for catalog {}",
+                connectorContext.getCatalogName());
         }
     }
 
@@ -151,14 +163,16 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
             service = new ThrottlingConnectorTableService(service, rateLimiter);
         }
 
-        // Apply authorization second (outermost decorator - checked first)
-        if (authorizationRequired) {
+        // Apply authorization and/or location lock (outermost decorator - checked first)
+        if (authorizationRequired || locationUpdateLocked) {
             log.info("Creating authorized connector table services for connector-type: {}, "
-                         + "plugin-type: {}, catalog: {}, shard: {}",
+                         + "plugin-type: {}, catalog: {}, shard: {}, auth: {}, locationLock: {}",
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
-                connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
+                connectorContext.getCatalogName(), connectorContext.getCatalogShardName(),
+                authorizationRequired, locationUpdateLocked);
             service = new AuthorizingConnectorTableService(
-                service, authorizedCallers, connectorContext.getCatalogName());
+                service, authorizedCallers, connectorContext.getCatalogName(),
+                authorizationRequired, locationUpdateLocked);
         }
 
         return service;
@@ -212,6 +226,16 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
 
         return !Boolean.parseBoolean(
             connectorContext.getConfiguration().getOrDefault(CONFIG_RATE_LIMITER_EXEMPTED, "false")
+        );
+    }
+
+    private boolean isLocationUpdateLocked() {
+        if (connectorContext.getConfiguration() == null) {
+            return false;
+        }
+
+        return Boolean.parseBoolean(
+            connectorContext.getConfiguration().getOrDefault(CONFIG_LOCATION_UPDATE_LOCKED, "false")
         );
     }
 
