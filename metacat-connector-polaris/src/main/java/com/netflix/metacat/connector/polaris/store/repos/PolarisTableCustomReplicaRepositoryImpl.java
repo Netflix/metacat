@@ -59,7 +59,7 @@ public class PolarisTableCustomReplicaRepositoryImpl
     }
 
     /**
-     * Retrieves all tables by database name and table prefix using crdb.
+     * Retrieves all tables by database name and table prefix.
      * Fetches tables in pages and collects them into a list.
      *
      * @param catalogName catalogName
@@ -76,8 +76,6 @@ public class PolarisTableCustomReplicaRepositoryImpl
             final String tableNamePrefix,
             final int pageFetchSize,
             final boolean selectAllColumns) {
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-                .executeUpdate();
         return super.findAllTablesByDbNameAndTablePrefix(
                 catalogName,
                 dbName,

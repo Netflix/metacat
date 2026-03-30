@@ -33,8 +33,6 @@ dependencies {
     api(project(":metacat-connector-jdbc"))
     api(project(":metacat-common-server"))
     api('org.springframework.data:spring-data-jpa')
-    api('org.springframework.boot:spring-boot-starter-aop')
-    api('org.springframework.retry:spring-retry')
     api("org.springframework:spring-aspects")
     api("com.h2database:h2")
 
@@ -62,19 +60,6 @@ test {
     systemProperty 'spring.profiles.active', 'polaristest'
 }
 
-// Define tasks for starting and stopping CRDB cluster
-task startCrdbCluster(type: Exec) {
-    commandLine 'sh',
-            project.file('src/functionalTest/scripts/start_docker_containers.sh'),
-            project.file('src/functionalTest/scripts/docker-compose.yml')
-}
-
-task stopCrdbCluster(type: Exec) {
-    commandLine 'sh',
-            project.file('src/functionalTest/scripts/stop_docker_containers.sh'),
-            project.file('src/functionalTest/scripts/docker-compose.yml')
-}
-
 // Define tasks for starting and stopping Aurora cluster
 task startAuroraCluster(type: Exec) {
     commandLine 'sh',
@@ -86,23 +71,6 @@ task stopAuroraCluster(type: Exec) {
     commandLine 'sh',
             project.file('src/functionalTest/scripts/stop_docker_containers.sh'),
             project.file('src/functionalTest/scripts/docker-compose-aurora.yml')
-}
-
-// Define functionalTestCRDB task
-task functionalTestCRDB(type: Test) {
-    outputs.upToDateWhen { false }
-
-    testClassesDirs = sourceSets.functionalTest.output.classesDirs
-    classpath = sourceSets.functionalTest.runtimeClasspath
-
-    if (project.ext.runDockerContainers) {
-        useJUnitPlatform {
-        }
-        dependsOn 'startCrdbCluster'
-        finalizedBy 'stopCrdbCluster'
-    }
-    systemProperty 'spring.profiles.active', 'polaris_functional_test'
-    systemProperty 'service.auroraDataSourceEnabled', 'false'
 }
 
 // Define functionalTestAurora task

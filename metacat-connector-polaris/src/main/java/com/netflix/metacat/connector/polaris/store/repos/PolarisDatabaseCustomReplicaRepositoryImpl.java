@@ -55,7 +55,7 @@ public class PolarisDatabaseCustomReplicaRepositoryImpl extends BasePolarisDatab
     }
 
     /**
-     * Retrieves all databases with optional filtering and sorting for crdb.
+     * Retrieves all databases with optional filtering and sorting.
      *
      * @param catalogName catalogName
      * @param dbNamePrefix the prefix of the database name to filter results, can be null
@@ -71,8 +71,6 @@ public class PolarisDatabaseCustomReplicaRepositoryImpl extends BasePolarisDatab
             @Nullable final com.netflix.metacat.common.dto.Sort sort,
             final int pageSize,
             final boolean selectAllColumns) {
-        entityManager.createNativeQuery("SET TRANSACTION AS OF SYSTEM TIME follower_read_timestamp()")
-                .executeUpdate();
         return super.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, selectAllColumns);
     }
 }
