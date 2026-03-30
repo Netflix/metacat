@@ -17,7 +17,7 @@ import java.util.Optional;
 @Repository
 public interface PolarisDatabaseRepository extends JpaRepository<PolarisDatabaseEntity, String>,
     CrudRepository<PolarisDatabaseEntity, String>,
-    JpaSpecificationExecutor, PolarisDatabaseCustomReplicaRepository {
+    JpaSpecificationExecutor {
 
     /**
      * Fetch database entry.

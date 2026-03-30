@@ -87,7 +87,6 @@ task functionalTestAurora(type: Test) {
         finalizedBy 'stopAuroraCluster'
     }
     systemProperty 'spring.profiles.active', 'polaris_functional_aurora_test'
-    systemProperty 'service.auroraDataSourceEnabled', 'true'
 }
 
 // Disable SpotBugs for tests

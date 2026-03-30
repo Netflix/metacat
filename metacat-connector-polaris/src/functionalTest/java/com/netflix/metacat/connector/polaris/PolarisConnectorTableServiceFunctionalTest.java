@@ -133,10 +133,7 @@ public class PolarisConnectorTableServiceFunctionalTest {
         assert activeProfiles.length  == 1;
 
         connectorContext = new ConnectorContext(CATALOG_NAME_TEST, CATALOG_NAME_TEST, "polaris",
-            new DefaultConfigImpl(
-                new MetacatProperties(null,
-                    environment.getActiveProfiles()[0].equals("polaris_functional_aurora_test"))
-            ),
+            new DefaultConfigImpl(new MetacatProperties(null)),
             new NoopRegistry(), null,  Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
         polarisTableService = new PolarisConnectorTableService(
