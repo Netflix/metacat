@@ -16,6 +16,10 @@
  */
 package com.netflix.metacat.thrift;
 
+import com.github.rholder.retry.Retryer;
+import com.github.rholder.retry.RetryerBuilder;
+import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.util.RegistryUtil;
@@ -29,6 +33,7 @@ import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
+import org.apache.thrift.transport.TTransportException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
@@ -43,6 +48,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 public abstract class AbstractThriftServer {
+    private static final int MAX_SOCKET_BIND_ATTEMPTS = 5;
+    private static final long MAX_SOCKET_BIND_WAIT_SECONDS = 30;
+    private static final Retryer<TServerTransport> RETRY_THRIFT_SOCKET = RetryerBuilder.<TServerTransport>newBuilder()
+        .retryIfExceptionOfType(TTransportException.class)
+        .withWaitStrategy(WaitStrategies.exponentialWait(1, MAX_SOCKET_BIND_WAIT_SECONDS, TimeUnit.SECONDS))
+        .withStopStrategy(StopStrategies.stopAfterAttempt(MAX_SOCKET_BIND_ATTEMPTS))
+        .build();
+
     protected final Config config;
     protected final Registry registry;
     @Getter
@@ -114,7 +127,17 @@ public abstract class AbstractThriftServer {
         );
         RegistryUtil.registerThreadPool(registry, threadPoolNameFormat, (ThreadPoolExecutor) executorService);
         final int timeout = config.getThriftServerSocketClientTimeoutInSeconds() * 1000;
-        final TServerTransport serverTransport = new TServerSocket(portNumber, timeout);
+        final TServerTransport serverTransport;
+        try {
+            serverTransport = RETRY_THRIFT_SOCKET.call(() -> {
+                log.info("Attempting to bind thrift server {} to port {}", getServerName(), portNumber);
+                return new TServerSocket(portNumber, timeout);
+            });
+        } catch (Exception e) {
+            log.error("Failed to bind thrift server {} to port {} after {} attempts",
+                getServerName(), portNumber, MAX_SOCKET_BIND_ATTEMPTS, e);
+            throw e;
+        }
         startServing(executorService, serverTransport);
     }
 
