@@ -119,9 +119,7 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         connectorContext = new ConnectorContext(
             CATALOG_NAME_TEST,
             CATALOG_NAME_TEST, "polaris",
-            new DefaultConfigImpl(
-                new MetacatProperties(null,
-                    environment.getActiveProfiles()[0].equals("polaris_functional_aurora_test"))),
+            new DefaultConfigImpl(new MetacatProperties(null)),
             new NoopRegistry(),
             null,
             Maps.newHashMap()
@@ -295,20 +293,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
         List<QualifiedName> dbNames = new ArrayList<>();
         List<DatabaseInfo> dbs = new ArrayList<>();
 
-        // Since crdb uses follower_read_timestamp, we will not immediately get the newly created dbs
-        if (environment.getActiveProfiles()[0].equals("polaris_functional_test")) {
-            dbNames =
-                getPolarisDBService().listNames(
-                    getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME_TEST), null, null, null);
-            dbs =
-                getPolarisDBService().list(
-                    getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME_TEST), null, null, null);
-            Assert.assertTrue("Expected dbNames to be empty", dbNames.isEmpty());
-            Assert.assertTrue("Expected dbs to be empty", dbs.isEmpty());
-        }
-
-
-        // After sufficient time, the dbs should return using follower_read_timestamp
         TestUtil.simulateDelay();
         dbNames = getPolarisDBService().listNames(
             getRequestContext(), QualifiedName.ofCatalog(CATALOG_NAME_TEST), null, null, null);

@@ -1,6 +1,5 @@
 package com.netflix.metacat.connector.polaris.configs;
 
-import com.google.common.collect.ImmutableMap;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
@@ -13,17 +12,10 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
 import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorPartitionService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorTableService;
-import com.netflix.metacat.connector.polaris.common.PolarisConnectorConsts;
-import com.netflix.metacat.connector.polaris.common.TransactionRetryAspect;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.retry.RetryException;
-import org.springframework.retry.backoff.ExponentialBackOffPolicy;
-import org.springframework.retry.policy.SimpleRetryPolicy;
-import org.springframework.retry.support.RetryTemplate;
 
 /**
  * Config for polaris connector.
@@ -176,34 +168,4 @@ public class PolarisConnectorConfig {
         return new IcebergTableOpsProxy();
     }
 
-    /**
-     * Retry template to use for transaction retries.
-     *
-     * @return The retry template bean.
-     */
-    @Bean
-    public RetryTemplate transactionRetryTemplate() {
-        final RetryTemplate result = new RetryTemplate();
-        result.setRetryPolicy(new SimpleRetryPolicy(
-                PolarisConnectorConsts.MAX_CRDB_TXN_RETRIES,
-                new ImmutableMap.Builder<Class<? extends Throwable>, Boolean>()
-                        .put(RetryException.class, true)
-                        .build()));
-        result.setBackOffPolicy(new ExponentialBackOffPolicy());
-        return result;
-    }
-
-    /**
-     * Aspect advice for transaction retries.
-     *
-     * @param retryTemplate the transaction retry template.
-     * @param connectorContext the connector context.
-     * @return TransactionRetryAspect
-     */
-    @Bean
-    public TransactionRetryAspect transactionRetryAspect(
-            @Qualifier("transactionRetryTemplate") final RetryTemplate retryTemplate,
-            final ConnectorContext connectorContext) {
-        return new TransactionRetryAspect(retryTemplate, connectorContext);
-    }
 }

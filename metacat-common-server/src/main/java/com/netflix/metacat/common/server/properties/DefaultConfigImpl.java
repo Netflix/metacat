@@ -714,8 +714,4 @@ public class DefaultConfigImpl implements Config {
         return this.metacatProperties.getUsermetadata().isDefinitionMetadataSelectForUpdateEnabled();
     }
 
-    @Override
-    public boolean isAuroraDataSourceEnabled() {
-        return this.metacatProperties.getService().isAuroraDataSourceEnabled();
-    }
 }

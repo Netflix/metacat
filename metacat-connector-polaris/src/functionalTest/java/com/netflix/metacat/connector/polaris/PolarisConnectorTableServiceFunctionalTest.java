@@ -133,10 +133,7 @@ public class PolarisConnectorTableServiceFunctionalTest {
         assert activeProfiles.length  == 1;
 
         connectorContext = new ConnectorContext(CATALOG_NAME_TEST, CATALOG_NAME_TEST, "polaris",
-            new DefaultConfigImpl(
-                new MetacatProperties(null,
-                    environment.getActiveProfiles()[0].equals("polaris_functional_aurora_test"))
-            ),
+            new DefaultConfigImpl(new MetacatProperties(null)),
             new NoopRegistry(), null,  Maps.newHashMap());
         polarisDBService = new PolarisConnectorDatabaseService(polarisStoreService, connectorContext);
         polarisTableService = new PolarisConnectorTableService(
@@ -536,9 +533,7 @@ public class PolarisConnectorTableServiceFunctionalTest {
         Assert.assertEquals(tables.stream().map(TableInfo::getName).collect(Collectors.toSet()),
             ImmutableSet.of(name1, name2));
 
-        // Create a 3rd table, but this time does not sleep
-        // so this table should not be included if we are on crdb
-        // but should be 3 if we are on aurora
+        // Create a 3rd table without sleeping
         final QualifiedName name3 = QualifiedName.ofTable(CATALOG_NAME_TEST, DB_NAME, "table3");
         final TableInfo tableInfo3 = TableInfo.builder()
             .name(name3)
@@ -549,13 +544,8 @@ public class PolarisConnectorTableServiceFunctionalTest {
         tables = this.getPolarisTableService().list(
             this.getRequestContext(), DB_QUALIFIED_NAME_FROM_TEST, qualifiedName, new Sort(null, SortOrder.ASC),
             new Pageable(3, 0));
-        if (!environment.getActiveProfiles()[0].equals("polaris_functional_test")) {
-            Assert.assertEquals(tables.stream().map(TableInfo::getName).collect(Collectors.toSet()),
-                ImmutableSet.of(name1, name2, name3));
-        } else {
-            Assert.assertEquals(tables.stream().map(TableInfo::getName).collect(Collectors.toSet()),
-                ImmutableSet.of(name1, name2));
-        }
+        Assert.assertEquals(tables.stream().map(TableInfo::getName).collect(Collectors.toSet()),
+            ImmutableSet.of(name1, name2, name3));
 
         polarisTableService.delete(getRequestContext(), name1);
         polarisTableService.delete(getRequestContext(), name2);

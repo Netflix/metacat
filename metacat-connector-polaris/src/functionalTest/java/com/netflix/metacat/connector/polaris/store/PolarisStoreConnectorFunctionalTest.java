@@ -486,14 +486,11 @@ public class PolarisStoreConnectorFunctionalTest {
      */
     @Test
     public void testPaginatedFetch() {
-        final String[] activeProfiles = environment.getActiveProfiles();
-        assert activeProfiles.length  == 1;
-        final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         final String dbName = generateDatabaseName();
         createDB(CATALOG_NAME_TEST, dbName);
         List<String> tblNames = getPolarisConnector().getTables(CATALOG_NAME_TEST,
-                dbName, "", 1000, isAuroraEnabled);
+                dbName, "", 1000);
         Assert.assertEquals(0, tblNames.size());
 
         final String tblNameA = "A_" + generateTableName();
@@ -506,7 +503,7 @@ public class PolarisStoreConnectorFunctionalTest {
         TestUtil.simulateDelay();
 
         tblNames = getPolarisConnector().getTables(CATALOG_NAME_TEST, dbName,
-                "", 1000, isAuroraEnabled);
+                "", 1000);
         Assert.assertEquals(3, tblNames.size());
         Assert.assertEquals(tblNameA, tblNames.get(0));
         Assert.assertEquals(tblNameB, tblNames.get(1));
@@ -519,9 +516,6 @@ public class PolarisStoreConnectorFunctionalTest {
     @Test
     public void testGetTableEntities() {
         // Create the db
-        final String[] activeProfiles = environment.getActiveProfiles();
-        assert activeProfiles.length  == 1;
-        final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         final String dbName = generateDatabaseName();
         createDB(CATALOG_NAME_TEST, dbName);
@@ -530,7 +524,7 @@ public class PolarisStoreConnectorFunctionalTest {
 
         // Test when db is empty
         List<PolarisTableEntity> entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
-                dbName, "", 1, isAuroraEnabled);
+                dbName, "", 1);
         Assert.assertEquals(0, entities.size());
 
         // Add some tables
@@ -545,28 +539,28 @@ public class PolarisStoreConnectorFunctionalTest {
 
         // Test pagination and sort
         entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
-                dbName, "", 1, isAuroraEnabled);
+                dbName, "", 1);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
 
         entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
-                dbName, "", 2, isAuroraEnabled);
+                dbName, "", 2);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
 
         entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
-                dbName, "", 3, isAuroraEnabled);
+                dbName, "", 3);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
         Assert.assertEquals(tblNameC, entities.get(2).getTblName());
 
         entities = getPolarisConnector().getTableEntities(CATALOG_NAME_TEST,
-                dbName, "", 4, isAuroraEnabled);
+                dbName, "", 4);
         Assert.assertEquals(3, entities.size());
         Assert.assertEquals(tblNameA, entities.get(0).getTblName());
         Assert.assertEquals(tblNameB, entities.get(1).getTblName());
@@ -578,9 +572,6 @@ public class PolarisStoreConnectorFunctionalTest {
      */
     @Test
     public void testListDbPage() {
-        final String[] activeProfiles = environment.getActiveProfiles();
-        assert activeProfiles.length  == 1;
-        final boolean isAuroraEnabled = activeProfiles[0].equals("polaris_functional_aurora_test");
 
         createDB(CATALOG_NAME_TEST, "db1");
         createDB(CATALOG_NAME_TEST, "db2");
@@ -589,33 +580,33 @@ public class PolarisStoreConnectorFunctionalTest {
         TestUtil.simulateDelay();
 
         List<String> dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 1, isAuroraEnabled);
+                "db", null, 1);
         List<PolarisDatabaseEntity> dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 1, isAuroraEnabled);
+                "db", null, 1);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
         dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 2, isAuroraEnabled);
+                "db", null, 2);
         dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 2, isAuroraEnabled);
+                "db", null, 2);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
         dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 3, isAuroraEnabled);
+                "db", null, 3);
         dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 3, isAuroraEnabled);
+                "db", null, 3);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
         dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 4, isAuroraEnabled);
+                "db", null, 4);
         dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 4, isAuroraEnabled);
+                "db", null, 4);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));

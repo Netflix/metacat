@@ -7,7 +7,7 @@ import java.util.List;
  */
 public interface PolarisTableCustomReplicaRepository {
     /**
-     * Fetch table entities for given database using AS OF SYSTEM TIME follower_read_timestamp().
+     * Fetch table entities for given database.
      * @param dbName database name
      * @param tableNamePrefix table name prefix. can be empty.
      * @param pageSize target size for each page

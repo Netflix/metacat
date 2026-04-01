@@ -73,12 +73,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final String catalogName,
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize,
-        final boolean isAuroraEnabled) {
+        final int pageSize) {
         return (List<PolarisDatabaseEntity>)
-            (isAuroraEnabled
-                ? replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, true)
-                : dbRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, true));
+            replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, true);
     }
 
     @Override
@@ -87,12 +84,9 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final String catalogName,
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
-        final int pageSize,
-        final boolean isAuroraEnabled) {
-        return (List<String>) (isAuroraEnabled
-            ? replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, false)
-            : dbRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, false)
-        );
+        final int pageSize) {
+        return (List<String>)
+            replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, false);
     }
 
     /**
@@ -187,7 +181,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Fetch table entities for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
-     * @param isAuroraEnabled isAuroraEnabled
      * @return table entities in the database.
      */
     @Override
@@ -195,25 +188,11 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<PolarisTableEntity> getTableEntities(
         final String catalogName,
         final String databaseName,
-                                                     final String tableNamePrefix,
-                                                     final int pageFetchSize,
-                                                     final boolean isAuroraEnabled) {
+        final String tableNamePrefix,
+        final int pageFetchSize) {
         return (List<PolarisTableEntity>)
-            (isAuroraEnabled
-                ? replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
-                catalogName,
-                databaseName,
-                tableNamePrefix,
-                pageFetchSize,
-                true
-            )
-                : tblRepo.findAllTablesByDbNameAndTablePrefix(
-                catalogName,
-                    databaseName,
-                    tableNamePrefix,
-                    pageFetchSize,
-                    true
-                ));
+            replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
+                catalogName, databaseName, tableNamePrefix, pageFetchSize, true);
     }
 
     /**
@@ -256,7 +235,6 @@ public class PolarisStoreConnector implements PolarisStoreService {
      * Fetch table names for given database.
      * @param databaseName database name
      * @param tableNamePrefix table name prefix. can be empty.
-     * @param isAuroraEnabled isAuroraEnabled
      * @return table names in the database.
      */
     @Override
@@ -265,26 +243,11 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final String catalogName,
         final String databaseName,
         final String tableNamePrefix,
-        final int pageFetchSize,
-        final boolean isAuroraEnabled
+        final int pageFetchSize
     ) {
         return (List<String>)
-            (isAuroraEnabled
-                ? replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
-                catalogName,
-                databaseName,
-                tableNamePrefix,
-                pageFetchSize,
-                false
-                )
-                : tblRepo.findAllTablesByDbNameAndTablePrefix(
-                catalogName,
-                    databaseName,
-                    tableNamePrefix,
-                    pageFetchSize,
-                    false
-                )
-            );
+            replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
+                catalogName, databaseName, tableNamePrefix, pageFetchSize, false);
     }
 
     /**
