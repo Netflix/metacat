@@ -33,6 +33,7 @@ dependencies {
      *******************************/
 
     api("com.google.guava:guava")
+    implementation("com.github.rholder:guava-retrying")
 
     /*******************************
      * Provided Dependencies
