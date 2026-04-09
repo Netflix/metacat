@@ -332,4 +332,91 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         then: "authorization is applied with only non-empty callers"
         tblSvc instanceof AuthorizingConnectorTableService
     }
+
+    def "location update lock enabled alone wraps only table service"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.location-update-locked": "true"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "table service is wrapped with AuthorizingConnectorTableService"
+        tblSvc instanceof AuthorizingConnectorTableService
+        def authTblSvc = tblSvc as AuthorizingConnectorTableService
+        authTblSvc.getDelegate() == tableService
+
+        when:
+        def catalogSvc = factory.getCatalogService()
+
+        then: "catalog service is NOT wrapped"
+        catalogSvc == catalogService
+
+        when:
+        def dbSvc = factory.getDatabaseService()
+
+        then: "database service is NOT wrapped"
+        dbSvc == databaseService
+
+        when:
+        def partitionSvc = factory.getPartitionService()
+
+        then: "partition service is NOT wrapped"
+        partitionSvc == partitionService
+    }
+
+    def "location update lock and auth both enabled wraps all services"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "irc",
+            "connector.location-update-locked": "true"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "table service is wrapped"
+        tblSvc instanceof AuthorizingConnectorTableService
+
+        when:
+        def catalogSvc = factory.getCatalogService()
+
+        then: "catalog service is wrapped (via auth)"
+        catalogSvc instanceof AuthorizingConnectorCatalogService
+
+        when:
+        def dbSvc = factory.getDatabaseService()
+
+        then: "database service is wrapped (via auth)"
+        dbSvc instanceof AuthorizingConnectorDatabaseService
+
+        when:
+        def partitionSvc = factory.getPartitionService()
+
+        then: "partition service is wrapped (via auth)"
+        partitionSvc instanceof AuthorizingConnectorPartitionService
+    }
+
+    def "location update lock disabled by default when config key absent"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true"
+            // location-update-locked not set
+        ]
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "no wrapper applied"
+        tblSvc == tableService
+    }
 }
