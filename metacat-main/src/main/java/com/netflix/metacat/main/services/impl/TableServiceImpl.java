@@ -356,6 +356,7 @@ public class TableServiceImpl implements TableService {
         TableDto tableDto = new TableDto();
         tableDto.setName(name);
 
+        boolean tableExists = false;
         try {
             final Optional<TableDto> oTable = get(name,
                 GetTableServiceParameters.builder()
@@ -364,8 +365,11 @@ public class TableServiceImpl implements TableService {
                     .includeDefinitionMetadata(true)
                     .includeDataMetadata(true)
                     .build());
+            tableExists = oTable.isPresent();
             tableDto = oTable.orElse(tableDto);
         } catch (Exception e) {
+            // Non-NotFoundException: table may exist but we couldn't read its metadata.
+            tableExists = true;
             handleException(name, true, "deleteAndReturn_get", e);
         }
 
@@ -449,7 +453,12 @@ public class TableServiceImpl implements TableService {
                     Lists.newArrayList(tableDto.getDataUri()));
             }
         }
-        eventBus.post(new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
+        if (tableExists) {
+            eventBus.post(
+                new MetacatDeleteTablePostEvent(name, metacatRequestContext, this, tableDto, isMView));
+        } else {
+            log.info("Skipping delete event for non-existent table {}", name);
+        }
         return tableDto;
     }
 

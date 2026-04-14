@@ -32,6 +32,7 @@ import com.netflix.metacat.common.server.connectors.ConnectorTableService
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetadataException
 import com.netflix.metacat.common.server.connectors.exception.TableNotFoundException
 import com.netflix.metacat.common.server.converter.ConverterUtil
+import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatEventBus
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
@@ -258,6 +259,27 @@ class TableServiceImplSpec extends Specification {
         1 * config.canDeleteTableDefinitionMetadata() >> true
         1 * usermetadataService.deleteMetadata(_,_)
         noExceptionThrown()
+    }
+
+    def testDeleteAndReturn_nonExistentTable() {
+        given:
+        // Override the default mock to simulate table not found
+        connectorTableService.get(_, _) >> { throw new TableNotFoundException(name) }
+
+        when:
+        def result = service.deleteAndReturn(name, false)
+
+        then:
+        1 * config.getNoTableDeleteOnTags() >> []
+        1 * config.canDeleteTableDefinitionMetadata() >> true
+        // Metadata cleanup should still happen (metacat metadata can exist independently)
+        1 * usermetadataService.deleteMetadata(_, _)
+        // Post-delete event should NOT be emitted for non-existent table
+        0 * eventBus.post({ it instanceof MetacatDeleteTablePostEvent })
+        // Should still return without exception (idempotent)
+        noExceptionThrown()
+        result != null
+        result.name == name
     }
 
     def testUpdateAndReturn() {
