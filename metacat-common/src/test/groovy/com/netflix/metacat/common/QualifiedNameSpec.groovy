@@ -52,7 +52,7 @@ class QualifiedNameSpec extends Specification {
         Exception e = thrown()
         e instanceof IllegalArgumentException || e instanceof IllegalStateException
 
-        where:
+            where:
         input       | _
         ''          | _
         '   '       | _
@@ -277,5 +277,53 @@ class QualifiedNameSpec extends Specification {
         'cde_catalog' | 'cde_catalog/Test_DB/Test_TABLE'                | 'cde_catalog'       | 'Test_DB'            | 'Test_TABLE'              | 'cde_catalog/Test_DB/Test_TABLE'
         'cde_catalog' | 'cde_catalog/Test_DB/Test_TABLE'                | 'cde_catalog'       | 'Test_DB'            | 'Test_TABLE'              | 'cde_catalog/Test_DB/Test_TABLE'
         'prodhive'    | 'prodhive/database_1/Test_TABLE'                | 'prodhive'          | 'database_1'         | 'test_table'              | 'prodhive/database_1/test_table'
+    }
+
+    @Unroll
+    def 'expect uppercase catalogs to force uppercase when enabled for #catalogName'() {
+        setup:
+        QualifiedName.enableUpperCaseCatalogs()
+
+        when:
+        def qualifiedName = QualifiedName.fromString(inputString)
+
+        then:
+        qualifiedName.catalogName == expectedCatalogName
+        qualifiedName.databaseName == expectedDatabaseName
+        qualifiedName.tableName == expectedTableName
+        qualifiedName.toString() == expectedString
+
+        cleanup:
+        QualifiedName.@upperCaseCatalogsEnabled = false
+
+        where:
+        catalogName      | inputString                                  | expectedCatalogName | expectedDatabaseName | expectedTableName | expectedString
+        'snowflake-dse'  | 'snowflake-dse/MYDB/MYTABLE'                 | 'snowflake-dse'     | 'MYDB'               | 'MYTABLE'         | 'snowflake-dse/MYDB/MYTABLE'
+        'snowflake-dse'  | 'snowflake-dse/already_Lower/also_lower'     | 'snowflake-dse'     | 'ALREADY_LOWER'      | 'ALSO_LOWER'      | 'snowflake-dse/ALREADY_LOWER/ALSO_LOWER'
+    }
+
+    def 'expect uppercase catalogs to force lowercase when not enabled'() {
+        when:
+        def qualifiedName = QualifiedName.fromString('snowflake-dse/MyDb/MyTable')
+
+        then:
+        qualifiedName.databaseName == 'mydb'
+        qualifiedName.tableName == 'mytable'
+    }
+
+    def 'expect partition names to preserve case even for uppercase catalogs'() {
+        setup:
+        QualifiedName.enableUpperCaseCatalogs()
+
+        when:
+        def qualifiedName = QualifiedName.fromString('snowflake-dse/db/table/dateint=2024-01-01')
+
+        then:
+        qualifiedName.databaseName == 'DB'
+        qualifiedName.tableName == 'TABLE'
+        qualifiedName.partitionName == 'dateint=2024-01-01'
+
+        cleanup:
+        QualifiedName.@upperCaseCatalogsEnabled = false
     }
 }
