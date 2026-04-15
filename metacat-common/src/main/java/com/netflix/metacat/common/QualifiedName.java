@@ -42,6 +42,8 @@ public final class QualifiedName implements Serializable {
     private static final long serialVersionUID = -7916364073519921672L;
     private static final List<String> CASE_SENSITIVE_CATALOG_PREFIXES = List.of("cde_");
     private static final List<String> CASE_SENSITIVE_CATALOG_SUFFIXES = List.of("druid");
+    private static final List<String> UPPER_CASE_CATALOG_PREFIXES = List.of("snowflake-dse");
+    private static volatile boolean upperCaseCatalogsEnabled;
     private final String catalogName;
     private final String databaseName;
     private final String partitionName;
@@ -57,12 +59,12 @@ public final class QualifiedName implements Serializable {
         @Nullable final String viewName
     ) {
         this.catalogName = standardizeRequired("catalogName", catalogName);
-        // TODO: Temporary hack to support a certain catalog that has mixed case naming.
-        final boolean forceLowerCase = !isCaseSensitiveCatalog(catalogName);
-        this.databaseName = standardizeOptional(databaseName, forceLowerCase);
-        this.tableName = standardizeOptional(tableName, forceLowerCase);
-        this.partitionName = standardizeOptional(partitionName, false);
-        this.viewName = standardizeOptional(viewName, forceLowerCase);
+        // TODO: Temporary hack to support a certain catalogs that has mixed case naming.
+        final CatalogCaseConversion caseConversion = getCaseConversion(this.catalogName);
+        this.databaseName = standardizeOptional(databaseName, caseConversion);
+        this.tableName = standardizeOptional(tableName, caseConversion);
+        this.partitionName = standardizeOptional(partitionName, CatalogCaseConversion.KEEP_CASE);
+        this.viewName = standardizeOptional(viewName, caseConversion);
 
         if (this.databaseName.isEmpty() && (!this.tableName.isEmpty() || !this.partitionName.isEmpty())) {
             throw new IllegalStateException("databaseName is not present but tableName or partitionName are present");
@@ -448,16 +450,25 @@ public final class QualifiedName implements Serializable {
         return !tableName.isEmpty();
     }
 
-    private static String standardizeOptional(@Nullable final String value, final boolean forceLowerCase) {
+    private static String standardizeOptional(@Nullable final String value,
+                                              final CatalogCaseConversion caseConversion) {
         if (value == null) {
             return "";
-        } else {
-            String returnValue = value.trim();
-            if (forceLowerCase) {
-                returnValue = returnValue.toLowerCase();
-            }
-            return returnValue;
         }
+
+        String returnValue = value.trim();
+        switch (caseConversion) {
+            case FORCE_LOWERCASE:
+                returnValue = returnValue.toLowerCase();
+                break;
+            case FORCE_UPPERCASE:
+                returnValue = returnValue.toUpperCase();
+                break;
+            default:
+                break;
+        }
+
+        return returnValue;
     }
 
     private static String standardizeRequired(final String name, @Nullable final String value) {
@@ -621,9 +632,23 @@ public final class QualifiedName implements Serializable {
      * Checks whether the catalog supports case-sensitive qualified names.
      * @param catalogName catalog name
      */
-    private static boolean isCaseSensitiveCatalog(final String catalogName) {
-        return CASE_SENSITIVE_CATALOG_PREFIXES.stream().anyMatch(catalogName::startsWith)
-               || CASE_SENSITIVE_CATALOG_SUFFIXES.stream().anyMatch(catalogName::endsWith);
+    private static CatalogCaseConversion getCaseConversion(final String catalogName) {
+        if (CASE_SENSITIVE_CATALOG_PREFIXES.stream().anyMatch(catalogName::startsWith)
+            || CASE_SENSITIVE_CATALOG_SUFFIXES.stream().anyMatch(catalogName::endsWith)) {
+            return CatalogCaseConversion.KEEP_CASE;
+        }
+        if (upperCaseCatalogsEnabled && UPPER_CASE_CATALOG_PREFIXES.stream().anyMatch(catalogName::startsWith)) {
+            return CatalogCaseConversion.FORCE_UPPERCASE;
+        }
+        return CatalogCaseConversion.FORCE_LOWERCASE;
+    }
+
+    /**
+     * Enables upper case catalog conversions.
+     */
+    @SuppressWarnings("unused")
+    public static void enableUpperCaseCatalogs() {
+        upperCaseCatalogsEnabled = true;
     }
 
     /**
@@ -691,4 +716,9 @@ public final class QualifiedName implements Serializable {
         }
     }
 
+    private enum CatalogCaseConversion {
+        FORCE_LOWERCASE,
+        KEEP_CASE,
+        FORCE_UPPERCASE
+    }
 }
