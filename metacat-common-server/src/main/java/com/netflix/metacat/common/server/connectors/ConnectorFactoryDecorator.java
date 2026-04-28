@@ -18,6 +18,7 @@
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
+import com.netflix.metacat.common.server.util.AuthorizedCaller;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +56,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     private final RateLimiter rateLimiter;
     private final boolean rateLimiterEnabled;
     private final boolean authorizationRequired;
-    private final Set<String> authorizedCallers;
+    private final Set<AuthorizedCaller> authorizedCallers;
 
     /**
      * Creates the decorated connector factory that wraps connector services
@@ -225,7 +226,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         );
     }
 
-    private Set<String> getAuthorizedCallers() {
+    private Set<AuthorizedCaller> getAuthorizedCallers() {
         if (connectorContext.getConfiguration() == null) {
             return Collections.emptySet();
         }
@@ -237,11 +238,24 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
             return Collections.emptySet();
         }
 
-        // Split by comma, trim whitespace, filter empty strings, collect to set
+        // Split by comma, trim whitespace, filter empty strings, parse each token.
+        // Plain entry "app" matches on SsoDirectCallerAppName only.
+        // Compound entry "app:userName" requires both SsoDirectCallerAppName AND userName to match.
         // Note: matching is case-sensitive (e.g., "IRC" will not match "irc")
         return Arrays.stream(callers.split(","))
             .map(String::trim)
             .filter(s -> !s.isEmpty())
+            .map(ConnectorFactoryDecorator::parseAuthorizedCaller)
             .collect(Collectors.toSet());
+    }
+
+    private static AuthorizedCaller parseAuthorizedCaller(final String token) {
+        final int colon = token.indexOf(':');
+        if (colon < 0) {
+            return new AuthorizedCaller(token, null);
+        }
+        final String app = token.substring(0, colon);
+        final String user = token.substring(colon + 1);
+        return new AuthorizedCaller(app, user);
     }
 }

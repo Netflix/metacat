@@ -21,6 +21,7 @@ import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException
 import com.netflix.metacat.common.server.connectors.model.CatalogInfo
+import com.netflix.metacat.common.server.util.AuthorizedCaller
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import spock.lang.Specification
 
@@ -58,7 +59,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "create - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -71,7 +72,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "create - unauthorized caller throws exception"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
 
@@ -85,7 +86,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "create - missing SsoDirectCallerAppName throws exception"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
 
         // No SsoDirectCallerAppName in additionalContext
@@ -102,7 +103,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "update - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -115,7 +116,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "update - unauthorized caller throws exception"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("spark"))
 
@@ -129,7 +130,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "delete - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -142,7 +143,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "get - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -155,7 +156,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "exists - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -168,7 +169,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "list - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -181,7 +182,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "listNames - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -194,7 +195,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "rename - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -207,7 +208,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "exception message contains caller name when unauthorized"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorCatalogService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
 

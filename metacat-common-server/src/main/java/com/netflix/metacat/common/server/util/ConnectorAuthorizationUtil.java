@@ -39,38 +39,43 @@ public final class ConnectorAuthorizationUtil {
 
     /**
      * Checks if the current caller is authorized to access the specified catalog.
-     * Authorization is based on the SsoDirectCallerAppName from the request context's additionalContext.
+     * Authorization is based on the SsoDirectCallerAppName from the request context's additionalContext,
+     * and optionally the request's userName when a rule specifies one.
      *
      * @param catalogName    the name of the catalog being accessed
-     * @param allowedCallers the set of callers allowed to access this catalog
+     * @param allowedCallers the set of caller rules allowed to access this catalog
      * @param operation      the operation being performed (for logging)
      * @param resource       the resource being accessed (for logging)
      * @throws CatalogUnauthorizedException if the caller is not authorized
      */
     public static void checkAuthorization(
         final String catalogName,
-        final Set<String> allowedCallers,
+        final Set<AuthorizedCaller> allowedCallers,
         final String operation,
         final QualifiedName resource
     ) {
         final MetacatRequestContext context = MetacatContextManager.getContext();
-        final String caller = context.getAdditionalContext()
+        final String callerApp = context.getAdditionalContext()
             .get(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME);
+        final String callerUser = context.getUserName();
 
-        if (caller == null) {
+        if (callerApp == null) {
             log.warn("Authorization denied for catalog {}: No SsoDirectCallerAppName in request context for {} on {}",
                 catalogName, operation, resource);
             throw new CatalogUnauthorizedException(catalogName);
         }
 
-        if (!allowedCallers.contains(caller)) {
+        final boolean allowed = allowedCallers.stream()
+            .anyMatch(rule -> rule.matches(callerApp, callerUser));
+
+        if (!allowed) {
             log.warn("Authorization denied for catalog {}: "
-                    + "SsoDirectCallerAppName '{}' not in allowed list for {} on {}",
-                catalogName, caller, operation, resource);
-            throw new CatalogUnauthorizedException(catalogName, caller);
+                    + "SsoDirectCallerAppName '{}' (userName '{}') not in allowed list for {} on {}",
+                catalogName, callerApp, callerUser, operation, resource);
+            throw new CatalogUnauthorizedException(catalogName, callerApp);
         }
 
-        log.debug("Authorization granted for catalog {}: SsoDirectCallerAppName '{}' for {} on {}",
-            catalogName, caller, operation, resource);
+        log.debug("Authorization granted for catalog {}: SsoDirectCallerAppName '{}' (userName '{}') for {} on {}",
+            catalogName, callerApp, callerUser, operation, resource);
     }
 }

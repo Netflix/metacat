@@ -21,6 +21,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.util.AuthorizedCaller;
 import com.netflix.metacat.common.server.util.ConnectorAuthorizationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
@@ -46,7 +47,7 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
     private final ConnectorTableService delegate;
 
     @NonNull
-    private final Set<String> allowedCallers;
+    private final Set<AuthorizedCaller> allowedCallers;
 
     @NonNull
     private final String catalogName;

@@ -316,6 +316,23 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         // The whitespace should be trimmed, so "irc", "irc-server", and "spark" should all be valid
     }
 
+    def "authorized callers list accepts compound app:userName syntax"() {
+        given:
+        connectorContext.getConfiguration() >> [
+            "connector.rate-limiter-exempted": "true",
+            "connector.authorization-required": "true",
+            "connector.authorized-callers": "irc,hadoop:idm-worker"
+        ]
+        connectorContext.getCatalogName() >> "ads"
+        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+
+        when:
+        def tblSvc = factory.getTableService()
+
+        then: "authorization is applied; compound entry parses without error"
+        tblSvc instanceof AuthorizingConnectorTableService
+    }
+
     def "authorized callers with only whitespace entries are filtered"() {
         given:
         connectorContext.getConfiguration() >> [

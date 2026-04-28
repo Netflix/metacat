@@ -24,6 +24,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest
 import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.server.util.AuthorizedCaller
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import spock.lang.Specification
 
@@ -69,7 +70,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "create - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -82,7 +83,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "create - unauthorized caller throws exception"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
 
@@ -96,7 +97,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "create - missing SsoDirectCallerAppName throws exception"() {
         given:
-        def allowedCallers = ["irc", "irc-server"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
 
         // No SsoDirectCallerAppName in additionalContext
@@ -113,7 +114,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "update - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -126,7 +127,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "delete - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -139,7 +140,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "get - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -152,7 +153,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "exists - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -165,7 +166,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "list - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -178,7 +179,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "listNames - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -191,7 +192,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "rename - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -204,7 +205,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "getPartitions - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -217,7 +218,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "getPartitions - unauthorized caller throws exception"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("spark"))
 
@@ -231,7 +232,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "savePartitions - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -244,7 +245,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "savePartitions - unauthorized caller throws exception"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("hive"))
 
@@ -258,7 +259,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "deletePartitions - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         def partitionNames = ["dateint=20240101"]
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
@@ -272,7 +273,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "getPartitionCount - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -285,7 +286,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "getPartitionNames - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         def uris = ["s3://bucket/path"]
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
@@ -299,7 +300,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "getPartitionKeys - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -312,7 +313,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "getPartitionUris - authorized caller succeeds"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
@@ -325,7 +326,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "exception message contains caller name when unauthorized"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
         MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
 
@@ -340,7 +341,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "exception message indicates missing caller when no SsoDirectCallerAppName"() {
         given:
-        def allowedCallers = ["irc"] as Set
+        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
         service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
 
         def ctx = MetacatRequestContext.builder().build()
