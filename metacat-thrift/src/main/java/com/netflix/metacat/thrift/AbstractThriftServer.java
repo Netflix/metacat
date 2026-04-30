@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractThriftServer {
     private static final int MAX_SOCKET_BIND_ATTEMPTS = 5;
-    private static final long MAX_SOCKET_BIND_WAIT_SECONDS = 30;
+    private static final long MAX_SOCKET_BIND_WAIT_SECONDS = 120;
     private static final Retryer<TServerTransport> RETRY_THRIFT_SOCKET = RetryerBuilder.<TServerTransport>newBuilder()
         .retryIfExceptionOfType(TTransportException.class)
         .withWaitStrategy(WaitStrategies.exponentialWait(1, MAX_SOCKET_BIND_WAIT_SECONDS, TimeUnit.SECONDS))
