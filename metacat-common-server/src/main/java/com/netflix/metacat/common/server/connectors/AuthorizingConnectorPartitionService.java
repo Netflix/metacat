@@ -25,6 +25,7 @@ import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
+import com.netflix.metacat.common.server.util.AuthorizedCaller;
 import com.netflix.metacat.common.server.util.ConnectorAuthorizationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
@@ -50,7 +51,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
     private final ConnectorPartitionService delegate;
 
     @NonNull
-    private final Set<String> allowedCallers;
+    private final Set<AuthorizedCaller> allowedCallers;
 
     @NonNull
     private final String catalogName;
