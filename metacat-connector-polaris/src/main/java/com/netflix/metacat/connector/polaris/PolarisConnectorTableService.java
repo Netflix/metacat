@@ -101,6 +101,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         }
         try {
             final PolarisTableEntity entity = polarisTableMapper.toEntity(tableInfo);
+            if (HiveTableUtil.isSecureView(tableInfo)) {
+                throw new InvalidMetaException(tableInfo.getName(),
+                    "Secure view creation is not permitted in Metacat.", null);
+            }
             if (HiveTableUtil.isCommonView(tableInfo)) {
                 polarisStoreService.createTable(entity.getCatalogName(), entity.getDbName(), entity.getTblName(),
                     entity.getMetadataLocation(), entity.getParams(), createdBy);
@@ -236,6 +240,11 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
         final boolean isView = HiveTableUtil.isCommonView(tableInfo);
+        final boolean isSecureView = HiveTableUtil.isSecureView(tableInfo);
+        if (isSecureView) {
+            throw new InvalidMetaException(tableInfo.getName(),
+                "Secure view update is not permitted in Metacat", null);
+        }
         if (isView) {
             commonViewHandler.update(tableInfo);
         } else {

@@ -169,6 +169,16 @@ public final class HiveTableUtil {
                 && MetacatUtils.isCommonView(tableInfo.getMetadata());
     }
 
+    /** check if the table is a secure view.
+     *
+     * @param tableInfo table info
+     * @return true for common view
+     */
+    public static boolean isSecureView(final TableInfo tableInfo) {
+        return tableInfo != null && tableInfo.getMetadata() != null
+            && MetacatUtils.isSecureView(tableInfo.getMetadata());
+    }
+
     /**
      * get common view metadata location.
      *
