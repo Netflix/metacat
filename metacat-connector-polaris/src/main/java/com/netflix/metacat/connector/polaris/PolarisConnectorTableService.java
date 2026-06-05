@@ -163,7 +163,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 .orElseThrow(() -> new TableNotFoundException(name));
             final boolean isView = MetacatUtils.isCommonView(polarisTableEntity.getParams());
             final boolean isSecureView = MetacatUtils.isSecureView(polarisTableEntity.getParams());
-            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity, isView);
+            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity, isView || isSecureView);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
 
             // Return the iceberg table with just the metadata location included if requested.

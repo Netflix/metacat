@@ -463,6 +463,26 @@ public class PolarisConnectorTableServiceFunctionalTest {
     }
 
     /**
+     * Validate that loading a secure view returns only metadata with no field information.
+     */
+    @Test
+    public void testSecureViewLoadRestricted() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME_TEST, DB_NAME, "secure_view2");
+        final String location = "src/test/resources/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json";
+        // Plant the row directly via the store (bypassing the service-layer block) to simulate an existing secure view.
+        polarisStoreService.createTable(CATALOG_NAME_TEST, DB_NAME, "secure_view2",
+            location, ImmutableMap.of("secure_view", "true"), "metacat_user");
+
+        final TableInfo result = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals("true", result.getMetadata().get("secure_view"));
+        Assert.assertEquals(location, result.getMetadata().get("metadata_location"));
+        Assert.assertEquals(result.getMetadata().toString(),
+            ImmutableSet.of("secure_view", "metadata_location"), result.getMetadata().keySet());
+
+        polarisTableService.delete(requestContext, qualifiedName);
+    }
+
+    /**
      * Test get table names.
      */
     @Test
