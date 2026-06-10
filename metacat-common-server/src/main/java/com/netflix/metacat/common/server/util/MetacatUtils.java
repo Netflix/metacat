@@ -41,6 +41,7 @@ public class MetacatUtils {
      */
     public static final String COMMON_VIEW = "common_view";
     public static final String STORAGE_TABLE = "storage_table";
+    public static final String SECURE_VIEW = "secure_view";
 
     /**
      * Default Ctor.
@@ -173,5 +174,15 @@ public class MetacatUtils {
             return Optional.ofNullable(tableMetadata.get(STORAGE_TABLE));
         }
         return Optional.empty();
+    }
+
+    /**
+     * check if the table is a secure view.
+     *
+     * @param tableMetadata table metadata map
+     * @return true for secure view
+     */
+    public static boolean isSecureView(final Map<String, String> tableMetadata) {
+        return tableMetadata != null && Boolean.parseBoolean(tableMetadata.get(SECURE_VIEW));
     }
 }

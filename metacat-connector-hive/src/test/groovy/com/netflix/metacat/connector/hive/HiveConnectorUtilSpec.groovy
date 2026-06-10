@@ -65,4 +65,24 @@ class HiveConnectorUtilSpec extends Specification{
         [:]    | false
         null | false
       }
+
+    def "Test for check secure view" () {
+        given:
+        def tableInfo = TableInfo.builder().metadata(metadata).build()
+        def isView = HiveTableUtil.isSecureView(tableInfo)
+        def isView2 = MetacatUtils.isSecureView(tableInfo.metadata)
+        expect:
+        isView == output
+        isView2 == output
+        where:
+        metadata     | output
+        ['secure_view' : "true"]    | true
+        ['secure_view' : "false"]    | false
+        ['secure_view_1' : "false"]    | false
+        ['secure_view' : null]    | false
+        ['secure_view' : "True"]    | true
+        ['secure_view' : ""]    | false
+        [:]    | false
+        null | false
+      }
 }

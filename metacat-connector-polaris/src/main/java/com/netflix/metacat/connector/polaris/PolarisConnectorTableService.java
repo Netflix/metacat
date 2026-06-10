@@ -95,6 +95,9 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     public void create(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
         final String createdBy = PolarisUtils.getUserOrDefault(requestContext);
+        if (HiveTableUtil.isSecureView(tableInfo)) {
+            throw new InvalidMetaException("Secure view creation is not permitted in Metacat.", null);
+        }
         // check exists then create in non-transactional optimistic manner
         if (exists(requestContext, name)) {
             throw new TableAlreadyExistsException(name);
@@ -159,12 +162,13 @@ public class PolarisConnectorTableService implements ConnectorTableService {
                 .getTable(name.getCatalogName(), name.getDatabaseName(), name.getTableName())
                 .orElseThrow(() -> new TableNotFoundException(name));
             final boolean isView = MetacatUtils.isCommonView(polarisTableEntity.getParams());
-            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity, isView);
+            final boolean isSecureView = MetacatUtils.isSecureView(polarisTableEntity.getParams());
+            final TableInfo info = polarisTableMapper.toInfo(polarisTableEntity, isView || isSecureView);
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
 
             // Return the iceberg table with just the metadata location included if requested.
-            if (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
-                    && requestContext.isIncludeMetadataLocationOnly()) {
+            if (isSecureView || (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
+                    && requestContext.isIncludeMetadataLocationOnly())) {
                 return TableInfo.builder()
                         .auditInfo(info.getAudit())
                         .metadata(Maps.newHashMap(info.getMetadata()))
@@ -235,6 +239,10 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final Config conf = connectorContext.getConfig();
         final String lastModifiedBy = PolarisUtils.getUserOrDefault(requestContext);
         final boolean isView = HiveTableUtil.isCommonView(tableInfo);
+        final boolean isSecureView = HiveTableUtil.isSecureView(tableInfo);
+        if (isSecureView) {
+            throw new InvalidMetaException("Secure view update is not permitted in Metacat", null);
+        }
         if (isView) {
             commonViewHandler.update(tableInfo);
         } else {

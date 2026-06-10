@@ -433,6 +433,56 @@ public class PolarisConnectorTableServiceFunctionalTest {
     }
 
     /**
+     * Validate that secure view create and update are blocked in Polaris.
+     */
+    @Test
+    public void testSecureViewCreateAndUpdateBlocked() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME_TEST, DB_NAME, "secure_view1");
+        // Not valid secure view metadata, but doesn't matter for this test
+        final String location = "src/test/resources/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json";
+
+        final TableInfo createInfo = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("metadata_location", location, "secure_view", "true"))
+            .build();
+        final InvalidMetaException createEx = Assertions.assertThrows(InvalidMetaException.class,
+            () -> polarisTableService.create(requestContext, createInfo));
+        Assert.assertTrue(createEx.getMessage(),
+            createEx.getMessage().contains("Secure view creation is not permitted in Metacat."));
+        // secure view should not have been persisted
+        Assert.assertFalse(polarisTableService.exists(requestContext, qualifiedName));
+
+        final TableInfo updateInfo = TableInfo.builder()
+            .name(qualifiedName)
+            .metadata(ImmutableMap.of("metadata_location", location, "secure_view", "true"))
+            .build();
+        final InvalidMetaException updateEx = Assertions.assertThrows(InvalidMetaException.class,
+            () -> polarisTableService.update(requestContext, updateInfo));
+        Assert.assertTrue(updateEx.getMessage(),
+            updateEx.getMessage().contains("Secure view update is not permitted in Metacat"));
+    }
+
+    /**
+     * Validate that loading a secure view returns only metadata with no field information.
+     */
+    @Test
+    public void testSecureViewLoadRestricted() {
+        final QualifiedName qualifiedName = QualifiedName.ofTable(CATALOG_NAME_TEST, DB_NAME, "secure_view2");
+        final String location = "src/test/resources/metadata/00001-abf48887-aa4f-4bcc-9219-1e1721314ee1.metadata.json";
+        // Plant the row directly via the store (bypassing the service-layer block) to simulate an existing secure view.
+        polarisStoreService.createTable(CATALOG_NAME_TEST, DB_NAME, "secure_view2",
+            location, ImmutableMap.of("secure_view", "true"), "metacat_user");
+
+        final TableInfo result = polarisTableService.get(requestContext, qualifiedName);
+        Assert.assertEquals("true", result.getMetadata().get("secure_view"));
+        Assert.assertEquals(location, result.getMetadata().get("metadata_location"));
+        Assert.assertEquals(result.getMetadata().toString(),
+            ImmutableSet.of("secure_view", "metadata_location"), result.getMetadata().keySet());
+
+        polarisTableService.delete(requestContext, qualifiedName);
+    }
+
+    /**
      * Test get table names.
      */
     @Test
