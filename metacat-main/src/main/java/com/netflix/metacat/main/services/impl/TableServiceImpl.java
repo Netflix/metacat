@@ -871,6 +871,7 @@ public class TableServiceImpl implements TableService {
         if (Strings.isNullOrEmpty(parameters.getFilter())) {
             throw new MetacatBadRequestException("Filter expression cannot be empty");
         }
+
         return connectorTableServiceProxy.getQualifiedNames(name, parameters);
     }
 
