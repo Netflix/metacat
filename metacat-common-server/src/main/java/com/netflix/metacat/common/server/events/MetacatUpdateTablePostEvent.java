@@ -26,7 +26,6 @@ import lombok.NonNull;
 import lombok.ToString;
 
 import javax.annotation.Nonnull;
-import java.util.Optional;
 
 /**
  * Post table update event.
@@ -82,30 +81,5 @@ public class MetacatUpdateTablePostEvent extends MetacatEvent {
         this.oldTable = oldTable;
         this.currentTable = currentTable;
         this.isLatestCurrentTable = isLatestCurrentTable;
-    }
-
-    /**
-     * Whether this update changed only table metadata (schema, properties, tags, etc.) without producing
-     * a new Iceberg snapshot. This is derived by comparing the main-branch Iceberg current snapshot id of
-     * the old and current table (see {@link TableDto#getCurrentSnapshotId()}): a metadata-only change
-     * leaves the snapshot id unchanged, whereas a data change creates a new snapshot.
-     * <p>
-     * Returns {@code false} whenever this cannot be determined &mdash; the current table could not be
-     * refreshed after the update ({@code isLatestCurrentTable()} is {@code false}), or a snapshot id is
-     * unavailable on either side (for example a non-Iceberg table or a view) &mdash; so callers should
-     * treat {@code false} as "not a known metadata-only update" rather than a confirmed data change.
-     *
-     * @return true if the main-branch current snapshot id is unchanged; false otherwise or if unknown
-     */
-    public boolean getMetadataOnlyUpdate() {
-        if (!isLatestCurrentTable) {
-            return false;
-        }
-        final Optional<Long> oldSnapshotId = oldTable.getCurrentSnapshotId();
-        final Optional<Long> currentSnapshotId = currentTable.getCurrentSnapshotId();
-        if (oldSnapshotId.isEmpty() || currentSnapshotId.isEmpty()) {
-            return false;
-        }
-        return oldSnapshotId.equals(currentSnapshotId);
     }
 }

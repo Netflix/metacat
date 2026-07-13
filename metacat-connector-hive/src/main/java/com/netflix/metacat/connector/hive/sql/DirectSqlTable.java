@@ -97,11 +97,7 @@ public class DirectSqlTable {
      * Defines the metadata content of the iceberg table.
      */
     public static final String PARAM_METADATA_CONTENT = "metadata_content";
-    /**
-     * Defines the Iceberg current snapshot id of the table. This is a read-only, derived parameter
-     * surfaced on read by the Iceberg conversion (see {@link TableDto#CURRENT_SNAPSHOT_ID_METADATA_KEY}).
-     * It is used by the read converter and by the Polaris write-path exclusion, and is not persisted.
-     */
+    /** Read-only Iceberg current snapshot id, surfaced on read and never persisted. */
     public static final String PARAM_CURRENT_SNAPSHOT_ID = TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY;
     /**
      * List of parameter that needs to be excluded when updating an iceberg table.

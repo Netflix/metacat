@@ -50,13 +50,7 @@ import java.util.Optional;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
-    /**
-     * Key in {@code getMetadata()} that holds the Iceberg current snapshot id for Iceberg tables.
-     * <p>
-     * Populated on read by the Hive connector's Iceberg conversion. The value {@code -1} is valid and
-     * means the Iceberg table has no current snapshot (e.g. it was just created and has no data yet).
-     * The key is absent for non-Iceberg tables and views, which have no snapshot concept.
-     */
+    /** Metadata key holding the Iceberg current snapshot id ({@code -1} if none); absent for non-Iceberg tables. */
     public static final String CURRENT_SNAPSHOT_ID_METADATA_KEY = "current_snapshot_id";
 
     private static final long serialVersionUID = 5922768252406041451L;
@@ -117,14 +111,10 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     }
 
     /**
-     * Returns the Iceberg current snapshot id for this table, when known.
-     * <p>
-     * The value is read from the {@value #CURRENT_SNAPSHOT_ID_METADATA_KEY} metadata property that the
-     * Hive connector populates for Iceberg tables on read. A value of {@code -1} is returned as-is and
-     * means "no current snapshot" (an empty Iceberg table). The result is empty for non-Iceberg tables
-     * and views, or when the property is missing or not a parseable long.
+     * Returns the Iceberg current snapshot id ({@code -1} if the table has no snapshot), or empty for a
+     * non-Iceberg table or when the {@value #CURRENT_SNAPSHOT_ID_METADATA_KEY} property is missing or unparseable.
      *
-     * @return the Iceberg current snapshot id, or empty if this is not an Iceberg table or it is unknown
+     * @return the Iceberg current snapshot id, or empty if unknown
      */
     @JsonIgnore
     public Optional<Long> getCurrentSnapshotId() {

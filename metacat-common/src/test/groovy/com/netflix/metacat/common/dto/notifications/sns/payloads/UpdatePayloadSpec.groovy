@@ -23,7 +23,6 @@ import com.github.fge.jsonpatch.diff.JsonDiff
 import com.google.common.collect.Lists
 import com.netflix.metacat.common.dto.TableDto
 import spock.lang.Specification
-import spock.lang.Unroll
 
 /**
  * Tests for the UploadPayload class.
@@ -67,71 +66,5 @@ class UpdatePayloadSpec extends Specification {
         payload.getPatch().toString() == payload2.getPatch().toString()
         payload.getPrevious() == payload2.getPrevious()
         json == json2
-    }
-
-    def "the two-arg constructor leaves metadataOnly false"() {
-        def previous = Lists.newArrayList("one")
-        def patch = JsonDiff.asJsonPatch(this.mapper.valueToTree(previous), this.mapper.valueToTree(previous))
-
-        expect:
-        !new UpdatePayload<>(previous, patch).isMetadataOnly()
-    }
-
-    def "metadataOnly is always serialized"() {
-        def previous = Lists.newArrayList("one")
-        def patch = JsonDiff.asJsonPatch(this.mapper.valueToTree(previous), this.mapper.valueToTree(previous))
-
-        expect:
-        this.mapper.writeValueAsString(new UpdatePayload<>(previous, patch, true)).contains('"metadataOnly":true')
-        this.mapper.writeValueAsString(new UpdatePayload<>(previous, patch, false)).contains('"metadataOnly":false')
-    }
-
-    @Unroll
-    def "round-trips metadataOnly = #value with no data loss"() {
-        def previous = Lists.newArrayList("one", "three")
-        def patch = JsonDiff.asJsonPatch(this.mapper.valueToTree(previous), this.mapper.valueToTree(previous))
-        def payload = new UpdatePayload<>(previous, patch, value)
-
-        when:
-        def json = this.mapper.writeValueAsString(payload)
-        UpdatePayload<ArrayList<String>> payload2 = this.mapper.readValue(
-                json, new TypeReference<UpdatePayload<ArrayList<String>>>() {})
-
-        then:
-        payload2.isMetadataOnly() == value
-
-        where:
-        value << [true, false]
-    }
-
-    def "deserializes a legacy payload that predates metadataOnly (backward compatible)"() {
-        given: "JSON with no metadataOnly field, as produced before the field existed"
-        def previous = Lists.newArrayList("one")
-        def patch = JsonDiff.asJsonPatch(this.mapper.valueToTree(previous), this.mapper.valueToTree(previous))
-        def legacyJson = '{"previous":["one"],"patch":' + this.mapper.writeValueAsString(patch) + '}'
-
-        when:
-        UpdatePayload<ArrayList<String>> payload = this.mapper.readValue(
-                legacyJson, new TypeReference<UpdatePayload<ArrayList<String>>>() {})
-
-        then:
-        !payload.isMetadataOnly()
-        payload.getPrevious() == ["one"]
-    }
-
-    def "tolerates unknown future fields on a strict mapper (forward compatible)"() {
-        given: "a payload JSON carrying a field this version does not know about"
-        def previous = Lists.newArrayList("one")
-        def patch = JsonDiff.asJsonPatch(this.mapper.valueToTree(previous), this.mapper.valueToTree(previous))
-        def json = this.mapper.writeValueAsString(new UpdatePayload<>(previous, patch, true))
-        def futureJson = json.substring(0, json.length() - 1) + ',"someFutureField":"x"}'
-
-        when: "deserialized with a strict default ObjectMapper (FAIL_ON_UNKNOWN defaults to true)"
-        UpdatePayload<ArrayList<String>> payload = this.mapper.readValue(
-                futureJson, new TypeReference<UpdatePayload<ArrayList<String>>>() {})
-
-        then: "@JsonIgnoreProperties makes the unknown field ignored rather than fatal"
-        noExceptionThrown()
-        payload.isMetadataOnly()
     }
 }
