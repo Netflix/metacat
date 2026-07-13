@@ -32,6 +32,7 @@ import software.amazon.awssdk.services.sns.SnsClient
 import software.amazon.awssdk.services.sns.model.PublishRequest
 import software.amazon.awssdk.services.sns.model.PublishResponse
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.concurrent.TimeUnit
 
@@ -195,15 +196,20 @@ class SNSNotificationServiceImplSpec extends Specification {
             new TableDto(),
             new TableDto()
         )
+        RenameTableMessage captured = null
 
         when:
         this.service.notifyOfTableRename(event)
 
         then:
         2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
-        1 * this.mapper.writeValueAsString(_ as RenameTableMessage) >> UUID.randomUUID().toString()
+        1 * this.mapper.writeValueAsString(_ as RenameTableMessage) >> { RenameTableMessage m ->
+            captured = m
+            UUID.randomUUID().toString()
+        }
         1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
+        captured.getPayload().isMetadataOnly()
     }
 
     def "Will Notify On Table Update"() {
@@ -223,6 +229,54 @@ class SNSNotificationServiceImplSpec extends Specification {
         1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> UUID.randomUUID().toString()
         1 * this.client.publish({it.topicArn.equals(this.tableArn)}) >> result
         2 * this.timer.record(_ as Long, _ as TimeUnit)
+    }
+
+    @Unroll
+    def "Table Update carries metadataOnly=#expected when old/current snapshot ids are #oldId/#newId"() {
+        given:
+        def oldTable = new TableDto(metadata: [(TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY): oldId])
+        def currentTable = new TableDto(metadata: [(TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY): newId])
+        def event = new MetacatUpdateTablePostEvent(
+            this.qName, this.requestContext, this, oldTable, currentTable)
+        UpdateTableMessage captured = null
+
+        when:
+        this.service.notifyOfTableUpdate(event)
+
+        then:
+        2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
+        1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> { UpdateTableMessage m ->
+            captured = m
+            UUID.randomUUID().toString()
+        }
+        1 * this.client.publish({ it.topicArn.equals(this.tableArn) }) >> result
+        2 * this.timer.record(_ as Long, _ as TimeUnit)
+        captured.getPayload().isMetadataOnly() == expected
+
+        where:
+        oldId | newId || expected
+        '100' | '100' || true
+        '100' | '200' || false
+    }
+
+    def "Table Update carries a false metadataOnly for non-iceberg tables"() {
+        given:
+        def event = new MetacatUpdateTablePostEvent(
+            this.qName, this.requestContext, this, new TableDto(), new TableDto())
+        UpdateTableMessage captured = null
+
+        when:
+        this.service.notifyOfTableUpdate(event)
+
+        then:
+        2 * this.mapper.valueToTree(_ as TableDto) >> new TextNode(UUID.randomUUID().toString())
+        1 * this.mapper.writeValueAsString(_ as UpdateTableMessage) >> { UpdateTableMessage m ->
+            captured = m
+            UUID.randomUUID().toString()
+        }
+        1 * this.client.publish({ it.topicArn.equals(this.tableArn) }) >> result
+        2 * this.timer.record(_ as Long, _ as TimeUnit)
+        !captured.getPayload().isMetadataOnly()
     }
 
     def "Will Notify with Null Payload on Table Update with Failed Get"() {

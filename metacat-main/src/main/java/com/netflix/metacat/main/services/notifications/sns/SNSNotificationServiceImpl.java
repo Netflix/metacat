@@ -272,6 +272,8 @@ public class SNSNotificationServiceImpl implements NotificationService {
             event.getName(),
             event.getOldTable(),
             event.getCurrentTable(),
+            // A rename never changes table data or produces a new Iceberg snapshot.
+            true,
             "Unable to create json patch for rename table notification",
             Metrics.CounterSNSNotificationTableRename.getMetricName(),
             SNSMessageType.TABLE_RENAME
@@ -303,6 +305,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                 name,
                 oldTable,
                 currentTable,
+                event.getMetadataOnlyUpdate(),
                 "Unable to create json patch for update table notification",
                 Metrics.CounterSNSNotificationTableUpdate.getMetricName(),
                 SNSMessageType.TABLE_UPDATE
@@ -333,6 +336,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
         final QualifiedName name,
         final TableDto oldTable,
         final TableDto currentTable,
+        final boolean metadataOnly,
         final String exceptionMessage,
         final String metricName,
         final SNSMessageType messageType
@@ -348,7 +352,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                     timestamp,
                     requestId,
                     name.toString(),
-                    new UpdatePayload<>(oldTable, patch)
+                    new UpdatePayload<>(oldTable, patch, metadataOnly)
                 );
             } else {
                 final QualifiedName newName = currentTable == null ? null : currentTable.getName();
@@ -358,7 +362,7 @@ public class SNSNotificationServiceImpl implements NotificationService {
                     requestId,
                     name.toString(),
                     newName == null ? "" : newName.toString(),
-                    new UpdatePayload<>(oldTable, patch)
+                    new UpdatePayload<>(oldTable, patch, metadataOnly)
                 );
             }
         } catch (final Exception e) {

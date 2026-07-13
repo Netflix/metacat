@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.iceberg.Snapshot;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -199,6 +200,15 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         // Populate branch/tag metadata for optimization purposes
         tableParameters.putAll(tableWrapper.populateBranchTagMetadata());
         tableParameters.putAll(tableWrapper.getExtraProperties());
+        // Surface the Iceberg current snapshot id so table-update events (and other consumers) can
+        // detect metadata-only changes without loading the full metadata content. The table metadata is
+        // already loaded in memory here, so this is read without additional I/O. A value of -1 means the
+        // table has no current snapshot yet (e.g. it was just created with no data). This is written last,
+        // after every putAll above, so the derived value is authoritative and cannot be shadowed by a
+        // table property or any other injected metadata of the same name.
+        final Snapshot currentSnapshot = table.currentSnapshot();
+        tableParameters.put(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID,
+            String.valueOf(currentSnapshot == null ? -1L : currentSnapshot.snapshotId()));
         final StorageInfo.StorageInfoBuilder storageInfoBuilder = StorageInfo.builder();
         if (tableInfo.getSerde() != null) {
             // Adding the serde properties to support old engines.
