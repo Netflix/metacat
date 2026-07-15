@@ -17,219 +17,109 @@
  */
 package com.netflix.metacat.common.server.connectors
 
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo
-import com.netflix.metacat.common.server.util.AuthorizedCaller
-import com.netflix.metacat.common.server.util.MetacatContextManager
 import spock.lang.Specification
 
 class AuthorizingConnectorDatabaseServiceSpec extends Specification {
     def delegate
+    def authorizer
     def context
     def resource
     def name
     def newName
     def catalogName
+    def authorizedCallers
     def service
 
     def setup() {
         delegate = Mock(ConnectorDatabaseService)
+        authorizer = Mock(ConnectorAuthorizer)
         context = Mock(ConnectorRequestContext)
 
         catalogName = "ads"
+        authorizedCallers = "caller-a,caller-b"
         name = QualifiedName.ofDatabase(catalogName, "db")
         newName = QualifiedName.ofDatabase(catalogName, "db2")
         resource = new DatabaseInfo(name: name)
 
-        // Reset context before each test
-        MetacatContextManager.removeContext()
+        service = new AuthorizingConnectorDatabaseService(delegate, authorizer, authorizedCallers, catalogName)
     }
 
-    def cleanup() {
-        MetacatContextManager.removeContext()
-    }
-
-    private MetacatRequestContext buildContextWithCaller(String caller) {
-        def ctx = MetacatRequestContext.builder().build()
-        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, caller)
-        return ctx
-    }
-
-    def "create - authorized caller succeeds"() {
+    def "delegates each operation when the authorizer permits the caller"() {
         given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> true
 
         when:
         service.create(context, resource)
-
         then:
         1 * delegate.create(context, resource)
-    }
-
-    def "create - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
-
-        when:
-        service.create(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.create(_, _)
-    }
-
-    def "create - missing SsoDirectCallerAppName throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder().build()
-        MetacatContextManager.setContext(ctx)
-
-        when:
-        service.create(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.create(_, _)
-    }
-
-    def "update - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.update(context, resource)
-
         then:
         1 * delegate.update(context, resource)
-    }
-
-    def "update - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("spark"))
-
-        when:
-        service.update(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.update(_, _)
-    }
-
-    def "delete - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.delete(context, name)
-
         then:
         1 * delegate.delete(context, name)
-    }
-
-    def "get - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.get(context, name)
-
         then:
         1 * delegate.get(context, name)
-    }
-
-    def "exists - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.exists(context, name)
-
         then:
         1 * delegate.exists(context, name)
-    }
-
-    def "list - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.list(context, name, null, null, null)
-
         then:
         1 * delegate.list(context, name, null, null, null)
-    }
-
-    def "listNames - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.listNames(context, name, null, null, null)
-
         then:
         1 * delegate.listNames(context, name, null, null, null)
-    }
-
-    def "rename - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.rename(context, name, newName)
-
         then:
         1 * delegate.rename(context, name, newName)
-    }
-
-    def "listViewNames - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.listViewNames(context, name)
-
         then:
         1 * delegate.listViewNames(context, name)
     }
 
-    def "exception message contains caller name when unauthorized"() {
+    def "throws and does not delegate when the authorizer denies the caller"() {
         given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorDatabaseService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
+        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> false
 
+        when:
+        service.create(context, resource)
+        then:
+        thrown(CatalogUnauthorizedException)
+        0 * delegate.create(_, _)
+
+        when:
+        service.get(context, name)
+        then:
+        thrown(CatalogUnauthorizedException)
+        0 * delegate.get(_, _)
+    }
+
+    def "passes the operation and resource through to the authorizer"() {
         when:
         service.get(context, name)
 
         then:
-        def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("bad-actor")
-        ex.message.contains("ads")
+        1 * authorizer.isAuthorized(catalogName, authorizedCallers, "get", name) >> true
+        1 * delegate.get(context, name)
     }
 }

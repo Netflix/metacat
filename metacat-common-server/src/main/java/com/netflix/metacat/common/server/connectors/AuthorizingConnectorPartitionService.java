@@ -20,13 +20,12 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
+import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import com.netflix.metacat.common.server.util.AuthorizedCaller;
-import com.netflix.metacat.common.server.util.ConnectorAuthorizationUtil;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,7 +34,6 @@ import lombok.RequiredArgsConstructor;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Connector decorator that authorizes partition service calls based on SSO caller context.
@@ -51,10 +49,19 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
     private final ConnectorPartitionService delegate;
 
     @NonNull
-    private final Set<AuthorizedCaller> allowedCallers;
+    private final ConnectorAuthorizer authorizer;
+
+    @NonNull
+    private final String authorizedCallers;
 
     @NonNull
     private final String catalogName;
+
+    private void authorize(final String operation, final QualifiedName resource) {
+        if (!authorizer.isAuthorized(catalogName, authorizedCallers, operation, resource)) {
+            throw new CatalogUnauthorizedException(catalogName);
+        }
+    }
 
     @Override
     public List<PartitionInfo> getPartitions(
@@ -63,7 +70,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final PartitionListRequest partitionsRequest,
         final TableInfo tableInfo
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "getPartitions", table);
+        authorize("getPartitions", table);
         return delegate.getPartitions(context, table, partitionsRequest, tableInfo);
     }
 
@@ -73,7 +80,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final QualifiedName table,
         final PartitionsSaveRequest partitionsSaveRequest
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "savePartitions", table);
+        authorize("savePartitions", table);
         return delegate.savePartitions(context, table, partitionsSaveRequest);
     }
 
@@ -84,7 +91,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final List<String> partitionNames,
         final TableInfo tableInfo
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "deletePartitions", tableName);
+        authorize("deletePartitions", tableName);
         delegate.deletePartitions(context, tableName, partitionNames, tableInfo);
     }
 
@@ -94,7 +101,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final QualifiedName table,
         final TableInfo tableInfo
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "getPartitionCount", table);
+        authorize("getPartitionCount", table);
         return delegate.getPartitionCount(context, table, tableInfo);
     }
 
@@ -105,8 +112,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final boolean prefixSearch
     ) {
         // No specific resource name available, check catalog-level access
-        ConnectorAuthorizationUtil.checkAuthorization(
-            catalogName, allowedCallers, "getPartitionNames", QualifiedName.ofCatalog(catalogName));
+        authorize("getPartitionNames", QualifiedName.ofCatalog(catalogName));
         return delegate.getPartitionNames(context, uris, prefixSearch);
     }
 
@@ -117,7 +123,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final PartitionListRequest partitionsRequest,
         final TableInfo tableInfo
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "getPartitionKeys", table);
+        authorize("getPartitionKeys", table);
         return delegate.getPartitionKeys(context, table, partitionsRequest, tableInfo);
     }
 
@@ -128,38 +134,38 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final PartitionListRequest partitionsRequest,
         final TableInfo tableInfo
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "getPartitionUris", table);
+        authorize("getPartitionUris", table);
         return delegate.getPartitionUris(context, table, partitionsRequest, tableInfo);
     }
 
     @Override
     public void create(final ConnectorRequestContext context, final PartitionInfo resource) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "create", resource.getName());
+        authorize("create", resource.getName());
         delegate.create(context, resource);
     }
 
     @Override
     public void update(final ConnectorRequestContext context, final PartitionInfo resource) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "update", resource.getName());
+        authorize("update", resource.getName());
         delegate.update(context, resource);
     }
 
     @Override
     public void delete(final ConnectorRequestContext context, final QualifiedName name) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "delete", name);
+        authorize("delete", name);
         delegate.delete(context, name);
     }
 
     @Override
     public PartitionInfo get(final ConnectorRequestContext context, final QualifiedName name) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "get", name);
+        authorize("get", name);
         return delegate.get(context, name);
     }
 
     @Override
     @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "exists", name);
+        authorize("exists", name);
         return delegate.exists(context, name);
     }
 
@@ -171,7 +177,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "list", name);
+        authorize("list", name);
         return delegate.list(context, name, prefix, sort, pageable);
     }
 
@@ -183,7 +189,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         @Nullable final Sort sort,
         @Nullable final Pageable pageable
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "listNames", name);
+        authorize("listNames", name);
         return delegate.listNames(context, name, prefix, sort, pageable);
     }
 
@@ -193,7 +199,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
         final QualifiedName oldName,
         final QualifiedName newName
     ) {
-        ConnectorAuthorizationUtil.checkAuthorization(catalogName, allowedCallers, "rename", oldName);
+        authorize("rename", oldName);
         delegate.rename(context, oldName, newName);
     }
 
