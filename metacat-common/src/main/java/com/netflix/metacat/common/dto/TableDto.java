@@ -50,7 +50,11 @@ import java.util.Optional;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
+    /** Metadata key holding the Iceberg current snapshot id ({@code -1} if none); absent for non-Iceberg tables. */
+    public static final String CURRENT_SNAPSHOT_ID_METADATA_KEY = "current_snapshot_id";
+
     private static final long serialVersionUID = 5922768252406041451L;
+
     @Schema(description = "Contains information about table changes")
     private AuditDto audit;
     // Marked as transient because we serialize it manually, however as a JsonProperty because Jackson does serialize it
@@ -104,6 +108,28 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
                    .map(definitionMetadataJson -> definitionMetadataJson.get("owner"))
                    .map(ownerJson -> ownerJson.get("google_group"))
                    .map(JsonNode::textValue);
+    }
+
+    /**
+     * Returns the Iceberg current snapshot id ({@code -1} if the table has no snapshot), or empty for a
+     * non-Iceberg table or when the {@value #CURRENT_SNAPSHOT_ID_METADATA_KEY} property is missing or unparseable.
+     *
+     * @return the Iceberg current snapshot id, or empty if unknown
+     */
+    @JsonIgnore
+    public Optional<Long> getCurrentSnapshotId() {
+        if (metadata == null) {
+            return Optional.empty();
+        }
+        final String rawSnapshotId = metadata.get(CURRENT_SNAPSHOT_ID_METADATA_KEY);
+        if (rawSnapshotId == null || rawSnapshotId.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Long.parseLong(rawSnapshotId.trim()));
+        } catch (final NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 
     /**

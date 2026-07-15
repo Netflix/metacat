@@ -32,7 +32,9 @@ public class PolarisTableMapper implements
         DirectSqlTable.PARAM_PREVIOUS_METADATA_LOCATION,
         DirectSqlTable.PARAM_TABLE_TYPE,
         DirectSqlTable.PARAM_PARTITION_SPEC,
-        DirectSqlTable.PARAM_METADATA_CONTENT
+        DirectSqlTable.PARAM_METADATA_CONTENT,
+        // Derived, read-only value surfaced on read; must not be persisted into the Polaris entity params.
+        DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID
     );
 
     /**
