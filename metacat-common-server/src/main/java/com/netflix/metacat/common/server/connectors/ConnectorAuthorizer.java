@@ -26,15 +26,7 @@ import com.netflix.metacat.common.QualifiedName;
  * {@link ConnectorFactoryDecorator} wraps every connector service with an authorization
  * decorator that delegates the access decision to an implementation of this interface.
  *
- * <p>This interface intentionally contains no policy: the meaning of the
- * {@code connector.authorized-callers} configuration value, and the source of the caller
- * identity used to evaluate it, are entirely up to the implementation. This allows
- * deployment-specific authorization semantics (e.g. how a caller is identified) to live
- * outside of the open-source project. Deployments that require connector authorization
- * provide an implementation as a Spring bean; if no bean is present when authorization is
- * required, catalog creation fails fast.
- *
- * @author jursetta
+ * @author abozigian
  */
 public interface ConnectorAuthorizer {
 
@@ -43,8 +35,7 @@ public interface ConnectorAuthorizer {
      * against the given catalog.
      *
      * <p>The caller identity is not passed as an argument; implementations are expected to
-     * resolve it from the ambient request context. The {@code operation} and
-     * {@code resource} are provided for logging and fine-grained decisions.
+     * resolve it from the ambient request context.
      *
      * @param catalogName       the name of the catalog being accessed
      * @param authorizedCallers the raw, deployment-defined {@code connector.authorized-callers}

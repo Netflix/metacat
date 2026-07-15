@@ -76,10 +76,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         this.authorizationRequired = isAuthorizationRequired();
         this.authorizedCallers = getAuthorizedCallersConfig();
 
-        // The authorization policy (how callers are identified and matched against the
-        // configured allow list) is intentionally not part of the open-source project.
-        // It is supplied by the deployment as a ConnectorAuthorizer bean. If authorization
-        // is required but no implementation is available, fail fast rather than silently
+        // If authorization is required but no implementation is available, fail fast rather than silently
         // allowing access.
         if (this.authorizationRequired) {
             this.authorizer = connectorContext.getApplicationContext()
@@ -235,13 +232,6 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         );
     }
 
-    /**
-     * Returns the raw, deployment-defined authorized-callers configuration value for this
-     * catalog. The value is opaque to the open-source project; interpreting it is the
-     * responsibility of the configured {@link ConnectorAuthorizer}.
-     *
-     * @return the configured authorized-callers value, or an empty string if none
-     */
     private String getAuthorizedCallersConfig() {
         if (connectorContext.getConfiguration() == null) {
             return "";

@@ -58,9 +58,6 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorContext.getApplicationContext() >> applicationContext
         applicationContext.getBean(RateLimiter) >> rateLimiter
 
-        // By default an authorizer implementation is available in the context. Resolving through
-        // a mutable field (rather than a fixed stub) lets individual tests simulate its absence,
-        // since a stub declared here would otherwise take precedence over a feature-method stub.
         availableAuthorizer = authorizer
         applicationContext.getBeanProvider(ConnectorAuthorizer) >> authorizerProvider
         authorizerProvider.getIfAvailable() >> { availableAuthorizer }
