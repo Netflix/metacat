@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.exception.ConnectorException;
 import com.netflix.metacat.common.server.connectors.exception.InvalidMetaException;
@@ -96,6 +97,8 @@ public class DirectSqlTable {
      * Defines the metadata content of the iceberg table.
      */
     public static final String PARAM_METADATA_CONTENT = "metadata_content";
+    /** Read-only Iceberg current snapshot id, surfaced on read and never persisted. */
+    public static final String PARAM_CURRENT_SNAPSHOT_ID = TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY;
     /**
      * List of parameter that needs to be excluded when updating an iceberg table.
      */

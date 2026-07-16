@@ -699,6 +699,7 @@ class MetacatSmokeSpec extends Specification {
         noExceptionThrown()
         api.doesTableExist(catalogName, databaseName, tableName)
         updatedTable.getMetadata().get('metadata_location') == metadataLocation1
+        updatedTable.getMetadata().get('current_snapshot_id') == '5186921321658503645'
         updatedTable != null
         if (catalogName == 'hive-metastore') {
             updatedTable.getDataUri() == updatedUri
@@ -713,6 +714,7 @@ class MetacatSmokeSpec extends Specification {
         then:
         noExceptionThrown()
         updatedTable.getMetadata().get('metadata_location') == metadataLocation2
+        updatedTable.getMetadata().get('current_snapshot_id') == '8158962092416812121'
         updatedTable.getMetadata().get('partition_spec') != 'invalid'
         !updatedTable.getMetadata().containsKey('metadata_content')
         updatedTable.getFields().get(1).getSource_type().equals('string')

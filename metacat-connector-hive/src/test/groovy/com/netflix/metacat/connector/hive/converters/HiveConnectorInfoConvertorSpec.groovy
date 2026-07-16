@@ -568,4 +568,63 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         tableInfo.getMetadata().get("iceberg.has.non.main.branches") == "true"
         tableInfo.getMetadata().get("iceberg.has.tags") == "false"
     }
+
+    def "test fromIcebergTableToTableInfo surfaces the current snapshot id"() {
+        def icebergTable = Mock(org.apache.iceberg.Table)
+        def icebergTableWrapper = Mock(IcebergTableWrapper)
+        def snapshot = Mock(org.apache.iceberg.Snapshot)
+        when:
+        def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
+            icebergTableWrapper, "/tmp/test", TableInfo.builder().build())
+        then:
+        1 * icebergTableWrapper.getTable() >> icebergTable
+        1 * icebergTableWrapper.populateBranchTagMetadata() >> [:]
+        1 * icebergTableWrapper.getExtraProperties() >> [:]
+        1 * icebergTable.properties() >> [:]
+        1 * icebergTable.currentSnapshot() >> snapshot
+        1 * snapshot.snapshotId() >> 5186921321658503645L
+        1 * icebergTable.schema() >> Mock(Schema) { columns() >> [] }
+        2 * icebergTable.spec() >> Mock(PartitionSpec) { fields() >> []; toString() >> "[]" }
+
+        tableInfo.getMetadata().get(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID) == "5186921321658503645"
+    }
+
+    def "test fromIcebergTableToTableInfo uses -1 when the table has no current snapshot"() {
+        def icebergTable = Mock(org.apache.iceberg.Table)
+        def icebergTableWrapper = Mock(IcebergTableWrapper)
+        when:
+        def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
+            icebergTableWrapper, "/tmp/test", TableInfo.builder().build())
+        then:
+        1 * icebergTableWrapper.getTable() >> icebergTable
+        1 * icebergTableWrapper.populateBranchTagMetadata() >> [:]
+        1 * icebergTableWrapper.getExtraProperties() >> [:]
+        1 * icebergTable.properties() >> [:]
+        1 * icebergTable.currentSnapshot() >> null
+        1 * icebergTable.schema() >> Mock(Schema) { columns() >> [] }
+        2 * icebergTable.spec() >> Mock(PartitionSpec) { fields() >> []; toString() >> "[]" }
+
+        tableInfo.getMetadata().get(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID) == "-1"
+    }
+
+    def "test fromIcebergTableToTableInfo derived snapshot id is not shadowed by a table property"() {
+        def icebergTable = Mock(org.apache.iceberg.Table)
+        def icebergTableWrapper = Mock(IcebergTableWrapper)
+        def snapshot = Mock(org.apache.iceberg.Snapshot)
+        when:
+        def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
+            icebergTableWrapper, "/tmp/test", TableInfo.builder().build())
+        then:
+        1 * icebergTableWrapper.getTable() >> icebergTable
+        1 * icebergTableWrapper.populateBranchTagMetadata() >> [:]
+        1 * icebergTableWrapper.getExtraProperties() >> [:]
+        // A user-defined table property that collides with the derived key must not win.
+        1 * icebergTable.properties() >> [(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID): "999"]
+        1 * icebergTable.currentSnapshot() >> snapshot
+        1 * snapshot.snapshotId() >> 42L
+        1 * icebergTable.schema() >> Mock(Schema) { columns() >> [] }
+        2 * icebergTable.spec() >> Mock(PartitionSpec) { fields() >> []; toString() >> "[]" }
+
+        tableInfo.getMetadata().get(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID) == "42"
+    }
 }

@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
+import org.apache.iceberg.Snapshot;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -199,6 +200,11 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         // Populate branch/tag metadata for optimization purposes
         tableParameters.putAll(tableWrapper.populateBranchTagMetadata());
         tableParameters.putAll(tableWrapper.getExtraProperties());
+        // Surface the current snapshot id (-1 when the table has no snapshot). Written last so it cannot
+        // be shadowed by an injected property of the same name.
+        final Snapshot currentSnapshot = table.currentSnapshot();
+        tableParameters.put(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID,
+            String.valueOf(currentSnapshot == null ? -1L : currentSnapshot.snapshotId()));
         final StorageInfo.StorageInfoBuilder storageInfoBuilder = StorageInfo.builder();
         if (tableInfo.getSerde() != null) {
             // Adding the serde properties to support old engines.
