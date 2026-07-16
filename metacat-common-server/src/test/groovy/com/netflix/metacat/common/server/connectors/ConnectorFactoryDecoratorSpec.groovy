@@ -145,7 +145,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
             "connector.authorization-required": "true",
             "connector.authorized-callers": "caller-a,caller-b"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -212,7 +212,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
             "connector.authorization-required": "true",
             "connector.authorized-callers": "caller-a"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -263,7 +263,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
             "connector.authorization-required": "true",
             "connector.authorized-callers": "caller-a"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -284,7 +284,7 @@ class ConnectorFactoryDecoratorSpec extends Specification {
             "connector.authorization-required": "true",
             "connector.authorized-callers": ""
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -316,14 +316,14 @@ class ConnectorFactoryDecoratorSpec extends Specification {
             "connector.authorization-required": "true",
             "connector.authorized-callers": "caller-a"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
 
         when:
         new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         then:
         def ex = thrown(IllegalStateException)
-        ex.message.contains("ads")
+        ex.message.contains("catalog1")
         ex.message.contains("ConnectorAuthorizer")
     }
 }

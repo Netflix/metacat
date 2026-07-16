@@ -38,7 +38,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         authorizer = Mock(ConnectorAuthorizer)
         context = Mock(ConnectorRequestContext)
 
-        catalogName = "ads"
+        catalogName = "catalog1"
         authorizedCallers = "caller-a,caller-b"
         name = QualifiedName.ofDatabase(catalogName, "db")
         newName = QualifiedName.ofDatabase(catalogName, "db2")
@@ -48,9 +48,6 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
     }
 
     def "delegates each operation when the authorizer permits the caller"() {
-        given:
-        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> true
-
         when:
         service.create(context, resource)
         then:
@@ -99,7 +96,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
 
     def "throws and does not delegate when the authorizer denies the caller"() {
         given:
-        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> false
+        authorizer.checkAuthorization(catalogName, authorizedCallers, _, _) >> { throw new CatalogUnauthorizedException(catalogName) }
 
         when:
         service.create(context, resource)
@@ -119,7 +116,7 @@ class AuthorizingConnectorDatabaseServiceSpec extends Specification {
         service.get(context, name)
 
         then:
-        1 * authorizer.isAuthorized(catalogName, authorizedCallers, "get", name) >> true
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "get", name)
         1 * delegate.get(context, name)
     }
 }

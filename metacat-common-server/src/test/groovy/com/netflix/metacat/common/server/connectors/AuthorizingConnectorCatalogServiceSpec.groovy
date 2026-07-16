@@ -38,7 +38,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
         authorizer = Mock(ConnectorAuthorizer)
         context = Mock(ConnectorRequestContext)
 
-        catalogName = "ads"
+        catalogName = "catalog1"
         authorizedCallers = "caller-a,caller-b"
         name = QualifiedName.ofCatalog(catalogName)
         newName = QualifiedName.ofCatalog("ads2")
@@ -48,9 +48,6 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
     }
 
     def "delegates each operation when the authorizer permits the caller"() {
-        given:
-        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> true
-
         when:
         service.create(context, resource)
         then:
@@ -94,7 +91,7 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
 
     def "throws and does not delegate when the authorizer denies the caller"() {
         given:
-        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> false
+        authorizer.checkAuthorization(catalogName, authorizedCallers, _, _) >> { throw new CatalogUnauthorizedException(catalogName) }
 
         when:
         service.create(context, resource)
@@ -114,19 +111,19 @@ class AuthorizingConnectorCatalogServiceSpec extends Specification {
         service.get(context, name)
 
         then:
-        1 * authorizer.isAuthorized(catalogName, authorizedCallers, "get", name) >> true
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "get", name)
         1 * delegate.get(context, name)
     }
 
     def "unauthorized exception message identifies the catalog"() {
         given:
-        authorizer.isAuthorized(_, _, _, _) >> false
+        authorizer.checkAuthorization(_, _, _, _) >> { throw new CatalogUnauthorizedException("catalog1") }
 
         when:
         service.get(context, name)
 
         then:
         def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("ads")
+        ex.message.contains("catalog1")
     }
 }

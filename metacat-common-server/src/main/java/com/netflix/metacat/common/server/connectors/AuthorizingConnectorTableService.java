@@ -20,7 +20,6 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
@@ -54,9 +53,7 @@ public class AuthorizingConnectorTableService implements ConnectorTableService {
     private final String catalogName;
 
     private void authorize(final String operation, final QualifiedName resource) {
-        if (!authorizer.isAuthorized(catalogName, authorizedCallers, operation, resource)) {
-            throw new CatalogUnauthorizedException(catalogName);
-        }
+        authorizer.checkAuthorization(catalogName, authorizedCallers, operation, resource);
     }
 
     @Override

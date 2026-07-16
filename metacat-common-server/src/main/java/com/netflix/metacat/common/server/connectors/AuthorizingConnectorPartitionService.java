@@ -20,7 +20,6 @@ package com.netflix.metacat.common.server.connectors;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException;
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo;
 import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
@@ -58,9 +57,7 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
     private final String catalogName;
 
     private void authorize(final String operation, final QualifiedName resource) {
-        if (!authorizer.isAuthorized(catalogName, authorizedCallers, operation, resource)) {
-            throw new CatalogUnauthorizedException(catalogName);
-        }
+        authorizer.checkAuthorization(catalogName, authorizedCallers, operation, resource);
     }
 
     @Override

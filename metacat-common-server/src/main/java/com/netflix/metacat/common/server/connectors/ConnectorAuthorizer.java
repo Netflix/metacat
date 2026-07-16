@@ -37,15 +37,19 @@ public interface ConnectorAuthorizer {
      * <p>The caller identity is not passed as an argument; implementations are expected to
      * resolve it from the ambient request context.
      *
+     * <p>Returns normally if the caller is authorized; otherwise throws
+     * {@link com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException}.
+     *
      * @param catalogName       the name of the catalog being accessed
      * @param authorizedCallers the raw, deployment-defined {@code connector.authorized-callers}
      *                          configuration value for the catalog (may be empty)
      * @param operation         the operation being performed (for logging/decisioning)
      * @param resource          the resource being accessed (for logging/decisioning)
-     * @return {@code true} if the caller is authorized, {@code false} otherwise
+     * @throws com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException
+     *         if the caller is not authorized
      */
-    boolean isAuthorized(String catalogName,
-                         String authorizedCallers,
-                         String operation,
-                         QualifiedName resource);
+    void checkAuthorization(String catalogName,
+                            String authorizedCallers,
+                            String operation,
+                            QualifiedName resource);
 }

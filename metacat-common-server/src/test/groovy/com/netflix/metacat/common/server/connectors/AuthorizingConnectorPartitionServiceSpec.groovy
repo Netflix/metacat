@@ -39,7 +39,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         authorizer = Mock(ConnectorAuthorizer)
         context = Mock(ConnectorRequestContext)
 
-        catalogName = "ads"
+        catalogName = "catalog1"
         authorizedCallers = "caller-a,caller-b"
         table = QualifiedName.ofTable(catalogName, "db", "tbl")
         name = QualifiedName.ofPartition(catalogName, "db", "tbl", "dateint=1")
@@ -50,9 +50,6 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
     }
 
     def "delegates each operation when the authorizer permits the caller"() {
-        given:
-        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> true
-
         when:
         service.getPartitions(context, table, null, null)
         then:
@@ -121,7 +118,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
 
     def "throws and does not delegate when the authorizer denies the caller"() {
         given:
-        authorizer.isAuthorized(catalogName, authorizedCallers, _, _) >> false
+        authorizer.checkAuthorization(catalogName, authorizedCallers, _, _) >> { throw new CatalogUnauthorizedException(catalogName) }
 
         when:
         service.savePartitions(context, table, null)
@@ -141,7 +138,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         service.getPartitions(context, table, null, null)
 
         then:
-        1 * authorizer.isAuthorized(catalogName, authorizedCallers, "getPartitions", table) >> true
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "getPartitions", table)
         1 * delegate.getPartitions(context, table, null, null)
     }
 
@@ -150,7 +147,7 @@ class AuthorizingConnectorPartitionServiceSpec extends Specification {
         service.getPartitionNames(context, ["s3://uri"], false)
 
         then:
-        1 * authorizer.isAuthorized(catalogName, authorizedCallers, "getPartitionNames", QualifiedName.ofCatalog(catalogName)) >> true
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "getPartitionNames", QualifiedName.ofCatalog(catalogName))
         1 * delegate.getPartitionNames(context, ["s3://uri"], false)
     }
 }
