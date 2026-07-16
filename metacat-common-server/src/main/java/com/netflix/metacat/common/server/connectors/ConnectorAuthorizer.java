@@ -22,10 +22,6 @@ import com.netflix.metacat.common.QualifiedName;
 /**
  * Service Provider Interface for connector-level authorization.
  *
- * <p>When a catalog is configured with {@code connector.authorization-required=true}, the
- * {@link ConnectorFactoryDecorator} wraps every connector service with an authorization
- * decorator that delegates the access decision to an implementation of this interface.
- *
  * @author abozigian
  */
 public interface ConnectorAuthorizer {
@@ -33,12 +29,6 @@ public interface ConnectorAuthorizer {
     /**
      * Determines whether the current caller is authorized to perform the given operation
      * against the given catalog.
-     *
-     * <p>The caller identity is not passed as an argument; implementations are expected to
-     * resolve it from the ambient request context.
-     *
-     * <p>Returns normally if the caller is authorized; otherwise throws
-     * {@link com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException}.
      *
      * @param catalogName       the name of the catalog being accessed
      * @param authorizedCallers the raw, deployment-defined {@code connector.authorized-callers}
