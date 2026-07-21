@@ -18,6 +18,7 @@
 package com.netflix.metacat.common.server.connectors
 
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -28,6 +29,10 @@ class ConnectorFactoryDecoratorSpec extends Specification {
     ConnectorContext connectorContext
     RateLimiter rateLimiter
     ApplicationContext applicationContext
+    ObjectProvider<ConnectorAuthorizer> authorizerProvider
+    ConnectorAuthorizer authorizer
+    // The authorizer the context will hand back; null simulates "no implementation configured".
+    def availableAuthorizer
     ConnectorCatalogService catalogService
     ConnectorDatabaseService databaseService
     ConnectorTableService tableService
@@ -41,6 +46,8 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorContext = Mock(ConnectorContext)
         rateLimiter = Mock(RateLimiter)
         applicationContext = Mock(ApplicationContext)
+        authorizerProvider = Mock(ObjectProvider)
+        authorizer = Mock(ConnectorAuthorizer)
 
         catalogService = Mock(ConnectorCatalogService)
         databaseService = Mock(ConnectorDatabaseService)
@@ -50,6 +57,10 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorPlugin.create(connectorContext) >> delegate
         connectorContext.getApplicationContext() >> applicationContext
         applicationContext.getBean(RateLimiter) >> rateLimiter
+
+        availableAuthorizer = authorizer
+        applicationContext.getBeanProvider(ConnectorAuthorizer) >> authorizerProvider
+        authorizerProvider.getIfAvailable() >> { availableAuthorizer }
 
         delegate.getCatalogService() >> catalogService
         delegate.getDatabaseService() >> databaseService
@@ -132,9 +143,9 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorContext.getConfiguration() >> [
             "connector.rate-limiter-exempted": "false",
             "connector.authorization-required": "true",
-            "connector.authorized-callers": "irc,irc-server"
+            "connector.authorized-callers": "caller-a,caller-b"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -199,9 +210,9 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorContext.getConfiguration() >> [
             "connector.rate-limiter-exempted": "true",
             "connector.authorization-required": "true",
-            "connector.authorized-callers": "irc"
+            "connector.authorized-callers": "caller-a"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -250,9 +261,9 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         connectorContext.getConfiguration() >> [
             "connector.rate-limiter-exempted": "false",
             "connector.authorization-required": "true",
-            "connector.authorized-callers": "irc"
+            "connector.authorized-callers": "caller-a"
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
@@ -266,20 +277,20 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         partitionSvc instanceof AuthorizingConnectorPartitionService
     }
 
-    def "empty authorized callers list"() {
+    def "empty authorized callers config still applies authorization"() {
         given:
         connectorContext.getConfiguration() >> [
             "connector.rate-limiter-exempted": "true",
             "connector.authorization-required": "true",
             "connector.authorized-callers": ""
         ]
-        connectorContext.getCatalogName() >> "ads"
+        connectorContext.getCatalogName() >> "catalog1"
         factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
         when:
         def tblSvc = factory.getTableService()
 
-        then: "authorization still applied with empty callers set"
+        then: "authorization still applied; interpretation of the empty value is up to the authorizer"
         tblSvc instanceof AuthorizingConnectorTableService
     }
 
@@ -298,55 +309,21 @@ class ConnectorFactoryDecoratorSpec extends Specification {
         tblSvc == tableService
     }
 
-    def "authorized callers list trims whitespace"() {
-        given:
+    def "fails fast when authorization is required but no ConnectorAuthorizer bean is configured"() {
+        given: "no authorizer implementation is available in the context"
+        availableAuthorizer = null
         connectorContext.getConfiguration() >> [
-            "connector.rate-limiter-exempted": "true",
             "connector.authorization-required": "true",
-            "connector.authorized-callers": "  irc  ,  irc-server  ,spark"
+            "connector.authorized-callers": "caller-a"
         ]
-        connectorContext.getCatalogName() >> "ads"
-        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
+        connectorContext.getCatalogName() >> "catalog1"
 
         when:
-        def tblSvc = factory.getTableService()
+        new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
 
-        then: "authorization is applied"
-        tblSvc instanceof AuthorizingConnectorTableService
-        // The whitespace should be trimmed, so "irc", "irc-server", and "spark" should all be valid
-    }
-
-    def "authorized callers list accepts compound app:userName syntax"() {
-        given:
-        connectorContext.getConfiguration() >> [
-            "connector.rate-limiter-exempted": "true",
-            "connector.authorization-required": "true",
-            "connector.authorized-callers": "irc,hadoop:idm-worker"
-        ]
-        connectorContext.getCatalogName() >> "ads"
-        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
-
-        when:
-        def tblSvc = factory.getTableService()
-
-        then: "authorization is applied; compound entry parses without error"
-        tblSvc instanceof AuthorizingConnectorTableService
-    }
-
-    def "authorized callers with only whitespace entries are filtered"() {
-        given:
-        connectorContext.getConfiguration() >> [
-            "connector.rate-limiter-exempted": "true",
-            "connector.authorization-required": "true",
-            "connector.authorized-callers": "irc,   ,,"
-        ]
-        connectorContext.getCatalogName() >> "ads"
-        factory = new ConnectorFactoryDecorator(connectorPlugin, connectorContext)
-
-        when:
-        def tblSvc = factory.getTableService()
-
-        then: "authorization is applied with only non-empty callers"
-        tblSvc instanceof AuthorizingConnectorTableService
+        then:
+        def ex = thrown(IllegalStateException)
+        ex.message.contains("catalog1")
+        ex.message.contains("ConnectorAuthorizer")
     }
 }

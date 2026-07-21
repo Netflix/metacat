@@ -18,15 +18,9 @@
 package com.netflix.metacat.common.server.connectors;
 
 import com.netflix.metacat.common.server.api.ratelimiter.RateLimiter;
-import com.netflix.metacat.common.server.util.AuthorizedCaller;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * A decorator for a connector factory to add additional cross-cutting functionality
@@ -56,7 +50,8 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
     private final RateLimiter rateLimiter;
     private final boolean rateLimiterEnabled;
     private final boolean authorizationRequired;
-    private final Set<AuthorizedCaller> authorizedCallers;
+    private final ConnectorAuthorizer authorizer;
+    private final String authorizedCallers;
 
     /**
      * Creates the decorated connector factory that wraps connector services
@@ -79,11 +74,22 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         // changes from the Metacat dynamic configuration.
         this.rateLimiterEnabled = isRateLimiterEnabled();
         this.authorizationRequired = isAuthorizationRequired();
-        this.authorizedCallers = getAuthorizedCallers();
+        this.authorizedCallers = getAuthorizedCallersConfig();
 
+        // If authorization is required but no implementation is available, fail fast rather than silently
+        // allowing access.
         if (this.authorizationRequired) {
-            log.info("Authorization enabled for catalog {} with allowed callers: {}",
-                connectorContext.getCatalogName(), this.authorizedCallers);
+            this.authorizer = connectorContext.getApplicationContext()
+                .getBeanProvider(ConnectorAuthorizer.class).getIfAvailable();
+            if (this.authorizer == null) {
+                throw new IllegalStateException(String.format(
+                    "Catalog '%s' requires authorization (%s=true) but no ConnectorAuthorizer bean is configured",
+                    connectorContext.getCatalogName(), CONFIG_AUTHORIZATION_REQUIRED));
+            }
+            log.info("Authorization enabled for catalog {} using authorizer {}",
+                connectorContext.getCatalogName(), this.authorizer.getClass().getName());
+        } else {
+            this.authorizer = null;
         }
     }
 
@@ -107,7 +113,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new AuthorizingConnectorCatalogService(
-                service, authorizedCallers, connectorContext.getCatalogName());
+                service, authorizer, authorizedCallers, connectorContext.getCatalogName());
         }
 
         return service;
@@ -133,7 +139,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new AuthorizingConnectorDatabaseService(
-                service, authorizedCallers, connectorContext.getCatalogName());
+                service, authorizer, authorizedCallers, connectorContext.getCatalogName());
         }
 
         return service;
@@ -159,7 +165,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new AuthorizingConnectorTableService(
-                service, authorizedCallers, connectorContext.getCatalogName());
+                service, authorizer, authorizedCallers, connectorContext.getCatalogName());
         }
 
         return service;
@@ -185,7 +191,7 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
                 connectorContext.getConnectorType(), connectorPlugin.getType(),
                 connectorContext.getCatalogName(), connectorContext.getCatalogShardName());
             service = new AuthorizingConnectorPartitionService(
-                service, authorizedCallers, connectorContext.getCatalogName());
+                service, authorizer, authorizedCallers, connectorContext.getCatalogName());
         }
 
         return service;
@@ -226,36 +232,11 @@ public class ConnectorFactoryDecorator implements ConnectorFactory {
         );
     }
 
-    private Set<AuthorizedCaller> getAuthorizedCallers() {
+    private String getAuthorizedCallersConfig() {
         if (connectorContext.getConfiguration() == null) {
-            return Collections.emptySet();
+            return "";
         }
 
-        final String callers = connectorContext.getConfiguration()
-            .getOrDefault(CONFIG_AUTHORIZED_CALLERS, "");
-
-        if (callers.isEmpty()) {
-            return Collections.emptySet();
-        }
-
-        // Split by comma, trim whitespace, filter empty strings, parse each token.
-        // Plain entry "app" matches on SsoDirectCallerAppName only.
-        // Compound entry "app:userName" requires both SsoDirectCallerAppName AND userName to match.
-        // Note: matching is case-sensitive (e.g., "IRC" will not match "irc")
-        return Arrays.stream(callers.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .map(ConnectorFactoryDecorator::parseAuthorizedCaller)
-            .collect(Collectors.toSet());
-    }
-
-    private static AuthorizedCaller parseAuthorizedCaller(final String token) {
-        final int colon = token.indexOf(':');
-        if (colon < 0) {
-            return new AuthorizedCaller(token, null);
-        }
-        final String app = token.substring(0, colon);
-        final String user = token.substring(colon + 1);
-        return new AuthorizedCaller(app, user);
+        return connectorContext.getConfiguration().getOrDefault(CONFIG_AUTHORIZED_CALLERS, "");
     }
 }
