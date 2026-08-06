@@ -22,6 +22,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 
+import javax.annotation.Nullable;
+
 /**
  * Spring based Connector Factory.
  *
@@ -73,6 +75,17 @@ public abstract class SpringConnectorFactory implements ConnectorFactory {
      */
     public void refresh() {
         this.ctx.refresh();
+    }
+
+    /**
+     * Returns the bean of the given type from this connector's context if one is registered.
+     *
+     * @param type bean type
+     * @return the bean, or null if no bean of that type is registered for this connector
+     */
+    @Nullable
+    public <T> T getBeanIfAvailable(final Class<T> type) {
+        return this.ctx.getBeanProvider(type).getIfAvailable();
     }
 
     /**
