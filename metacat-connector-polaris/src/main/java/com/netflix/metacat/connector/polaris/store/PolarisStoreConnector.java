@@ -74,8 +74,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
         final int pageSize) {
-        return (List<PolarisDatabaseEntity>)
-            replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, true);
+        return replicaDatabaseRepo.getDatabases(catalogName, dbNamePrefix, sort, pageSize);
     }
 
     @Override
@@ -85,8 +84,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
         @Nullable final String dbNamePrefix,
         @Nullable final Sort sort,
         final int pageSize) {
-        return (List<String>)
-            replicaDatabaseRepo.getAllDatabases(catalogName, dbNamePrefix, sort, pageSize, false);
+        return replicaDatabaseRepo.getDatabaseNames(catalogName, dbNamePrefix, sort, pageSize);
     }
 
     /**
@@ -190,9 +188,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final String databaseName,
         final String tableNamePrefix,
         final int pageFetchSize) {
-        return (List<PolarisTableEntity>)
-            replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
-                catalogName, databaseName, tableNamePrefix, pageFetchSize, true);
+        return replicaTableRepo.getTableEntities(catalogName, databaseName, tableNamePrefix, pageFetchSize);
     }
 
     /**
@@ -245,9 +241,7 @@ public class PolarisStoreConnector implements PolarisStoreService {
         final String tableNamePrefix,
         final int pageFetchSize
     ) {
-        return (List<String>)
-            replicaTableRepo.findAllTablesByDbNameAndTablePrefix(
-                catalogName, databaseName, tableNamePrefix, pageFetchSize, false);
+        return replicaTableRepo.getTableNames(catalogName, databaseName, tableNamePrefix, pageFetchSize);
     }
 
     /**
