@@ -1,7 +1,5 @@
 package com.netflix.metacat.connector.polaris.store.jdbc;
 
-import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.connector.polaris.store.entities.AuditEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,17 +52,14 @@ public class PolarisDatabaseReplicaJDBC {
      *
      * @param catalogName  catalog name
      * @param dbNamePrefix database name prefix, may be null or empty to match all
-     * @param sort         sort, honored only for the name column
      * @param pageSize     rows fetched per round trip
-     * @return the matching database entities, ordered by name
+     * @return the matching database entities, ordered by name ascending
      */
     public List<PolarisDatabaseEntity> getDatabases(
         final String catalogName,
         @Nullable final String dbNamePrefix,
-        @Nullable final Sort sort,
         final int pageSize) {
-        return list(catalogName, dbNamePrefix, sort, pageSize, "d.*", ENTITY_MAPPER,
-            PolarisDatabaseEntity::getDbName);
+        return list(catalogName, dbNamePrefix, pageSize, "d.*", ENTITY_MAPPER, PolarisDatabaseEntity::getDbName);
     }
 
     /**
@@ -72,42 +67,37 @@ public class PolarisDatabaseReplicaJDBC {
      *
      * @param catalogName  catalog name
      * @param dbNamePrefix database name prefix, may be null or empty to match all
-     * @param sort         sort, honored only for the name column
      * @param pageSize     rows fetched per round trip
-     * @return the matching database names, ordered by name
+     * @return the matching database names, ordered ascending
      */
     public List<String> getDatabaseNames(
         final String catalogName,
         @Nullable final String dbNamePrefix,
-        @Nullable final Sort sort,
         final int pageSize) {
-        return list(catalogName, dbNamePrefix, sort, pageSize, "d.name", NAME_MAPPER, Function.identity());
+        return list(catalogName, dbNamePrefix, pageSize, "d.name", NAME_MAPPER, Function.identity());
     }
 
     private <T> List<T> list(
         final String catalogName,
         @Nullable final String dbNamePrefix,
-        @Nullable final Sort sort,
         final int pageSize,
         final String columns,
         final RowMapper<T> mapper,
         final Function<T, String> cursorOf) {
 
-        // Pages are walked by cursor, which requires ordering by name, the only column unique
-        // within a catalog. A sort on any other column is ignored rather than skipping rows.
-        final boolean desc = sort != null && "name".equals(sort.getSortBy()) && sort.getOrder() == SortOrder.DESC;
         final String prefix = (dbNamePrefix == null ? "" : dbNamePrefix) + "%";
 
+        // Pages are walked by cursor rather than offset, so every page is a range scan on the
+        // (catalog_name, name) index instead of a rescan from the start.
         final String head = "SELECT " + columns + " FROM DBS d WHERE d.catalog_name = ? AND d.name LIKE ?";
-        final String seek = desc ? " AND d.name < ?" : " AND d.name > ?";
-        final String tail = " ORDER BY d.name " + (desc ? "DESC" : "ASC") + " LIMIT ?";
+        final String tail = " ORDER BY d.name ASC LIMIT ?";
 
         final List<T> retval = new ArrayList<>();
         String cursor = null;
         while (true) {
             final List<T> page = cursor == null
                 ? jdbcTemplate.query(head + tail, mapper, catalogName, prefix, pageSize)
-                : jdbcTemplate.query(head + seek + tail, mapper, catalogName, prefix, cursor, pageSize);
+                : jdbcTemplate.query(head + " AND d.name > ?" + tail, mapper, catalogName, prefix, cursor, pageSize);
             retval.addAll(page);
             if (page.size() < pageSize) {
                 return retval;

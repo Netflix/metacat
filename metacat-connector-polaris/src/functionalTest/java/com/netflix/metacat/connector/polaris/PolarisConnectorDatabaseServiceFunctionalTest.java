@@ -5,8 +5,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
-import com.netflix.metacat.common.dto.Sort;
-import com.netflix.metacat.common.dto.SortOrder;
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext;
 import com.netflix.metacat.common.server.connectors.exception.DatabaseAlreadyExistsException;
@@ -330,22 +328,6 @@ public class PolarisConnectorDatabaseServiceFunctionalTest {
             null,
             null);
         Assert.assertEquals(dbs, Arrays.asList(db1));
-
-        // Test Order desc
-        dbNames = getPolarisDBService().listNames(
-            getRequestContext(),
-            QualifiedName.ofCatalog(CATALOG_NAME_TEST),
-            null,
-            new Sort("name", SortOrder.DESC),
-            null);
-        Assert.assertEquals(dbNames, Arrays.asList(DB2_QUALIFIED_NAME_TEST_CATALOG, DB1_QUALIFIED_NAME_TEST_CATALOG));
-        dbs = getPolarisDBService().list(
-            getRequestContext(),
-            QualifiedName.ofCatalog(CATALOG_NAME_TEST),
-            null,
-            new Sort("name", SortOrder.DESC),
-            null);
-        Assert.assertEquals(dbs, Arrays.asList(db2, db1));
 
         // Test pageable
         dbNames = getPolarisDBService().listNames(

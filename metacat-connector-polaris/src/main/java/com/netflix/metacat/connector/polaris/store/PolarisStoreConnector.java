@@ -1,6 +1,5 @@
 package com.netflix.metacat.connector.polaris.store;
 
-import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.connector.polaris.store.entities.AuditEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
@@ -72,9 +71,8 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<PolarisDatabaseEntity> getDatabases(
         final String catalogName,
         @Nullable final String dbNamePrefix,
-        @Nullable final Sort sort,
         final int pageSize) {
-        return replicaDatabaseRepo.getDatabases(catalogName, dbNamePrefix, sort, pageSize);
+        return replicaDatabaseRepo.getDatabases(catalogName, dbNamePrefix, pageSize);
     }
 
     @Override
@@ -82,9 +80,8 @@ public class PolarisStoreConnector implements PolarisStoreService {
     public List<String> getDatabaseNames(
         final String catalogName,
         @Nullable final String dbNamePrefix,
-        @Nullable final Sort sort,
         final int pageSize) {
-        return replicaDatabaseRepo.getDatabaseNames(catalogName, dbNamePrefix, sort, pageSize);
+        return replicaDatabaseRepo.getDatabaseNames(catalogName, dbNamePrefix, pageSize);
     }
 
     /**
