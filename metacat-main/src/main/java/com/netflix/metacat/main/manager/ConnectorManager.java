@@ -307,7 +307,7 @@ public class ConnectorManager {
      * @param name qualified name
      * @return Returns the connector factory for the given <code>name</code>
      */
-    private ConnectorFactory getConnectorFactory(final QualifiedName name) {
+    public ConnectorFactory getConnectorFactory(final QualifiedName name) {
         Preconditions.checkNotNull(name, "Name is null");
         return getCatalogHolder(name).getConnectorFactory();
     }
