@@ -580,33 +580,33 @@ public class PolarisStoreConnectorFunctionalTest {
         TestUtil.simulateDelay();
 
         List<String> dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 1);
+                "db", 1);
         List<PolarisDatabaseEntity> dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 1);
+                "db", 1);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
         dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 2);
+                "db", 2);
         dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 2);
+                "db", 2);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
         dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 3);
+                "db", 3);
         dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 3);
+                "db", 3);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));
 
         dbNames = getPolarisConnector().getDatabaseNames(CATALOG_NAME_TEST,
-                "db", null, 4);
+                "db", 4);
         dbs = getPolarisConnector().getDatabases(CATALOG_NAME_TEST,
-                "db", null, 4);
+                "db", 4);
         Assert.assertEquals("Expected dbNames ", Arrays.asList("db1", "db2", "db3"), dbNames);
         Assert.assertEquals("Expected dbs ", Arrays.asList("db1", "db2", "db3"),
             dbs.stream().map(PolarisDatabaseEntity::getDbName).collect(Collectors.toList()));

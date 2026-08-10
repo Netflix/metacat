@@ -195,7 +195,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
             final String dbPrefix = prefix == null ? "" : prefix.getDatabaseName();
             final List<QualifiedName> qualifiedNames = polarisStoreService.getDatabaseNames(
                 name.getCatalogName(),
-                dbPrefix, sort,
+                dbPrefix,
                     connectorContext.getConfig().getListDatabaseNamesPageSize())
                 .stream()
                 .map(dbName -> QualifiedName.ofDatabase(name.getCatalogName(), dbName))
@@ -224,7 +224,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
 
             final List<PolarisDatabaseEntity> dbs = polarisStoreService.getDatabases(
                 name.getCatalogName(),
-                dbPrefix, sort,
+                dbPrefix,
                 connectorContext.getConfig().getListDatabaseEntitiesPageSize()
             );
 
