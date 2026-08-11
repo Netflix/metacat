@@ -80,6 +80,7 @@ public abstract class SpringConnectorFactory implements ConnectorFactory {
     /**
      * Returns the bean of the given type from this connector's context if one is registered.
      *
+     * @param <T> bean type
      * @param type bean type
      * @return the bean, or null if no bean of that type is registered for this connector
      */
