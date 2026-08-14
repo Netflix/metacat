@@ -959,13 +959,9 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that the iceberg.has.tags flag is populated correctly
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-        // Basic test tables without additional tags should return "false"
-        // This verifies both the injection mechanism AND the logic correctness for simple tables
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
 
-        // Verify that the branches and table_version metadata are populated correctly
         retrievedTable.metadata.containsKey(TableDto.BRANCHES_METADATA_KEY)
         retrievedTable.getBranches() == ['main'] as Set
         retrievedTable.metadata.get(TableDto.TABLE_VERSION_METADATA_KEY) == '2'
@@ -1009,17 +1005,9 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that the metadata flag correctly detects the tags from the real metadata file
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // The metadata file has 3 branches (main, feature-branch, experimental,beta) and 3 tags (v1.0.0, v2.0.0, release-2024-01)
-        // So the flag should be "true"
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
 
-        // Verify that only the branch names (not the tag names) are surfaced under branches, and the
-        // table_version metadata reflects the metadata file's format-version.
-        // "experimental,beta" also verifies that a comma inside a branch name survives encoding/decoding
-        // intact (branch names are JSON-array encoded, not comma-joined) rather than being split apart.
         retrievedTable.getBranches() == ['main', 'feature-branch', 'experimental,beta'] as Set
         retrievedTable.getTableVersion() == Optional.of(2)
 
@@ -1039,7 +1027,6 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
 
-        // Use the metadata file that contains only the main branch (no additional branches or tags)
         def metadataLocation = '/tmp/data/metadata/00004-main-branch-only.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -1062,11 +1049,7 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that the metadata flag correctly detects no additional tags
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // The metadata file has only 1 branch (main) and 0 tags
-        // So the flag should be "false"
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
 
         retrievedTable.getBranches() == ['main'] as Set
@@ -1088,8 +1071,6 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
 
-        // Use REAL metadata file created with Iceberg client < 0.14.1 (Dec 2021, before refs support)
-        // Note: This is v1 format but could be any format - client version determines refs support
         def metadataLocation = '/tmp/data/metadata/00005-old-client-no-refs.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -1112,16 +1093,9 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that tables created with Iceberg < 0.14.1 are handled correctly
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // CRITICAL: JSON metadata has no refs section, but Iceberg runtime auto-creates "main" branch
-        // Tables created with Iceberg < 0.14.1: JSON has no refs, but runtime has main branch
-        // - hasTags() == false (no tags in auto-created refs)
-        // This ensures backward compatibility with tables created before branches/tags support
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
 
-        // The runtime auto-creates a "main" branch even though the JSON has no refs section
         retrievedTable.getBranches() == ['main'] as Set
         retrievedTable.getTableVersion() == Optional.of(1)
 
@@ -1141,8 +1115,6 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
 
-        // Use v1 format metadata file with branches/tags (created with Iceberg client >= 0.14.1)
-        // This proves that format version != client capability - v1 can have refs!
         def metadataLocation = '/tmp/data/metadata/00006-v1-with-branches-tags.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -1165,14 +1137,9 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that v1 format tables created with Iceberg >= 0.14.1 DO support branches/tags
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // v1 format with refs should detect branches/tags correctly
-        // This table has 2 branches (main, dev-branch) + 1 tag (v3.0.0)
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
 
-        // format-version can be 1 even when refs are present - version and refs support are independent
         retrievedTable.getBranches() == ['main', 'dev-branch'] as Set
         retrievedTable.getTableVersion() == Optional.of(1)
 

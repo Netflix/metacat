@@ -553,8 +553,8 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         1 * icebergTableWrapper.getTable() >> icebergTable
         1 * icebergTableWrapper.populateBranchTagMetadata() >> [
             "iceberg.has.tags": "false"
-        ] // Called by converter and returns metadata map
-        1 * icebergTableWrapper.getExtraProperties() >> [:] // Called by converter for other properties
+        ]
+        1 * icebergTableWrapper.getExtraProperties() >> [:]
         1 * icebergTable.properties() >> [:]
         1 * icebergTable.schema() >> Mock(Schema) {
             columns() >> []
@@ -564,7 +564,6 @@ class HiveConnectorInfoConvertorSpec extends Specification{
             toString() >> "[]"
         }
 
-        // Verify that tag metadata is injected via extraProperties
         tableInfo.getMetadata().get("iceberg.has.tags") == "false"
     }
 

@@ -64,25 +64,6 @@ public class IcebergTableWrapper {
     }
 
     /**
-     * Get summary information about branches and tags for logging/debugging.
-     * @return formatted string with branch and tag counts and names
-     */
-    public String getBranchesAndTagsSummary() {
-        final Set<String> branches = extractBranches();
-        final Set<String> tags = extractTags();
-        final StringBuilder summary = new StringBuilder();
-        summary.append(String.format("branches=%d", branches.size()));
-        if (!branches.isEmpty()) {
-            summary.append(String.format(" %s", branches));
-        }
-        summary.append(String.format(", tags=%d", tags.size()));
-        if (!tags.isEmpty()) {
-            summary.append(String.format(" %s", tags));
-        }
-        return summary.toString();
-    }
-
-    /**
      * Extract branch names from the table references.
      * @return set of branch names
      * @throws RuntimeException if unable to read table references

@@ -50,12 +50,10 @@ class IcebergMetadataValidationSpec extends Specification {
         refs.has("v2.0.0")
         refs.has("release-2024-01")
         
-        // Verify branches
         refs.get("main").get("type").asText() == "branch"
         refs.get("feature-branch").get("type").asText() == "branch"
         refs.get("experimental,beta").get("type").asText() == "branch"
-        
-        // Verify tags
+
         refs.get("v1.0.0").get("type").asText() == "tag"
         refs.get("v2.0.0").get("type").asText() == "tag"
         refs.get("release-2024-01").get("type").asText() == "tag"
@@ -146,7 +144,6 @@ class IcebergMetadataValidationSpec extends Specification {
         def oldClientJson = objectMapper.readTree(oldClientFile)
         def v1WithRefsJson = objectMapper.readTree(v1WithRefsFile)
         
-        // Count branches and tags in the branches/tags file
         def branchesTagsRefs = branchesTagsJson.get("refs")
         def branchCount = 0
         def tagCount = 0
@@ -157,8 +154,7 @@ class IcebergMetadataValidationSpec extends Specification {
                 tagCount++
             }
         }
-        
-        // Count branches in the main-only file
+
         def mainOnlyRefs = mainOnlyJson.get("refs")
         def mainOnlyBranchCount = 0
         def mainOnlyTagCount = 0
@@ -169,8 +165,7 @@ class IcebergMetadataValidationSpec extends Specification {
                 mainOnlyTagCount++
             }
         }
-        
-        // Count branches and tags in the v1-with-refs file
+
         def v1WithRefsRefs = v1WithRefsJson.get("refs")
         def v1WithRefsBranchCount = 0
         def v1WithRefsTagCount = 0
@@ -181,26 +176,15 @@ class IcebergMetadataValidationSpec extends Specification {
                 v1WithRefsTagCount++
             }
         }
-        
-        // JSON metadata vs Iceberg runtime behavior
-        // - JSON metadata: Iceberg < 0.14.1 client tables have NO refs section
-        // - Iceberg runtime: ALL tables get at least a "main" branch (auto-created by Iceberg)
-        !oldClientJson.has("refs")  // JSON has no refs section for pre-0.14.1 clients
+
+        !oldClientJson.has("refs")
         oldClientJson.get("format-version").asInt() == 1
-        
-        // Verify expected counts for our integration tests
-        branchCount == 3  // main, feature-branch, experimental,beta
-        tagCount == 3     // v1.0.0, v2.0.0, release-2024-01
-        mainOnlyBranchCount == 1  // only main
-        mainOnlyTagCount == 0     // no tags
-        v1WithRefsBranchCount == 2 // main, dev-branch
-        v1WithRefsTagCount == 1    // v3.0.0
-        
-        // This confirms our integration test expectations (via Iceberg runtime, not JSON):
-        // - branchesTagsFile should trigger hasTags() == true (3 > 0)
-        // - mainOnlyFile should trigger hasTags() == false (0 == 0)
-        // - oldClientFile (Iceberg < 0.14.1): JSON has no refs, but Iceberg runtime auto-creates main branch
-        //   so hasTags() == false (0 tags)
-        // - v1WithRefsFile should trigger hasTags() == true (1 > 0)
+
+        branchCount == 3
+        tagCount == 3
+        mainOnlyBranchCount == 1
+        mainOnlyTagCount == 0
+        v1WithRefsBranchCount == 2
+        v1WithRefsTagCount == 1
     }
 }
