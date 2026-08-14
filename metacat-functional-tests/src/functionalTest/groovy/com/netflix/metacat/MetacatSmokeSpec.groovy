@@ -1012,13 +1012,15 @@ class MetacatSmokeSpec extends Specification {
         // Verify that the metadata flag correctly detects the tags from the real metadata file
         retrievedTable.metadata.containsKey('iceberg.has.tags')
 
-        // The metadata file has 3 branches (main, feature-branch, experimental) and 3 tags (v1.0.0, v2.0.0, release-2024-01)
+        // The metadata file has 3 branches (main, feature-branch, experimental,beta) and 3 tags (v1.0.0, v2.0.0, release-2024-01)
         // So the flag should be "true"
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
 
         // Verify that only the branch names (not the tag names) are surfaced under branches, and the
-        // table_version metadata reflects the metadata file's format-version
-        retrievedTable.getBranches() == ['main', 'feature-branch', 'experimental'] as Set
+        // table_version metadata reflects the metadata file's format-version.
+        // "experimental,beta" also verifies that a comma inside a branch name survives encoding/decoding
+        // intact (branch names are JSON-array encoded, not comma-joined) rather than being split apart.
+        retrievedTable.getBranches() == ['main', 'feature-branch', 'experimental,beta'] as Set
         retrievedTable.getTableVersion() == Optional.of(2)
 
         cleanup:
