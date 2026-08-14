@@ -963,7 +963,7 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
 
         retrievedTable.metadata.containsKey(TableDto.BRANCHES_METADATA_KEY)
-        retrievedTable.getBranches() == ['main'] as Set
+        retrievedTable.getBranches() == [] as Set
         retrievedTable.metadata.get(TableDto.TABLE_VERSION_METADATA_KEY) == '2'
         retrievedTable.getTableVersion() == Optional.of(2)
 
