@@ -197,13 +197,10 @@ class IcebergMetadataValidationSpec extends Specification {
         v1WithRefsTagCount == 1    // v3.0.0
         
         // This confirms our integration test expectations (via Iceberg runtime, not JSON):
-        // - branchesTagsFile should trigger hasNonMainBranches() == true (3 > 1)
-        // - branchesTagsFile should trigger hasTags() == true (3 > 0)  
-        // - mainOnlyFile should trigger hasNonMainBranches() == false (1 == 1)
+        // - branchesTagsFile should trigger hasTags() == true (3 > 0)
         // - mainOnlyFile should trigger hasTags() == false (0 == 0)
         // - oldClientFile (Iceberg < 0.14.1): JSON has no refs, but Iceberg runtime auto-creates main branch
-        //   so hasNonMainBranches() == false (1 branch - auto-created main only), hasTags() == false (0 tags)
-        // - v1WithRefsFile should trigger hasNonMainBranches() == true (2 > 1)
+        //   so hasTags() == false (0 tags)
         // - v1WithRefsFile should trigger hasTags() == true (1 > 0)
     }
 }

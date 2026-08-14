@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
+import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.server.connectors.ConnectorInfoConverter;
 import com.netflix.metacat.common.server.connectors.model.AuditInfo;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
@@ -200,11 +201,16 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
         // Populate branch/tag metadata for optimization purposes
         tableParameters.putAll(tableWrapper.populateBranchTagMetadata());
         tableParameters.putAll(tableWrapper.getExtraProperties());
-        // Surface the current snapshot id (-1 when the table has no snapshot). Written last so it cannot
-        // be shadowed by an injected property of the same name.
+        // Surface the current snapshot id (-1 when the table has no snapshot), the branch name list,
+        // and the table format version. Written last so they cannot be shadowed by an injected
+        // property of the same name.
         final Snapshot currentSnapshot = table.currentSnapshot();
         tableParameters.put(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID,
             String.valueOf(currentSnapshot == null ? -1L : currentSnapshot.snapshotId()));
+        tableParameters.put(DirectSqlTable.PARAM_BRANCHES,
+            TableDto.encodeBranches(tableWrapper.extractBranches()));
+        tableParameters.put(DirectSqlTable.PARAM_TABLE_VERSION,
+            String.valueOf(tableWrapper.getTableVersion()));
         final StorageInfo.StorageInfoBuilder storageInfoBuilder = StorageInfo.builder();
         if (tableInfo.getSerde() != null) {
             // Adding the serde properties to support old engines.

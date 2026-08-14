@@ -26,6 +26,8 @@ import spock.lang.Unroll
 class TableDtoSpec extends Specification {
 
     static final String KEY = TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY
+    static final String BRANCHES_KEY = TableDto.BRANCHES_METADATA_KEY
+    static final String VERSION_KEY = TableDto.TABLE_VERSION_METADATA_KEY
 
     @Unroll
     def "getCurrentSnapshotId: #scenario"() {
@@ -65,5 +67,34 @@ class TableDtoSpec extends Specification {
         value                   || expected
         '5186921321658503645'   || Optional.of(5186921321658503645L)
         '-1'                    || Optional.of(-1L)
+    }
+
+    @Unroll
+    def "getBranches: #scenario"() {
+        expect:
+        new TableDto(metadata: metadata).getBranches() == expected
+
+        where:
+        scenario                         | metadata                            || expected
+        "present multiple branches"      | [(BRANCHES_KEY): '["main","dev"]']  || ['main', 'dev'] as Set
+        "branch name containing a comma" | [(BRANCHES_KEY): '["main","a,b"]']  || ['main', 'a,b'] as Set
+        "key absent (non-iceberg)"       | ['metadata_location': 's3']         || [] as Set
+        "null metadata map"              | null                                || [] as Set
+        "blank value"                    | [(BRANCHES_KEY): '   ']             || [] as Set
+        "malformed json"                 | [(BRANCHES_KEY): 'not-json']        || [] as Set
+    }
+
+    @Unroll
+    def "getTableVersion: #scenario"() {
+        expect:
+        new TableDto(metadata: metadata).getTableVersion() == expected
+
+        where:
+        scenario                   | metadata                     || expected
+        "present version"          | [(VERSION_KEY): '2']         || Optional.of(2)
+        "key absent (non-iceberg)" | ['metadata_location': 's3']  || Optional.empty()
+        "null metadata map"        | null                         || Optional.empty()
+        "blank value"              | [(VERSION_KEY): '   ']       || Optional.empty()
+        "non-numeric value"        | [(VERSION_KEY): 'abc']       || Optional.empty()
     }
 }

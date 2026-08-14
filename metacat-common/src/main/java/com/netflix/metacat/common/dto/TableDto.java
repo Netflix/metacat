@@ -19,6 +19,7 @@ package com.netflix.metacat.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.netflix.metacat.common.QualifiedName;
@@ -33,11 +34,13 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Table DTO.
@@ -52,8 +55,13 @@ import java.util.Optional;
 public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionMetadata {
     /** Metadata key holding the Iceberg current snapshot id ({@code -1} if none); absent for non-Iceberg tables. */
     public static final String CURRENT_SNAPSHOT_ID_METADATA_KEY = "current_snapshot_id";
+    /** Metadata key holding the JSON array of Iceberg branch names; absent for non-Iceberg tables. */
+    public static final String BRANCHES_METADATA_KEY = "branches";
+    /** Metadata key holding the Iceberg table format version; absent for non-Iceberg tables. */
+    public static final String TABLE_VERSION_METADATA_KEY = "table_version";
 
     private static final long serialVersionUID = 5922768252406041451L;
+    private static final TypeReference<Set<String>> BRANCHES_TYPE_REFERENCE = new TypeReference<Set<String>>() { };
 
     @Schema(description = "Contains information about table changes")
     private AuditDto audit;
@@ -127,6 +135,61 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
         }
         try {
             return Optional.of(Long.parseLong(rawSnapshotId.trim()));
+        } catch (final NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Encodes a set of Iceberg branch names into the string form stored under
+     * {@value #BRANCHES_METADATA_KEY} in the metadata map.
+     *
+     * @param branches the branch names to encode
+     * @return the JSON array encoding of the branch names
+     */
+    public static String encodeBranches(final Collection<String> branches) {
+        return METACAT_JSON_LOCATOR.toJsonString(branches);
+    }
+
+    /**
+     * Returns the set of Iceberg branch names, or empty for a non-Iceberg table or when the
+     * {@value #BRANCHES_METADATA_KEY} property is missing or unparseable.
+     *
+     * @return set of Iceberg branch names, or empty set if unknown
+     */
+    @JsonIgnore
+    public Set<String> getBranches() {
+        if (metadata == null) {
+            return Collections.emptySet();
+        }
+        final String rawBranches = metadata.get(BRANCHES_METADATA_KEY);
+        if (rawBranches == null || rawBranches.trim().isEmpty()) {
+            return Collections.emptySet();
+        }
+        try {
+            return METACAT_JSON_LOCATOR.getObjectMapper().readValue(rawBranches, BRANCHES_TYPE_REFERENCE);
+        } catch (final IOException e) {
+            return Collections.emptySet();
+        }
+    }
+
+    /**
+     * Returns the Iceberg table format version, or empty for a non-Iceberg table or when the
+     * {@value #TABLE_VERSION_METADATA_KEY} property is missing or unparseable.
+     *
+     * @return the Iceberg table format version, or empty if unknown
+     */
+    @JsonIgnore
+    public Optional<Integer> getTableVersion() {
+        if (metadata == null) {
+            return Optional.empty();
+        }
+        final String rawVersion = metadata.get(TABLE_VERSION_METADATA_KEY);
+        if (rawVersion == null || rawVersion.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(Integer.parseInt(rawVersion.trim()));
         } catch (final NumberFormatException e) {
             return Optional.empty();
         }
