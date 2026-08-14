@@ -45,7 +45,7 @@ class IcebergMetadataValidationSpec extends Specification {
         def refs = json.get("refs")
         refs.has("main")
         refs.has("feature-branch")
-        refs.has("experimental")
+        refs.has("experimental,beta")
         refs.has("v1.0.0")
         refs.has("v2.0.0")
         refs.has("release-2024-01")
@@ -53,7 +53,7 @@ class IcebergMetadataValidationSpec extends Specification {
         // Verify branches
         refs.get("main").get("type").asText() == "branch"
         refs.get("feature-branch").get("type").asText() == "branch"
-        refs.get("experimental").get("type").asText() == "branch"
+        refs.get("experimental,beta").get("type").asText() == "branch"
         
         // Verify tags
         refs.get("v1.0.0").get("type").asText() == "tag"
@@ -189,7 +189,7 @@ class IcebergMetadataValidationSpec extends Specification {
         oldClientJson.get("format-version").asInt() == 1
         
         // Verify expected counts for our integration tests
-        branchCount == 3  // main, feature-branch, experimental
+        branchCount == 3  // main, feature-branch, experimental,beta
         tagCount == 3     // v1.0.0, v2.0.0, release-2024-01
         mainOnlyBranchCount == 1  // only main
         mainOnlyTagCount == 0     // no tags
