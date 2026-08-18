@@ -1,96 +1,108 @@
 package com.netflix.metacat.connector.polaris.store.jdbc;
 
-import com.netflix.metacat.connector.polaris.store.Utils;
-import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import com.netflix.metacat.connector.polaris.store.entities.AuditEntity;
-import com.netflix.metacat.connector.polaris.store.base.BasePolarisDatabaseReplicaRepository;
+import com.netflix.metacat.connector.polaris.store.entities.PolarisDatabaseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
- * Implementation for Custom repository using JdbcTemplate for interacting with databases.
+ * Read-only repository listing databases from the Polaris replica.
  */
 @Repository
-public class PolarisDatabaseReplicaJDBC extends BasePolarisDatabaseReplicaRepository {
+public class PolarisDatabaseReplicaJDBC {
+
+    private static final RowMapper<String> NAME_MAPPER = (rs, rowNum) -> rs.getString("name");
+
+    private static final RowMapper<PolarisDatabaseEntity> ENTITY_MAPPER = (rs, rowNum) ->
+        PolarisDatabaseEntity.builder()
+            .dbId(rs.getString("id"))
+            .catalogName(rs.getString("catalog_name"))
+            .dbName(rs.getString("name"))
+            .location(rs.getString("location"))
+            .audit(AuditEntity.builder()
+                .createdBy(rs.getString("created_by"))
+                .lastModifiedBy(rs.getString("last_updated_by"))
+                .createdDate(rs.getTimestamp("created_date").toInstant())
+                .lastModifiedDate(rs.getTimestamp("last_updated_date").toInstant())
+                .build())
+            .build();
 
     private final JdbcTemplate jdbcTemplate;
 
     /**
-     * Constructor to configure the JdbcTemplate.
+     * Configure to use the readerJdbcTemplate.
      *
-     * @param jdbcTemplate the JdbcTemplate to be used for database interactions
+     * @param jdbcTemplate readerJdbcTemplate
      */
     @Autowired
-    public PolarisDatabaseReplicaJDBC(
-        @Qualifier("readerJdbcTemplate") final JdbcTemplate jdbcTemplate) {
+    public PolarisDatabaseReplicaJDBC(@Qualifier("readerJdbcTemplate") final JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
-     * Retrieves a slice of databases filtered by a database name prefix for the current page.
+     * Fetch all database entities in a catalog matching the given name prefix.
      *
-     * @param catalogName catalog name
-     * @param dbNamePrefix the prefix of the database name to filter results
-     * @param page the pageable object containing pagination information
-     * @param selectAllColumns flag indicating whether to select all columns or just the database name
-     * @param <T> the type of the elements in the slice
-     * @return a Slice of database results
+     * @param catalogName  catalog name
+     * @param dbNamePrefix database name prefix, may be null or empty to match all
+     * @param pageSize     rows fetched per round trip
+     * @return the matching database entities, ordered by name ascending
      */
-    @Override
-    protected <T> Slice<T> getAllDatabasesForCurrentPage(
-        final String catalogName, final String dbNamePrefix, final Pageable page, final boolean selectAllColumns) {
+    public List<PolarisDatabaseEntity> getDatabases(
+        final String catalogName,
+        @Nullable final String dbNamePrefix,
+        final int pageSize) {
+        return list(catalogName, dbNamePrefix, pageSize, "d.*", ENTITY_MAPPER, PolarisDatabaseEntity::getDbName);
+    }
 
-        final String orderBy = Utils.generateOrderBy(page);
+    /**
+     * Fetch all database names in a catalog matching the given name prefix.
+     *
+     * @param catalogName  catalog name
+     * @param dbNamePrefix database name prefix, may be null or empty to match all
+     * @param pageSize     rows fetched per round trip
+     * @return the matching database names, ordered ascending
+     */
+    public List<String> getDatabaseNames(
+        final String catalogName,
+        @Nullable final String dbNamePrefix,
+        final int pageSize) {
+        return list(catalogName, dbNamePrefix, pageSize, "d.name", NAME_MAPPER, Function.identity());
+    }
 
-        // Generate Select clause
-        final String selectClause = selectAllColumns ? "d.*" : "d.name";
-        final String sql = "SELECT " + selectClause + " FROM DBS d "
-                + "WHERE d.catalog_name = ? AND d.name LIKE ? " + orderBy
-                + " LIMIT ? OFFSET ?";
+    private <T> List<T> list(
+        final String catalogName,
+        @Nullable final String dbNamePrefix,
+        final int pageSize,
+        final String columns,
+        final RowMapper<T> mapper,
+        final Function<T, String> cursorOf) {
 
-        final List<T> resultList = jdbcTemplate.query(sql,
-            new Object[]{catalogName, dbNamePrefix + "%", page.getPageSize() + 1,
-                    page.getPageNumber() * page.getPageSize(),
-            }, new RowMapper<T>() {
-                @Override
-                public T mapRow(final ResultSet rs, final int rowNum) throws SQLException {
-                    if (selectAllColumns) {
-                        final AuditEntity audit = new AuditEntity(
-                            rs.getString("created_by"),
-                            rs.getString("last_updated_by"),
-                            rs.getTimestamp("created_date").toInstant(),
-                            rs.getTimestamp("last_updated_date").toInstant()
-                        );
-                        return (T) PolarisDatabaseEntity.builder()
-                            .dbId(rs.getString("id"))
-                            .catalogName(catalogName)
-                            .dbName(rs.getString("name"))
-                            .location(rs.getString("location"))
-                            .audit(audit)
-                            .build();
-                    } else {
-                        return (T) rs.getString("name");
-                    }
-                }
-            });
+        final String prefix = (dbNamePrefix == null ? "" : dbNamePrefix) + "%";
 
-        // Check if there is a next page
-        final boolean hasNext = resultList.size() > page.getPageSize();
+        // Pages are walked by cursor rather than offset, so every page is a range scan on the
+        // (catalog_name, name) index instead of a rescan from the start.
+        final String head = "SELECT " + columns + " FROM DBS d WHERE d.catalog_name = ? AND d.name LIKE ?";
+        final String tail = " ORDER BY d.name ASC LIMIT ?";
 
-        // If there is a next page, remove the last item from the list
-        if (hasNext) {
-            resultList.remove(resultList.size() - 1);
+        final List<T> retval = new ArrayList<>();
+        String cursor = null;
+        while (true) {
+            final List<T> page = cursor == null
+                ? jdbcTemplate.query(head + tail, mapper, catalogName, prefix, pageSize)
+                : jdbcTemplate.query(head + " AND d.name > ?" + tail, mapper, catalogName, prefix, cursor, pageSize);
+            retval.addAll(page);
+            if (page.size() < pageSize) {
+                return retval;
+            }
+            cursor = cursorOf.apply(page.get(page.size() - 1));
         }
-        return new SliceImpl<>(resultList, page, hasNext);
     }
 }
