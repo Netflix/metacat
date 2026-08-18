@@ -17,320 +17,111 @@
  */
 package com.netflix.metacat.common.server.connectors
 
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException
 import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.util.AuthorizedCaller
-import com.netflix.metacat.common.server.util.MetacatContextManager
 import spock.lang.Specification
 
 class AuthorizingConnectorTableServiceSpec extends Specification {
     def delegate
+    def authorizer
     def context
     def resource
     def name
     def newName
     def catalogName
+    def authorizedCallers
     def service
-
-    class Success extends RuntimeException {}
 
     def setup() {
         delegate = Mock(ConnectorTableService)
+        authorizer = Mock(ConnectorAuthorizer)
         context = Mock(ConnectorRequestContext)
 
-        catalogName = "ads"
-        name = QualifiedName.ofTable(catalogName, "d", "t")
-        newName = QualifiedName.ofTable(catalogName, "d", "t2")
+        catalogName = "catalog1"
+        authorizedCallers = "caller-a,caller-b"
+        name = QualifiedName.ofTable(catalogName, "db", "tbl")
+        newName = QualifiedName.ofTable(catalogName, "db", "tbl2")
         resource = new TableInfo(name: name)
 
-        // Reset context before each test
-        MetacatContextManager.removeContext()
+        service = new AuthorizingConnectorTableService(delegate, authorizer, authorizedCallers, catalogName)
     }
 
-    def cleanup() {
-        MetacatContextManager.removeContext()
-    }
-
-    private MetacatRequestContext buildContextWithCaller(String caller) {
-        def ctx = MetacatRequestContext.builder().build()
-        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, caller)
-        return ctx
-    }
-
-    def "create - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
-
+    def "delegates each operation when the authorizer permits the caller"() {
         when:
         service.create(context, resource)
-
         then:
         1 * delegate.create(context, resource)
-    }
-
-    def "create - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
-
-        when:
-        service.create(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.create(_, _)
-    }
-
-    def "create - missing SsoDirectCallerAppName throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-
-        // No SsoDirectCallerAppName in additionalContext
-        def ctx = MetacatRequestContext.builder().build()
-        MetacatContextManager.setContext(ctx)
-
-        when:
-        service.create(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.create(_, _)
-    }
-
-    def "update - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.update(context, resource)
-
         then:
         1 * delegate.update(context, resource)
-    }
-
-    def "update - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("spark"))
-
-        when:
-        service.update(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.update(_, _)
-    }
-
-    def "delete - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.delete(context, name)
-
         then:
         1 * delegate.delete(context, name)
-    }
-
-    def "delete - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("hive"))
-
-        when:
-        service.delete(context, name)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.delete(_, _)
-    }
-
-    def "get - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.get(context, name)
-
         then:
         1 * delegate.get(context, name)
-    }
-
-    def "get - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("presto"))
-
-        when:
-        service.get(context, name)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.get(_, _)
-    }
-
-    def "exists - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.exists(context, name)
-
         then:
         1 * delegate.exists(context, name)
-    }
-
-    def "list - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.list(context, name, null, null, null)
-
         then:
         1 * delegate.list(context, name, null, null, null)
-    }
-
-    def "listNames - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.listNames(context, name, null, null, null)
-
         then:
         1 * delegate.listNames(context, name, null, null, null)
-    }
-
-    def "rename - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.rename(context, name, newName)
-
         then:
         1 * delegate.rename(context, name, newName)
-    }
-
-    def "getTableNames with filter - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.getTableNames(context, name, "filter", 10)
-
         then:
         1 * delegate.getTableNames(context, name, "filter", 10)
-    }
-
-    def "getTableNames with URIs - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
-        service.getTableNames(context, ["s3://bucket/path"], false)
-
+        service.getTableNames(context, ["s3://uri"], false)
         then:
-        1 * delegate.getTableNames(context, ["s3://bucket/path"], false)
+        1 * delegate.getTableNames(context, ["s3://uri"], false)
     }
 
-    def "exception message contains caller name when unauthorized"() {
+    def "throws and does not delegate when the authorizer denies the caller"() {
         given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
+        authorizer.checkAuthorization(catalogName, authorizedCallers, _, _) >> { throw new CatalogUnauthorizedException(catalogName) }
+
+        when:
+        service.create(context, resource)
+        then:
+        thrown(CatalogUnauthorizedException)
+        0 * delegate.create(_, _)
 
         when:
         service.get(context, name)
-
-        then:
-        def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("bad-actor")
-        ex.message.contains("ads")
-    }
-
-    def "exception message indicates missing caller when no SsoDirectCallerAppName"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder().build()
-        MetacatContextManager.setContext(ctx)
-
-        when:
-        service.get(context, name)
-
-        then:
-        def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("authenticated caller")
-        ex.message.contains("ads")
-    }
-
-    def "caller matching is case sensitive - uppercase caller rejected"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set  // lowercase
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("IRC"))  // uppercase
-
-        when:
-        service.get(context, name)
-
         then:
         thrown(CatalogUnauthorizedException)
         0 * delegate.get(_, _)
     }
 
-    def "caller matching is case sensitive - lowercase caller accepted"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set  // lowercase
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))  // lowercase matches
-
+    def "checks catalog-level access for uri-based getTableNames"() {
         when:
-        service.get(context, name)
+        service.getTableNames(context, ["s3://uri"], false)
 
         then:
-        1 * delegate.get(context, name)
-    }
-
-    def "multiple allowed callers - second caller in list succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null), new AuthorizedCaller("spark", null)] as Set
-        service = new AuthorizingConnectorTableService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("spark"))
-
-        when:
-        service.get(context, name)
-
-        then:
-        1 * delegate.get(context, name)
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "getTableNames", QualifiedName.ofCatalog(catalogName))
+        1 * delegate.getTableNames(context, ["s3://uri"], false)
     }
 }

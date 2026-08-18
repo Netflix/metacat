@@ -17,342 +17,137 @@
  */
 package com.netflix.metacat.common.server.connectors
 
-import com.netflix.metacat.common.MetacatRequestContext
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.server.connectors.exception.CatalogUnauthorizedException
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo
-import com.netflix.metacat.common.server.connectors.model.PartitionListRequest
-import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest
-import com.netflix.metacat.common.server.connectors.model.TableInfo
-import com.netflix.metacat.common.server.util.AuthorizedCaller
-import com.netflix.metacat.common.server.util.MetacatContextManager
 import spock.lang.Specification
 
 class AuthorizingConnectorPartitionServiceSpec extends Specification {
     def delegate
+    def authorizer
     def context
     def resource
-    def tableName
-    def partitionName
+    def table
+    def name
     def newName
     def catalogName
+    def authorizedCallers
     def service
-    def tableInfo
-    def partitionListRequest
-    def partitionsSaveRequest
 
     def setup() {
         delegate = Mock(ConnectorPartitionService)
+        authorizer = Mock(ConnectorAuthorizer)
         context = Mock(ConnectorRequestContext)
-        tableInfo = Mock(TableInfo)
-        partitionListRequest = Mock(PartitionListRequest)
-        partitionsSaveRequest = Mock(PartitionsSaveRequest)
 
-        catalogName = "ads"
-        tableName = QualifiedName.ofTable(catalogName, "db", "table")
-        partitionName = QualifiedName.ofPartition(catalogName, "db", "table", "dateint=20240101")
-        newName = QualifiedName.ofPartition(catalogName, "db", "table", "dateint=20240102")
-        resource = new PartitionInfo(name: partitionName)
+        catalogName = "catalog1"
+        authorizedCallers = "caller-a,caller-b"
+        table = QualifiedName.ofTable(catalogName, "db", "tbl")
+        name = QualifiedName.ofPartition(catalogName, "db", "tbl", "dateint=1")
+        newName = QualifiedName.ofPartition(catalogName, "db", "tbl", "dateint=2")
+        resource = new PartitionInfo(name: name)
 
-        // Reset context before each test
-        MetacatContextManager.removeContext()
+        service = new AuthorizingConnectorPartitionService(delegate, authorizer, authorizedCallers, catalogName)
     }
 
-    def cleanup() {
-        MetacatContextManager.removeContext()
-    }
+    def "delegates each operation when the authorizer permits the caller"() {
+        when:
+        service.getPartitions(context, table, null, null)
+        then:
+        1 * delegate.getPartitions(context, table, null, null)
 
-    private MetacatRequestContext buildContextWithCaller(String caller) {
-        def ctx = MetacatRequestContext.builder().build()
-        ctx.getAdditionalContext().put(MetacatRequestContext.SSO_DIRECT_CALLER_APP_NAME, caller)
-        return ctx
-    }
+        when:
+        service.savePartitions(context, table, null)
+        then:
+        1 * delegate.savePartitions(context, table, null)
 
-    def "create - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        when:
+        service.deletePartitions(context, table, ["dateint=1"], null)
+        then:
+        1 * delegate.deletePartitions(context, table, ["dateint=1"], null)
+
+        when:
+        service.getPartitionKeys(context, table, null, null)
+        then:
+        1 * delegate.getPartitionKeys(context, table, null, null)
+
+        when:
+        service.getPartitionUris(context, table, null, null)
+        then:
+        1 * delegate.getPartitionUris(context, table, null, null)
 
         when:
         service.create(context, resource)
-
         then:
         1 * delegate.create(context, resource)
-    }
-
-    def "create - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("unauthorized-app"))
-
-        when:
-        service.create(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.create(_, _)
-    }
-
-    def "create - missing SsoDirectCallerAppName throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null), new AuthorizedCaller("irc-server", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        // No SsoDirectCallerAppName in additionalContext
-        def ctx = MetacatRequestContext.builder().build()
-        MetacatContextManager.setContext(ctx)
-
-        when:
-        service.create(context, resource)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.create(_, _)
-    }
-
-    def "update - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
         service.update(context, resource)
-
         then:
         1 * delegate.update(context, resource)
-    }
-
-    def "delete - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
-        service.delete(context, partitionName)
-
+        service.delete(context, name)
         then:
-        1 * delegate.delete(context, partitionName)
-    }
-
-    def "get - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        1 * delegate.delete(context, name)
 
         when:
-        service.get(context, partitionName)
-
+        service.get(context, name)
         then:
-        1 * delegate.get(context, partitionName)
-    }
-
-    def "exists - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        1 * delegate.get(context, name)
 
         when:
-        service.exists(context, partitionName)
-
+        service.exists(context, name)
         then:
-        1 * delegate.exists(context, partitionName)
-    }
-
-    def "list - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        1 * delegate.exists(context, name)
 
         when:
-        service.list(context, tableName, null, null, null)
-
+        service.list(context, name, null, null, null)
         then:
-        1 * delegate.list(context, tableName, null, null, null)
-    }
-
-    def "listNames - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        1 * delegate.list(context, name, null, null, null)
 
         when:
-        service.listNames(context, tableName, null, null, null)
-
+        service.listNames(context, name, null, null, null)
         then:
-        1 * delegate.listNames(context, tableName, null, null, null)
-    }
-
-    def "rename - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        1 * delegate.listNames(context, name, null, null, null)
 
         when:
-        service.rename(context, partitionName, newName)
-
+        service.rename(context, name, newName)
         then:
-        1 * delegate.rename(context, partitionName, newName)
+        1 * delegate.rename(context, name, newName)
     }
 
-    def "getPartitions - authorized caller succeeds"() {
+    def "throws and does not delegate when the authorizer denies the caller"() {
         given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
+        authorizer.checkAuthorization(catalogName, authorizedCallers, _, _) >> { throw new CatalogUnauthorizedException(catalogName) }
 
         when:
-        service.getPartitions(context, tableName, partitionListRequest, tableInfo)
-
-        then:
-        1 * delegate.getPartitions(context, tableName, partitionListRequest, tableInfo)
-    }
-
-    def "getPartitions - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("spark"))
-
-        when:
-        service.getPartitions(context, tableName, partitionListRequest, tableInfo)
-
-        then:
-        thrown(CatalogUnauthorizedException)
-        0 * delegate.getPartitions(_, _, _, _)
-    }
-
-    def "savePartitions - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
-
-        when:
-        service.savePartitions(context, tableName, partitionsSaveRequest)
-
-        then:
-        1 * delegate.savePartitions(context, tableName, partitionsSaveRequest)
-    }
-
-    def "savePartitions - unauthorized caller throws exception"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("hive"))
-
-        when:
-        service.savePartitions(context, tableName, partitionsSaveRequest)
-
+        service.savePartitions(context, table, null)
         then:
         thrown(CatalogUnauthorizedException)
         0 * delegate.savePartitions(_, _, _)
-    }
-
-    def "deletePartitions - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        def partitionNames = ["dateint=20240101"]
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
 
         when:
-        service.deletePartitions(context, tableName, partitionNames, tableInfo)
-
+        service.get(context, name)
         then:
-        1 * delegate.deletePartitions(context, tableName, partitionNames, tableInfo)
+        thrown(CatalogUnauthorizedException)
+        0 * delegate.get(_, _)
     }
 
-    def "getPartitionCount - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
-
+    def "passes the operation and resource through to the authorizer"() {
         when:
-        service.getPartitionCount(context, tableName, tableInfo)
+        service.getPartitions(context, table, null, null)
 
         then:
-        1 * delegate.getPartitionCount(context, tableName, tableInfo)
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "getPartitions", table)
+        1 * delegate.getPartitions(context, table, null, null)
     }
 
-    def "getPartitionNames - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        def uris = ["s3://bucket/path"]
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
-
+    def "checks catalog-level access for uri-based getPartitionNames"() {
         when:
-        service.getPartitionNames(context, uris, false)
+        service.getPartitionNames(context, ["s3://uri"], false)
 
         then:
-        1 * delegate.getPartitionNames(context, uris, false)
-    }
-
-    def "getPartitionKeys - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
-
-        when:
-        service.getPartitionKeys(context, tableName, partitionListRequest, tableInfo)
-
-        then:
-        1 * delegate.getPartitionKeys(context, tableName, partitionListRequest, tableInfo)
-    }
-
-    def "getPartitionUris - authorized caller succeeds"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("irc"))
-
-        when:
-        service.getPartitionUris(context, tableName, partitionListRequest, tableInfo)
-
-        then:
-        1 * delegate.getPartitionUris(context, tableName, partitionListRequest, tableInfo)
-    }
-
-    def "exception message contains caller name when unauthorized"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-        MetacatContextManager.setContext(buildContextWithCaller("bad-actor"))
-
-        when:
-        service.get(context, partitionName)
-
-        then:
-        def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("bad-actor")
-        ex.message.contains("ads")
-    }
-
-    def "exception message indicates missing caller when no SsoDirectCallerAppName"() {
-        given:
-        def allowedCallers = [new AuthorizedCaller("irc", null)] as Set
-        service = new AuthorizingConnectorPartitionService(delegate, allowedCallers, catalogName)
-
-        def ctx = MetacatRequestContext.builder().build()
-        MetacatContextManager.setContext(ctx)
-
-        when:
-        service.get(context, partitionName)
-
-        then:
-        def ex = thrown(CatalogUnauthorizedException)
-        ex.message.contains("authenticated caller")
-        ex.message.contains("ads")
+        1 * authorizer.checkAuthorization(catalogName, authorizedCallers, "getPartitionNames", QualifiedName.ofCatalog(catalogName))
+        1 * delegate.getPartitionNames(context, ["s3://uri"], false)
     }
 }
