@@ -17,6 +17,7 @@
 package com.netflix.metacat.connector.hive.iceberg;
 
 import org.apache.iceberg.Table;
+import org.apache.iceberg.TableUtil;
 import lombok.Data;
 
 import java.util.Collections;
@@ -29,21 +30,10 @@ import java.util.Set;
  */
 @Data
 public class IcebergTableWrapper {
-    /** Key for indicating if the table has non-main branches. */
-    public static final String ICEBERG_HAS_NON_MAIN_BRANCHES_KEY = "iceberg.has.non.main.branches";
     /** Key for indicating if the table has tags. */
     public static final String ICEBERG_HAS_TAGS_KEY = "iceberg.has.tags";
     private final Table table;
     private final Map<String, String> extraProperties;
-
-    /**
-     * Check if the table has any non-main branches.
-     * @return true if the table has branches other than main
-     */
-    public boolean hasNonMainBranches() {
-        final Set<String> branches = extractBranches();
-        return branches.size() > 1;
-    }
 
     /**
      * Check if the table has any tags.
@@ -61,28 +51,16 @@ public class IcebergTableWrapper {
      */
     public Map<String, String> populateBranchTagMetadata() {
         final Map<String, String> branchTagMetadata = new HashMap<>();
-        branchTagMetadata.put(ICEBERG_HAS_NON_MAIN_BRANCHES_KEY, String.valueOf(hasNonMainBranches()));
         branchTagMetadata.put(ICEBERG_HAS_TAGS_KEY, String.valueOf(hasTags()));
         return branchTagMetadata;
     }
 
     /**
-     * Get summary information about branches and tags for logging/debugging.
-     * @return formatted string with branch and tag counts and names
+     * Get the Iceberg table format version.
+     * @return the format version
      */
-    public String getBranchesAndTagsSummary() {
-        final Set<String> branches = extractBranches();
-        final Set<String> tags = extractTags();
-        final StringBuilder summary = new StringBuilder();
-        summary.append(String.format("branches=%d", branches.size()));
-        if (!branches.isEmpty()) {
-            summary.append(String.format(" %s", branches));
-        }
-        summary.append(String.format(", tags=%d", tags.size()));
-        if (!tags.isEmpty()) {
-            summary.append(String.format(" %s", tags));
-        }
-        return summary.toString();
+    public int getTableVersion() {
+        return TableUtil.formatVersion(table);
     }
 
     /**
@@ -90,7 +68,7 @@ public class IcebergTableWrapper {
      * @return set of branch names
      * @throws RuntimeException if unable to read table references
      */
-    private Set<String> extractBranches() {
+    public Set<String> extractBranches() {
         final var refs = table.refs();
         if (refs == null || refs.isEmpty()) {
             return Collections.emptySet();

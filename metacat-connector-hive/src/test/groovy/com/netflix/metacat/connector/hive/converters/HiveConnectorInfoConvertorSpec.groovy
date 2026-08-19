@@ -502,7 +502,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
 
     def "test fromIcebergTableToTableInfo"() {
         def icebergTable = Mock(org.apache.iceberg.Table)
-        def icebergTableWrapper = new IcebergTableWrapper(icebergTable, [:])
+        def icebergTableWrapper = Spy(new IcebergTableWrapper(icebergTable, [:]))
         def partSpec = Mock(PartitionSpec)
         def field = Mock(PartitionField)
         def schema =  Mock(Schema)
@@ -520,6 +520,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
             isBranch() >> true
             isTag() >> false
         }]
+        1 * icebergTableWrapper.getTableVersion() >> 2
         1 * partSpec.fields() >> [ field]
         1 * icebergTable.schema() >> schema
         1 * schema.columns() >> [nestedField, nestedField2]
@@ -551,10 +552,9 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         then:
         1 * icebergTableWrapper.getTable() >> icebergTable
         1 * icebergTableWrapper.populateBranchTagMetadata() >> [
-            "iceberg.has.non.main.branches": "true",
             "iceberg.has.tags": "false"
-        ] // Called by converter and returns metadata map
-        1 * icebergTableWrapper.getExtraProperties() >> [:] // Called by converter for other properties
+        ]
+        1 * icebergTableWrapper.getExtraProperties() >> [:]
         1 * icebergTable.properties() >> [:]
         1 * icebergTable.schema() >> Mock(Schema) {
             columns() >> []
@@ -563,9 +563,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
             fields() >> []
             toString() >> "[]"
         }
-        
-        // Verify that non-main-branch/tag metadata is injected via extraProperties
-        tableInfo.getMetadata().get("iceberg.has.non.main.branches") == "true"
+
         tableInfo.getMetadata().get("iceberg.has.tags") == "false"
     }
 

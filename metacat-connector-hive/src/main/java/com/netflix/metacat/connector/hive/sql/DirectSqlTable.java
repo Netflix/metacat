@@ -99,6 +99,10 @@ public class DirectSqlTable {
     public static final String PARAM_METADATA_CONTENT = "metadata_content";
     /** Read-only Iceberg current snapshot id, surfaced on read and never persisted. */
     public static final String PARAM_CURRENT_SNAPSHOT_ID = TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY;
+    /** Read-only JSON array of Iceberg branch names, surfaced on read and never persisted. */
+    public static final String PARAM_BRANCHES = TableDto.BRANCHES_METADATA_KEY;
+    /** Read-only Iceberg table format version, surfaced on read and never persisted. */
+    public static final String PARAM_TABLE_VERSION = TableDto.TABLE_VERSION_METADATA_KEY;
     /**
      * List of parameter that needs to be excluded when updating an iceberg table.
      */

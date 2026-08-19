@@ -937,7 +937,7 @@ class MetacatSmokeSpec extends Specification {
         def uri = isLocalEnv ? String.format('file:/tmp/%s/%s', databaseName, tableName) : null
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
-        def metadataLocation = '/tmp/data/metadata/00000-9b5d4c36-130c-4288-9599-7d850c203d11.metadata.json'
+        def metadataLocation = '/tmp/data/metadata/00007-basic-v2.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
 
@@ -959,13 +959,13 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that the iceberg.has.non.main.branches and iceberg.has.tags flags are populated correctly
-        retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-        // Basic test tables without additional non-main branches/tags should return "false" for both
-        // This verifies both the injection mechanism AND the logic correctness for simple tables
-        retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'false'
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
+
+        retrievedTable.metadata.containsKey(TableDto.BRANCHES_METADATA_KEY)
+        retrievedTable.getBranches() == [] as Set
+        retrievedTable.metadata.get(TableDto.TABLE_VERSION_METADATA_KEY) == '2'
+        retrievedTable.getTableVersion() == Optional.of(2)
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
@@ -1005,14 +1005,11 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that the metadata flags correctly detect the branches and tags from the real metadata file
-        retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // The metadata file has 3 branches (main, feature-branch, experimental) and 3 tags (v1.0.0, v2.0.0, release-2024-01)
-        // So both flags should be "true"
-        retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'true'
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
+
+        retrievedTable.getBranches() == ['main', 'feature-branch', 'experimental,beta'] as Set
+        retrievedTable.getTableVersion() == Optional.of(2)
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
@@ -1030,7 +1027,6 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
 
-        // Use the metadata file that contains only the main branch (no additional branches or tags)
         def metadataLocation = '/tmp/data/metadata/00004-main-branch-only.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -1053,14 +1049,11 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that the metadata flags correctly detect no additional branches or tags
-        retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // The metadata file has only 1 branch (main) and 0 tags
-        // So both flags should be "false"
-        retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'false'
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
+
+        retrievedTable.getBranches() == ['main'] as Set
+        retrievedTable.getTableVersion() == Optional.of(2)
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
@@ -1078,8 +1071,6 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
 
-        // Use REAL metadata file created with Iceberg client < 0.14.1 (Dec 2021, before refs support)
-        // Note: This is v1 format but could be any format - client version determines refs support
         def metadataLocation = '/tmp/data/metadata/00005-old-client-no-refs.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -1102,17 +1093,11 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that tables created with Iceberg < 0.14.1 are handled correctly
-        retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // CRITICAL: JSON metadata has no refs section, but Iceberg runtime auto-creates "main" branch
-        // Tables created with Iceberg < 0.14.1: JSON has no refs, but runtime has main branch
-        // - hasNonMainBranches() == false (only auto-created main branch, size=1, so 1 > 1 is false)
-        // - hasTags() == false (no tags in auto-created refs)
-        // This ensures backward compatibility with tables created before branches/tags support
-        retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'false'
         retrievedTable.metadata.get('iceberg.has.tags') == 'false'
+
+        retrievedTable.getBranches() == ['main'] as Set
+        retrievedTable.getTableVersion() == Optional.of(1)
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)
@@ -1130,8 +1115,6 @@ class MetacatSmokeSpec extends Specification {
         def tableDto = PigDataDtoProvider.getTable(catalogName, databaseName, tableName, 'test', uri)
         tableDto.setFields([])
 
-        // Use v1 format metadata file with branches/tags (created with Iceberg client >= 0.14.1)
-        // This proves that format version != client capability - v1 can have refs!
         def metadataLocation = '/tmp/data/metadata/00006-v1-with-branches-tags.metadata.json'
         def metadata = [table_type: 'ICEBERG', metadata_location: metadataLocation]
         tableDto.setMetadata(metadata)
@@ -1154,14 +1137,11 @@ class MetacatSmokeSpec extends Specification {
         retrievedTable.metadata.containsKey('metadata_location')
         retrievedTable.metadata.get('metadata_location') == metadataLocation
 
-        // Verify that v1 format tables created with Iceberg >= 0.14.1 DO support branches/tags
-        retrievedTable.metadata.containsKey('iceberg.has.non.main.branches')
         retrievedTable.metadata.containsKey('iceberg.has.tags')
-
-        // v1 format with refs should detect branches/tags correctly
-        // This table has 2 branches (main, dev-branch) + 1 tag (v3.0.0)
-        retrievedTable.metadata.get('iceberg.has.non.main.branches') == 'true'
         retrievedTable.metadata.get('iceberg.has.tags') == 'true'
+
+        retrievedTable.getBranches() == ['main', 'dev-branch'] as Set
+        retrievedTable.getTableVersion() == Optional.of(1)
 
         cleanup:
         api.deleteTable(catalogName, databaseName, tableName)

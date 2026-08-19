@@ -86,7 +86,7 @@
       "snapshot-id" : 8158962092416812123,
       "type" : "branch"
     },
-    "experimental" : {
+    "experimental,beta" : {
       "snapshot-id" : 8158962092416812124,
       "type" : "branch"
     },
