@@ -1,3 +1,4 @@
+drop table if exists ALIASES;
 drop table if exists TBLS;
 drop table if exists DBS;
 
@@ -30,3 +31,17 @@ create table TBLS (
 );
 
 CREATE INDEX DB_NAME_IDX ON TBLS(db_name);
+
+create table ALIASES (
+                    id varchar(255) default random_uuid() not null primary key,
+                    db_id varchar(255) not null,
+                    name varchar(255) not null,
+                    source_tbl_id varchar(255) not null,
+                    created_by varchar(255),
+                    created_date TIMESTAMP not null,
+                    last_updated_by varchar(255),
+                    last_updated_date TIMESTAMP not null,
+                    constraint uniq_alias unique(name, db_id),
+                    foreign key (db_id) references DBS(id),
+                    foreign key (source_tbl_id) references TBLS(id)
+);

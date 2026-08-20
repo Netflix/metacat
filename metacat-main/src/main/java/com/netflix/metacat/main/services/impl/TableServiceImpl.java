@@ -27,6 +27,7 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatBadRequestException;
 import com.netflix.metacat.common.exception.MetacatNotSupportedException;
 import com.netflix.metacat.common.json.MetacatJson;
@@ -51,6 +52,7 @@ import com.netflix.metacat.common.server.model.ParentInfo;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig;
+import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.GetMetadataInterceptorParameters;
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants;
@@ -103,6 +105,7 @@ public class TableServiceImpl implements TableService {
     private final AuthorizationService authorizationService;
     private final OwnerValidationService ownerValidationService;
     private final ParentChildRelMetadataService parentChildRelMetadataService;
+    private final AliasService aliasService;
 
     /**
      * {@inheritDoc}
@@ -111,6 +114,11 @@ public class TableServiceImpl implements TableService {
     public TableDto create(final QualifiedName name, final TableDto tableDto) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         validate(name);
+
+        if (isAlias(name)) {
+            throw new MetacatAlreadyExistsException("Alias with name: " + name + ", already exists.");
+        }
+
         this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
             tableDto.getName(), MetacatOperation.CREATE);
 
@@ -348,6 +356,11 @@ public class TableServiceImpl implements TableService {
     public TableDto deleteAndReturn(final QualifiedName name, final boolean isMView) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         validate(name);
+
+        if (isAlias(name)) {
+            throw new MetacatNotSupportedException("Deleting alias: " + name + " is not allowed");
+        }
+
         this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
             name, MetacatOperation.DELETE);
 
@@ -510,14 +523,20 @@ public class TableServiceImpl implements TableService {
      * {@inheritDoc}
      */
     @Override
-    public Optional<TableDto> get(final QualifiedName name, final GetTableServiceParameters getTableServiceParameters) {
+    public Optional<TableDto> get(final QualifiedName requestedName,
+            final GetTableServiceParameters getTableServiceParameters) {
+        // A read that wants table info must fail on an alias rather than quietly serve the table it
+        // points at, so its name is left unresolved for the connector to reject.
+        final QualifiedName name = resolveAlias(requestedName, getTableServiceParameters);
+        final boolean isAliasRead = isAlias(requestedName);
+
         validate(name);
         TableDto tableInternal = null;
         final TableDto table;
         final MetacatCatalogConfig catalogConfig = connectorManager.getCatalogConfig(name);
-        if (getTableServiceParameters.isIncludeInfo()
+        if (!isAliasRead && (getTableServiceParameters.isIncludeInfo()
             || (getTableServiceParameters.isIncludeDefinitionMetadata() && catalogConfig.isInterceptorEnabled()
-            && !getTableServiceParameters.isDisableOnReadMetadataIntercetor())) {
+            && !getTableServiceParameters.isDisableOnReadMetadataIntercetor()))) {
             try {
                 final boolean useCache = getTableServiceParameters.isUseCache() && config.isCacheEnabled()
                     && catalogConfig.isCacheEnabled();
@@ -558,7 +577,7 @@ public class TableServiceImpl implements TableService {
 
         if (getTableServiceParameters.isIncludeDataMetadata() && catalogConfig.isHasDataExternal()) {
             TableDto dto = table;
-            if (tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
+            if (!isAliasRead && tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
                 try {
                     final boolean useCache = getTableServiceParameters.isUseCache() && config.isCacheEnabled();
                     dto = converterUtil.toTableDto(
@@ -586,6 +605,15 @@ public class TableServiceImpl implements TableService {
         final boolean isMView
     ) {
         validate(oldName);
+
+        if (isAlias(oldName)) {
+            throw new MetacatBadRequestException("Renaming of aliases is not supported: " + oldName);
+        }
+
+        if (isAlias(newName)) {
+            throw new MetacatAlreadyExistsException("Table " + newName + " already exists");
+        }
+
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         this.authorizationService.checkPermission(metacatRequestContext.getUserName(),
             oldName, MetacatOperation.RENAME);
@@ -875,9 +903,25 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableDto updateAndReturn(final QualifiedName name, final TableDto tableDto,
+    public TableDto updateAndReturn(final QualifiedName requestedName, final TableDto tableDto,
                                     final boolean shouldThrowExceptionOnMetadataSaveFailure) {
+        final QualifiedName name = resolveAlias(requestedName);
         validate(name);
+
+        if (isAlias(requestedName) && carriesTableInfo(tableDto)) {
+            throw new MetacatNotSupportedException(
+                "Updating table info through alias " + requestedName + " is not supported");
+        }
+
+        final QualifiedName dtoName = tableDto.getName();
+        Preconditions.checkArgument(
+            Objects.isNull(dtoName) || name.getTableName().equalsIgnoreCase(dtoName.getTableName()),
+            "Table name does not match the name in the table"
+        );
+        // Past this point the alias does not exist: everything, user metadata included, is keyed off
+        // the table it resolved to.
+        tableDto.setName(name);
+
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final TableDto oldTable = get(name, GetTableServiceParameters.builder()
             .disableOnReadMetadataIntercetor(false)
@@ -996,5 +1040,57 @@ public class TableServiceImpl implements TableService {
         Preconditions.checkArgument(name.isTableDefinition(), "Definition {} does not refer to a table", name);
     }
 
+    /**
+     * Whether the dto carries anything that would reach the connector, as opposed to user metadata.
+     *
+     * @param tableDto the dto
+     * @return true if the dto describes the table itself
+     */
+    private static boolean carriesTableInfo(final TableDto tableDto) {
+        return (tableDto.getFields() != null && !tableDto.getFields().isEmpty())
+            || (tableDto.getMetadata() != null && !tableDto.getMetadata().isEmpty())
+            || tableDto.getSerde() != null;
+    }
 
+    private QualifiedName resolveAlias(final QualifiedName name) {
+        return config.isTableAliasEnabled() ? aliasService.getTableName(name) : name;
+    }
+
+    /**
+     * Resolves a table alias to the table it points at. Names that are not aliases, and every name at
+     * all when table aliasing is disabled, are returned untouched.
+     *
+     * @param name the requested name
+     * @param getTableServiceParameters params from request
+     * @return the table the alias points at, or the given name
+     */
+    private QualifiedName resolveAlias(final QualifiedName name,
+            final GetTableServiceParameters getTableServiceParameters) {
+        return readsTableInfo(getTableServiceParameters) ? name : resolveAlias(name);
+    }
+
+    /**
+     * Whether the read asks for anything the connector owns, as opposed to user metadata. Three
+     * separate parameters select a connector read, see {@link #getFromTableServiceProxy}.
+     *
+     * @param getTableServiceParameters params from request
+     * @return true if the read wants the table itself
+     */
+    private static boolean readsTableInfo(final GetTableServiceParameters getTableServiceParameters) {
+        return getTableServiceParameters.isIncludeInfo()
+            || getTableServiceParameters.isIncludeMetadataLocationOnly()
+            || getTableServiceParameters.isIncludeMetadataFromConnector();
+    }
+
+    /**
+     * Whether the name is a table alias. False whenever table aliasing is disabled, so that this
+     * agrees with {@link #resolveAlias(QualifiedName)} without relying on every {@link AliasService}
+     * implementation to check the flag itself.
+     *
+     * @param name the requested name
+     * @return true if the name is an alias
+     */
+    private boolean isAlias(final QualifiedName name) {
+        return config.isTableAliasEnabled() && aliasService.isAlias(name);
+    }
 }

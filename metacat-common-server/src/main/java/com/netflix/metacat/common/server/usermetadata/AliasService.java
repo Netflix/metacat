@@ -36,4 +36,14 @@ public interface AliasService {
     default QualifiedName getTableName(@NonNull final QualifiedName tableAlias) {
         return tableAlias;
     }
+
+    /**
+     * Returns true if the given name refers to a table alias rather than to a table itself.
+     *
+     * @param name the table name.
+     * @return true if the name is an alias, false otherwise.
+     */
+    default boolean isAlias(@NonNull final QualifiedName name) {
+        return !name.equals(getTableName(name));
+    }
 }

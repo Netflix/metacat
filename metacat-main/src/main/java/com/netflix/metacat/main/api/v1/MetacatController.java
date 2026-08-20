@@ -219,7 +219,7 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The table information", required = true)
         @Valid @RequestBody final TableDto table
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         if (MetacatServiceHelper.isIcebergTable(table)) {
@@ -387,7 +387,7 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
@@ -642,9 +642,9 @@ public class MetacatController implements MetacatV1 {
             name = "includeMetadataLocationOnly",
             defaultValue = "false") final boolean includeMetadataLocationOnly
     ) {
-        final Supplier<QualifiedName> qualifiedNameSupplier =
-            () -> QualifiedName.ofTable(catalogName, databaseName, tableName);
-        final QualifiedName name = this.requestWrapper.qualifyName(qualifiedNameSupplier);
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
+            () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
+        );
         return this.requestWrapper.processRequest(
             name,
             "getTable",
@@ -669,11 +669,7 @@ public class MetacatController implements MetacatV1 {
                         .build()
                 );
 
-                final TableDto tableDto = table.orElseThrow(() -> new TableNotFoundException(name));
-                // Set the name to whatever the request was for because
-                // for aliases, this could've been set to the original name
-                tableDto.setName(qualifiedNameSupplier.get());
-                return tableDto;
+                return table.orElseThrow(() -> new TableNotFoundException(name));
             }
         );
     }
@@ -1001,10 +997,10 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The name of the table", required = true)
         @RequestParam("newTableName") final String newTableName
     ) {
-        final QualifiedName oldName = this.requestWrapper.qualifyName(
+        final QualifiedName oldName = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
-        final QualifiedName newName = this.requestWrapper.qualifyName(
+        final QualifiedName newName = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, newTableName)
         );
         this.requestWrapper.processRequest(
@@ -1212,18 +1208,13 @@ public class MetacatController implements MetacatV1 {
             name = "shouldThrowExceptionOnMetadataSaveFailure",
             defaultValue = "false") final boolean shouldThrowExceptionOnMetadataSaveFailure
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
             name,
             "updateTable",
             () -> {
-                Preconditions.checkArgument(table.getName() != null
-                        && tableName.equalsIgnoreCase(table.getName().getTableName()
-                    ),
-                    "Table name does not match the name in the table"
-                );
                 return this.tableService.updateAndReturn(name, table, shouldThrowExceptionOnMetadataSaveFailure);
             }
         );

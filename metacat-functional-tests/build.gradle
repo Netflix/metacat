@@ -90,9 +90,19 @@ task expandWar(type: Copy) {
     into file("${buildDir}/metacat-war-expanded/ROOT")
 }
 
+// Place the test log4j config into the expanded war rather than bind-mounting it over the
+// war directory mount. Nested bind mounts require the daemon to create the mountpoint inside
+// the host directory, which some container runtimes (e.g. OrbStack) refuse to do.
+task copyWarLog4jConfig(type: Copy) {
+    dependsOn 'expandWar'
+
+    from file('metacat-test-cluster/resources/log4j.properties')
+    into file("${buildDir}/metacat-war-expanded/ROOT/WEB-INF/classes")
+}
+
 // Aurora configuration tasks
 task startMetacatClusterAurora(type: Exec) {
-    dependsOn 'expandWar'
+    dependsOn 'expandWar', 'copyWarLog4jConfig'
     if (project.ext.startCluster) {
         commandLine 'sh', rootProject.file('scripts/start_metacat_test_cluster.sh'), project.file('metacat-test-cluster/docker-compose-aurora.yml')
     } else {

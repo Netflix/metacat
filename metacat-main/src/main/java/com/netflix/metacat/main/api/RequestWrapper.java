@@ -103,18 +103,29 @@ public final class RequestWrapper {
     }
 
     /**
-     * Creates the qualified name.
+     * Creates the qualified name, resolving a table alias to the table it points at.
      *
      * @param nameSupplier supplier
      * @return name
      */
     public QualifiedName qualifyName(final Supplier<QualifiedName> nameSupplier) {
+        final QualifiedName name = unresolvedQualifiedName(nameSupplier);
+        if (config.isTableAliasEnabled() && name.getType() == QualifiedName.Type.TABLE) {
+            return aliasService.getTableName(name);
+        }
+        return name;
+    }
+
+    /**
+     * Creates the qualified name without resolving a table alias. Table endpoints use this so that the
+     * table service sees the name as it was requested, and can resolve or reject the alias itself.
+     *
+     * @param nameSupplier supplier
+     * @return name
+     */
+    public QualifiedName unresolvedQualifiedName(final Supplier<QualifiedName> nameSupplier) {
         try {
-            final QualifiedName name = nameSupplier.get();
-            if (config.isTableAliasEnabled() && name.getType() == QualifiedName.Type.TABLE) {
-                return aliasService.getTableName(name);
-            }
-            return name;
+            return nameSupplier.get();
         } catch (Exception e) {
             log.error("Invalid qualified name", e);
             throw new MetacatBadRequestException(e.getMessage());

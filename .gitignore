@@ -35,6 +35,7 @@ Thumbs.db
 ################
 *~
 *.swp
+.factorypath
 
 # Gradle Files #
 ################
@@ -47,6 +48,8 @@ Thumbs.db
 */target
 /build
 */build
+/bin
+*/bin
 
 # IntelliJ specific files/directories
 out

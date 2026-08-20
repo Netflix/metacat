@@ -24,8 +24,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.AuditDto
+import com.netflix.metacat.common.dto.FieldDto
 import com.netflix.metacat.common.dto.StorageDto
 import com.netflix.metacat.common.dto.TableDto
+import com.netflix.metacat.common.exception.MetacatAlreadyExistsException
+import com.netflix.metacat.common.exception.MetacatBadRequestException
+import com.netflix.metacat.common.exception.MetacatNotSupportedException
 import com.netflix.metacat.common.json.MetacatJsonLocator
 import com.netflix.metacat.common.server.connectors.ConnectorRequestContext
 import com.netflix.metacat.common.server.connectors.ConnectorTableService
@@ -40,6 +44,7 @@ import com.netflix.metacat.common.server.model.ChildInfo
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.properties.ParentChildRelationshipProperties
 import com.netflix.metacat.common.server.spi.MetacatCatalogConfig
+import com.netflix.metacat.common.server.usermetadata.AliasService
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService
 import com.netflix.metacat.common.server.usermetadata.ParentChildRelMetadataConstants
 import com.netflix.metacat.common.server.usermetadata.TagService
@@ -74,6 +79,7 @@ class TableServiceImplSpec extends Specification {
     def usermetadataService = Mock(UserMetadataService)
     def eventBus = Mock(MetacatEventBus)
     def converterUtil = Mock(ConverterUtil)
+    def aliasService = Mock(AliasService)
     def catalogConfig = MetacatCatalogConfig.createFromMapAndRemoveProperties('migration', 'a', ['metacat.interceptor.enabled': 'true', 'metacat.has-data-external':'true', 'metacat.type': 'hive'])
     def catalogConfigFalse = MetacatCatalogConfig.createFromMapAndRemoveProperties('migration', 'a', ['metacat.interceptor.enabled': 'false', 'metacat.has-data-external':'false', 'metacat.type': 'hive'])
     def registry = new NoopRegistry()
@@ -104,7 +110,8 @@ class TableServiceImplSpec extends Specification {
 
         service = new TableServiceImpl(connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
-            eventBus, registry, config, converterUtil, authorizationService, ownerValidationService, parentChildRelSvc)
+            eventBus, registry, config, converterUtil, authorizationService, ownerValidationService, parentChildRelSvc,
+            aliasService)
     }
 
     ObjectNode createParentChildRelMetadata(String rootTableName, String rootTableUuid, String childTableUuid) {
@@ -162,6 +169,238 @@ class TableServiceImplSpec extends Specification {
         1 * usermetadataService.getDefinitionMetadata(_) >> Optional.empty()
         0 * usermetadataService.getDataMetadata(_)
         0 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
+    }
+
+    def "get resolves an alias for a definition-metadata-only read, but not for a read that touches the connector"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+
+        when: "the read only touches definition metadata"
+        service.get(aliasName, GetTableServiceParameters.builder()
+            .includeInfo(false)
+            .includeDefinitionMetadata(true)
+            .build())
+
+        then: "the alias is resolved to the source table before anything else happens"
+        1 * connectorManager.getCatalogConfig(name) >> catalogConfigFalse
+
+        when: "the read touches the connector (e.g. Iceberg location/serde/columns)"
+        service.get(aliasName, GetTableServiceParameters.builder()
+            .includeInfo(true)
+            .build())
+
+        then: "the alias name is left unresolved, since the connector has no concept of aliases"
+        1 * connectorManager.getCatalogConfig(aliasName) >> catalogConfigFalse
+        1 * connectorTableService.get(_, aliasName) >> { throw new TableNotFoundException(aliasName) }
+    }
+
+    def "get through an alias serves definition metadata only, never the table info"() {
+        given: "a catalog whose interceptor makes the definition-metadata read touch the connector"
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+        aliasService.isAlias(aliasName) >> true
+        def definitionMetadata = objectMapper.createObjectNode().put('k', 'v')
+
+        when:
+        def result = service.get(aliasName, GetTableServiceParameters.builder()
+            .includeInfo(false)
+            .includeDataMetadata(true)
+            .includeDefinitionMetadata(true)
+            .build())
+
+        then: "the connector is read to feed the interceptor, but its table info is not handed back"
+        1 * connectorManager.getCatalogConfig(name) >> catalogConfig
+        0 * connectorTableService.get(_, name)
+        1 * usermetadataService.getDefinitionMetadataWithInterceptor(name, _) >> Optional.of(definitionMetadata)
+        0 * usermetadataService.getDataMetadata(_)
+        result.get().getDefinitionMetadata() == definitionMetadata
+        result.get().getName() == name
+        result.get().getSerde() == null
+        result.get().getMetadata() == null
+        result.get().getFields() == null
+    }
+
+    def "create refuses to create a table over an existing alias name"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        def createTableDto = new TableDto(name: aliasName, serde: new StorageDto(uri: 's3:/a/b/c'))
+
+        when:
+        service.create(aliasName, createTableDto)
+
+        then: "the alias check happens before anything is written"
+        1 * aliasService.isAlias(aliasName) >> true
+        0 * connectorTableServiceProxy.create(_, _)
+        def e = thrown(MetacatAlreadyExistsException)
+        e.message.contains('the_alias')
+    }
+
+    def "create proceeds normally when the name is not an alias"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        ownerValidationService.extractPotentialOwners(_) >> []
+        ownerValidationService.extractPotentialOwnerGroups(_) >> []
+
+        when:
+        service.create(name, tableDto)
+
+        then:
+        (1.._) * aliasService.isAlias(name) >> false
+        1 * connectorTableServiceProxy.create(name, _)
+    }
+
+    def "deleteAndReturn refuses to delete through an alias"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+
+        when:
+        service.deleteAndReturn(aliasName, false)
+
+        then: "the alias check happens before the table is read or dropped"
+        1 * aliasService.isAlias(aliasName) >> true
+        0 * connectorTableServiceProxy.delete(_)
+        def e = thrown(MetacatNotSupportedException)
+        e.message.contains('the_alias')
+    }
+
+    def "deleteAndReturn proceeds normally when the name is not an alias"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        config.getNoTableDeleteOnTags() >> []
+        config.canDeleteTableDefinitionMetadata() >> true
+
+        when:
+        service.deleteAndReturn(name, false)
+
+        then:
+        (1.._) * aliasService.isAlias(name) >> false
+        1 * connectorTableServiceProxy.delete(name)
+    }
+
+    def "rename refuses to rename an alias"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        def newName = QualifiedName.ofTable('a', 'b', 'the_new_name')
+
+        when:
+        service.rename(aliasName, newName, false)
+
+        then: "the alias check happens before the table is read or renamed"
+        1 * aliasService.isAlias(aliasName) >> true
+        0 * connectorTableServiceProxy.rename(_, _, _)
+        def e = thrown(MetacatBadRequestException)
+        e.message.contains('the_alias')
+    }
+
+    def "rename refuses to rename a table onto an existing alias name"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+
+        when:
+        service.rename(name, aliasName, false)
+
+        then: "the target name collides with an alias, so it is rejected like a create would be"
+        1 * aliasService.isAlias(name) >> false
+        1 * aliasService.isAlias(aliasName) >> true
+        0 * connectorTableServiceProxy.rename(_, _, _)
+        def e = thrown(MetacatAlreadyExistsException)
+        e.message.contains('the_alias')
+    }
+
+    def "rename proceeds normally when neither name is an alias"() {
+        given:
+        config.isTableAliasEnabled() >> true
+        def newName = QualifiedName.ofTable('a', 'b', 'the_new_name')
+        config.getNoTableRenameOnTags() >> []
+        config.isParentChildRenameEnabled() >> true
+
+        when:
+        service.rename(name, newName, false)
+
+        then:
+        (1.._) * aliasService.isAlias(name) >> false
+        (1.._) * aliasService.isAlias(newName) >> false
+        1 * connectorTableServiceProxy.rename(name, newName, _)
+    }
+
+    def "updateAndReturn renames the dto onto the source, so metadata is not written under the alias"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        def updateTableDto = new TableDto(name: name,
+            definitionMetadata: objectMapper.createObjectNode().put('k', 'v'))
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+        aliasService.getTableName(name) >> name
+
+        when:
+        service.updateAndReturn(aliasName, updateTableDto, false)
+
+        then: "definition metadata is keyed off the dto name, which points at the source table"
+        1 * usermetadataService.saveMetadata(_, { TableDto dto -> dto.getDefinitionName() == name }, true)
+    }
+
+    @Unroll
+    def "updateAndReturn refuses to push #info through an alias"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+        aliasService.isAlias(aliasName) >> true
+
+        when:
+        service.updateAndReturn(aliasName, updateTableDto, false)
+
+        then: "nothing reaches the connector, and no metadata is written either"
+        0 * connectorTableServiceProxy.update(_, _)
+        0 * usermetadataService.saveMetadata(_, _, _)
+        def e = thrown(MetacatNotSupportedException)
+        e.message.contains('the_alias')
+
+        where:
+        info                | updateTableDto
+        'an iceberg commit' | new TableDto(metadata: [metadata_location: '/tmp/00001.metadata.json'])
+        'a schema change'   | new TableDto(fields: [new FieldDto(name: 'c', type: 'string', pos: 0)])
+        'a serde change'    | new TableDto(serde: new StorageDto(uri: 's3:/a/b/c'))
+    }
+
+    def "updateAndReturn accepts a body with no name, updating the table the alias points at"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        def updateTableDto = new TableDto(definitionMetadata: objectMapper.createObjectNode().put('k', 'v'))
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+
+        when: "the caller asked for the alias and named no table in the body"
+        service.updateAndReturn(aliasName, updateTableDto, false)
+
+        then: "the body is taken as an update of the source table the url resolved to"
+        noExceptionThrown()
+        1 * usermetadataService.saveMetadata(_, { TableDto dto -> dto.getDefinitionName() == name }, true)
+    }
+
+    def "updateAndReturn rejects a body that names a different table"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        def otherName = QualifiedName.ofTable('a', 'b', 'some_other_table')
+        def updateTableDto = new TableDto(name: otherName)
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+        aliasService.getTableName(otherName) >> otherName
+
+        when:
+        service.updateAndReturn(aliasName, updateTableDto, false)
+
+        then: "neither name resolves to the other, so the update is refused before anything is written"
+        0 * connectorTableServiceProxy.update(_, _)
+        def e = thrown(IllegalArgumentException)
+        e.message.contains('does not match')
     }
 
     def testIsTableInfoProvided() {
@@ -672,7 +911,8 @@ class TableServiceImplSpec extends Specification {
             connectorManager, connectorTableServiceProxy, databaseService, tagService,
             usermetadataService, new MetacatJsonLocator(),
             eventBus, new DefaultRegistry(), config, converterUtil, authorizationService,
-            new DefaultOwnerValidationService(new NoopRegistry()), parentChildRelSvc)
+            new DefaultOwnerValidationService(new NoopRegistry()), parentChildRelSvc,
+            aliasService)
 
         def initialDefinitionMetadataJson = toObjectNode(initialDefinitionMetadata)
         tableDto = new TableDto(
