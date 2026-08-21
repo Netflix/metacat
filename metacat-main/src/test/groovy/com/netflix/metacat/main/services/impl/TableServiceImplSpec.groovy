@@ -176,6 +176,7 @@ class TableServiceImplSpec extends Specification {
         def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
         config.isTableAliasEnabled() >> true
         aliasService.getTableName(aliasName) >> name
+        aliasService.isAlias(aliasName) >> true
 
         when: "the read only touches definition metadata"
         service.get(aliasName, GetTableServiceParameters.builder()
@@ -187,17 +188,59 @@ class TableServiceImplSpec extends Specification {
         1 * connectorManager.getCatalogConfig(name) >> catalogConfigFalse
 
         when: "the read touches the connector (e.g. Iceberg location/serde/columns)"
-        service.get(aliasName, GetTableServiceParameters.builder()
+        def result = service.get(aliasName, GetTableServiceParameters.builder()
             .includeInfo(true)
             .build())
 
-        then: "the alias name is left unresolved, since the connector has no concept of aliases"
-        1 * connectorManager.getCatalogConfig(aliasName) >> catalogConfigFalse
-        1 * connectorTableService.get(_, aliasName) >> { throw new TableNotFoundException(aliasName) }
+        then: "there is nothing to serve, since the connector has no concept of aliases"
+        0 * connectorTableService.get(_, _)
+        !result.isPresent()
+    }
+
+    @Unroll
+    def "get through an alias finds nothing when the read asks for #info"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+        aliasService.isAlias(aliasName) >> true
+
+        when:
+        def result = service.get(aliasName, params)
+
+        then: "the connector is never asked, and the caller gets a not-found"
+        0 * connectorTableService.get(_, _)
+        !result.isPresent()
+
+        where:
+        info                | params
+        'the table info'    | GetTableServiceParameters.builder().includeInfo(true).build()
+        'a metadata location' | GetTableServiceParameters.builder().includeMetadataLocationOnly(true).build()
+        'connector details' | GetTableServiceParameters.builder().includeMetadataFromConnector(true).build()
+    }
+
+    def "get through an alias serves no data metadata, and does not read the connector for it"() {
+        given:
+        def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
+        config.isTableAliasEnabled() >> true
+        aliasService.getTableName(aliasName) >> name
+        aliasService.isAlias(aliasName) >> true
+
+        when: "data metadata is asked for on a catalog that keeps data externally"
+        def result = service.get(aliasName, GetTableServiceParameters.builder()
+            .includeInfo(false)
+            .includeDataMetadata(true)
+            .build())
+
+        then: "the serde is never fetched to key the lookup off, so there is no data metadata"
+        1 * connectorManager.getCatalogConfig(name) >> catalogConfig
+        0 * connectorTableService.get(_, _)
+        0 * usermetadataService.getDataMetadata(_)
+        result.get().getDataMetadata() == null
     }
 
     def "get through an alias serves definition metadata only, never the table info"() {
-        given: "a catalog whose interceptor makes the definition-metadata read touch the connector"
+        given: "a catalog whose interceptor would otherwise make the read touch the connector"
         def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
         config.isTableAliasEnabled() >> true
         aliasService.getTableName(aliasName) >> name
@@ -211,9 +254,9 @@ class TableServiceImplSpec extends Specification {
             .includeDefinitionMetadata(true)
             .build())
 
-        then: "the connector is read to feed the interceptor, but its table info is not handed back"
+        then: "the connector is not read at all, and only definition metadata comes back"
         1 * connectorManager.getCatalogConfig(name) >> catalogConfig
-        0 * connectorTableService.get(_, name)
+        0 * connectorTableService.get(_, _)
         1 * usermetadataService.getDefinitionMetadataWithInterceptor(name, _) >> Optional.of(definitionMetadata)
         0 * usermetadataService.getDataMetadata(_)
         result.get().getDefinitionMetadata() == definitionMetadata

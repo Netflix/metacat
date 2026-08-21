@@ -525,10 +525,14 @@ public class TableServiceImpl implements TableService {
     @Override
     public Optional<TableDto> get(final QualifiedName requestedName,
             final GetTableServiceParameters getTableServiceParameters) {
-        // A read that wants table info must fail on an alias rather than quietly serve the table it
-        // points at, so its name is left unresolved for the connector to reject.
-        final QualifiedName name = resolveAlias(requestedName, getTableServiceParameters);
         final boolean isAliasRead = isAlias(requestedName);
+        // The connector knows nothing about aliases, and an alias serves definition metadata only,
+        // so a read that wants table info finds nothing under one.
+        if (isAliasRead && readsTableInfo(getTableServiceParameters)) {
+            return Optional.empty();
+        }
+        // Only an alias needs resolving; any other name already names the table it reads.
+        final QualifiedName name = isAliasRead ? resolveAlias(requestedName) : requestedName;
 
         validate(name);
         TableDto tableInternal = null;
@@ -1054,19 +1058,6 @@ public class TableServiceImpl implements TableService {
 
     private QualifiedName resolveAlias(final QualifiedName name) {
         return config.isTableAliasEnabled() ? aliasService.getTableName(name) : name;
-    }
-
-    /**
-     * Resolves a table alias to the table it points at. Names that are not aliases, and every name at
-     * all when table aliasing is disabled, are returned untouched.
-     *
-     * @param name the requested name
-     * @param getTableServiceParameters params from request
-     * @return the table the alias points at, or the given name
-     */
-    private QualifiedName resolveAlias(final QualifiedName name,
-            final GetTableServiceParameters getTableServiceParameters) {
-        return readsTableInfo(getTableServiceParameters) ? name : resolveAlias(name);
     }
 
     /**
