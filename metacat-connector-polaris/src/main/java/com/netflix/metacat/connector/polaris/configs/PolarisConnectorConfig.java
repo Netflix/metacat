@@ -1,6 +1,7 @@
 package com.netflix.metacat.connector.polaris.configs;
 
 import com.netflix.metacat.common.server.connectors.ConnectorContext;
+import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.util.ThreadServiceManager;
 import com.netflix.metacat.connector.hive.commonview.CommonViewHandler;
 import com.netflix.metacat.connector.hive.converters.HiveConnectorInfoConverter;
@@ -9,18 +10,22 @@ import com.netflix.metacat.connector.hive.iceberg.IcebergTableCriteriaImpl;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableHandler;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpWrapper;
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableOpsProxy;
+import com.netflix.metacat.connector.polaris.PolarisAliasService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorDatabaseService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorPartitionService;
 import com.netflix.metacat.connector.polaris.PolarisConnectorTableService;
 import com.netflix.metacat.connector.polaris.mappers.PolarisTableMapper;
 import com.netflix.metacat.connector.polaris.store.PolarisStoreService;
+import com.netflix.metacat.connector.polaris.store.repos.PolarisAliasRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
+
 
 /**
  * Config for polaris connector.
  */
 public class PolarisConnectorConfig {
+
     /**
      * Creates a new instance of a polaris connector partition service.
      *
@@ -85,6 +90,22 @@ public class PolarisConnectorConfig {
             polarisTableMapper,
             connectorContext
         );
+    }
+
+    /**
+     * Create the alias service backing table alias resolution for this catalog.
+     *
+     * @param aliasRepository  alias repository
+     * @param connectorContext server context
+     * @return AliasService
+     */
+    @Bean
+    @ConditionalOnMissingBean(AliasService.class)
+    public AliasService polarisAliasService(
+        final PolarisAliasRepository aliasRepository,
+        final ConnectorContext connectorContext
+    ) {
+        return new PolarisAliasService(aliasRepository, connectorContext.getConfig());
     }
 
     /**

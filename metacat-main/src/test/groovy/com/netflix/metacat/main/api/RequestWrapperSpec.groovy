@@ -71,4 +71,72 @@ class RequestWrapperSpec extends Specification {
         then:
         MetacatContextManager.getContext().getRequestName() == "getTable"
     }
+
+    def "qualifyName resolves a table alias to its source table"() {
+        given:
+        def alias = QualifiedName.ofTable("c", "d", "the_alias")
+        def source = QualifiedName.ofTable("c", "d", "the_source")
+
+        when:
+        def result = requestWrapper.qualifyName({ alias })
+
+        then:
+        1 * config.isTableAliasEnabled() >> true
+        1 * aliasService.getTableName(alias) >> source
+        result == source
+    }
+
+    def "qualifyName does not consult the alias service when aliasing is disabled"() {
+        given:
+        def alias = QualifiedName.ofTable("c", "d", "the_alias")
+
+        when:
+        def result = requestWrapper.qualifyName({ alias })
+
+        then:
+        1 * config.isTableAliasEnabled() >> false
+        0 * aliasService.getTableName(_)
+        result == alias
+    }
+
+    def "qualifyName only resolves aliases for table names"() {
+        given:
+        def dbName = QualifiedName.ofDatabase("c", "d")
+
+        when:
+        def result = requestWrapper.qualifyName({ dbName })
+
+        then:
+        0 * aliasService.getTableName(_)
+        result == dbName
+    }
+
+    def "qualifyName converts a failing supplier into a bad request"() {
+        when:
+        requestWrapper.qualifyName({ throw new IllegalArgumentException("bad name") })
+
+        then:
+        thrown(MetacatBadRequestException)
+    }
+
+    def "unresolvedQualifiedName leaves an alias alone, so the table service can decide what to do with it"() {
+        given:
+        def alias = QualifiedName.ofTable("c", "d", "the_alias")
+
+        when:
+        def result = requestWrapper.unresolvedQualifiedName({ alias })
+
+        then:
+        0 * aliasService.getTableName(_)
+        0 * aliasService.isAlias(_)
+        result == alias
+    }
+
+    def "unresolvedQualifiedName converts a failing supplier into a bad request"() {
+        when:
+        requestWrapper.unresolvedQualifiedName({ throw new IllegalArgumentException("bad name") })
+
+        then:
+        thrown(MetacatBadRequestException)
+    }
 }

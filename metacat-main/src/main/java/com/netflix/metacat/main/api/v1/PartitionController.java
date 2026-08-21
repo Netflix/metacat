@@ -117,7 +117,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "partitionId of the partitions to be deleted from this table", required = true)
         @RequestBody final List<String> partitionIds
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         this.requestWrapper.processRequest(
@@ -179,7 +179,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "partitionId of the partitions to be deleted from this table", required = true)
         @RequestBody final List<String> partitionIds
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         this.requestWrapper.processRequest(
@@ -251,7 +251,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "Whether to include user metadata information to the response")
         @RequestParam(name = "includeUserMetadata", defaultValue = "false") final boolean includeUserMetadata
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
@@ -327,7 +327,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "Whether to include user metadata information to the response")
         @RequestParam(name = "includeUserMetadata", defaultValue = "false") final boolean includeUserMetadata
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         return this.requestWrapper.processRequest(
@@ -1123,7 +1123,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "Request containing the list of partitions", required = true)
         @RequestBody final PartitionsSaveRequestDto partitionsSaveRequestDto
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         return this.requestWrapper.processRequest(
@@ -1188,7 +1188,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
@@ -1237,7 +1237,7 @@ public class PartitionController implements PartitionV1 {
         @Parameter(description = "The name of the view", required = true)
         @PathVariable("view-name") final String viewName
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         return this.requestWrapper.processRequest(
@@ -1258,7 +1258,7 @@ public class PartitionController implements PartitionV1 {
         final boolean includeUserMetadata,
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
 
@@ -1291,7 +1291,7 @@ public class PartitionController implements PartitionV1 {
         final boolean includeUserMetadata,
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         return this.requestWrapper.processRequest(
@@ -1321,7 +1321,7 @@ public class PartitionController implements PartitionV1 {
         @Nullable final Integer limit,
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
@@ -1352,7 +1352,7 @@ public class PartitionController implements PartitionV1 {
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
 
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         return this.requestWrapper.processRequest(
@@ -1382,7 +1382,7 @@ public class PartitionController implements PartitionV1 {
         @Nullable final Integer limit,
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofView(catalogName, databaseName, tableName, viewName)
         );
         return this.requestWrapper.processRequest(
@@ -1412,7 +1412,7 @@ public class PartitionController implements PartitionV1 {
         @Nullable final GetPartitionsRequestDto getPartitionsRequestDto
     ) {
 
-        final QualifiedName name = this.requestWrapper.qualifyName(
+        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(

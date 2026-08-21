@@ -1,6 +1,7 @@
 -- Enable the uuid-ossp extension for UUID generation
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+DROP TABLE IF EXISTS ALIASES;
 DROP TABLE IF EXISTS TBLS;
 DROP TABLE IF EXISTS DBS;
 
@@ -36,4 +37,16 @@ CREATE TABLE TBLS (
                     last_updated_date TIMESTAMP NOT NULL,
                     CONSTRAINT unique_catalog_db_tbl UNIQUE (catalog_name, db_name, tbl_name),
                     CONSTRAINT fk_tbls_db FOREIGN KEY (catalog_name, db_name) REFERENCES DBS(catalog_name, name) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE ALIASES (
+                    id UUID DEFAULT uuid_generate_v4() NOT NULL PRIMARY KEY,
+                    db_id UUID NOT NULL REFERENCES DBS(id),
+                    name VARCHAR(255) NOT NULL,
+                    source_tbl_id UUID NOT NULL REFERENCES TBLS(id),
+                    created_by VARCHAR(255),
+                    created_date TIMESTAMP NOT NULL,
+                    last_updated_by VARCHAR(255),
+                    last_updated_date TIMESTAMP NOT NULL,
+                    CONSTRAINT unique_alias_name_db UNIQUE (name, db_id)
 );

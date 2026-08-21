@@ -27,7 +27,6 @@ import com.netflix.metacat.common.server.events.MetacatEventBus;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.usermetadata.AuthorizationService;
-import com.netflix.metacat.common.server.usermetadata.DefaultAliasService;
 import com.netflix.metacat.common.server.usermetadata.DefaultAuthorizationService;
 import com.netflix.metacat.common.server.usermetadata.DefaultLookupService;
 import com.netflix.metacat.common.server.usermetadata.DefaultTagService;
@@ -53,6 +52,7 @@ import com.netflix.metacat.main.services.PartitionService;
 import com.netflix.metacat.main.services.TableService;
 import com.netflix.metacat.main.services.health.MetacatHealthIndicator;
 import com.netflix.metacat.main.services.impl.CatalogServiceImpl;
+import com.netflix.metacat.main.services.impl.ConnectorAliasService;
 import com.netflix.metacat.main.services.impl.ConnectorTableServiceProxy;
 import com.netflix.metacat.main.services.impl.DatabaseServiceImpl;
 import com.netflix.metacat.main.services.impl.DefaultOwnerValidationService;
@@ -125,14 +125,16 @@ public class ServicesConfig {
     }
 
     /**
-     * Alias service.
+     * Alias service. Delegates to the connector that owns the catalog, since that is where alias
+     * data lives; catalogs whose connector provides no alias service resolve to themselves.
      *
+     * @param connectorManager connector manager
      * @return an instance of the Alias service.
      */
     @Bean
     @ConditionalOnMissingBean(AliasService.class)
-    public AliasService aliasService() {
-        return new DefaultAliasService();
+    public AliasService aliasService(final ConnectorManager connectorManager) {
+        return new ConnectorAliasService(connectorManager);
     }
 
     /**
@@ -230,6 +232,7 @@ public class ServicesConfig {
      * @param authorizationService       authorization Service
      * @param ownerValidationService     owner validation service
      * @param parentChildRelMetadataService parentChildRelMetadataService
+     * @param aliasService                alias service
      *
      * @return The table service bean
      */
@@ -247,7 +250,8 @@ public class ServicesConfig {
         final ConverterUtil converterUtil,
         final AuthorizationService authorizationService,
         final OwnerValidationService ownerValidationService,
-        final ParentChildRelMetadataService parentChildRelMetadataService) {
+        final ParentChildRelMetadataService parentChildRelMetadataService,
+        final AliasService aliasService) {
         return new TableServiceImpl(
             connectorManager,
             connectorTableServiceProxy,
@@ -261,7 +265,8 @@ public class ServicesConfig {
             converterUtil,
             authorizationService,
             ownerValidationService,
-            parentChildRelMetadataService
+            parentChildRelMetadataService,
+            aliasService
         );
     }
 
