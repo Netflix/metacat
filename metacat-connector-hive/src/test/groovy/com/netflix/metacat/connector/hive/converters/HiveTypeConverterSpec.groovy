@@ -261,6 +261,25 @@ class HiveTypeConverterSpec extends Specification {
         "array<struct<Date:string,nestedArray:array<struct<date:string,countryCodes:array<string>,source:string>>>>" | """{"type":"array","elementType":{"type":"row","fields":[{"name":"Date","type":"string"},{"name":"nestedArray","type":{"type":"array","elementType":{"type":"row","fields":[{"name":"date","type":"string"},{"name":"countryCodes","type":{"type":"array","elementType":"string"}},{"name":"source","type":"string"}]}}}]}}"""
     }
 
+    @Unroll
+    def 'json form of parametric type "#typeString"'(String typeString, String expectedString) {
+        expect:
+        def result = converter.fromMetacatTypeToJson(converter.toMetacatType(typeString)).toString()
+
+        assert result == expectedString
+
+        where:
+        typeString | expectedString
+        "decimal(38,9)" | """{"type":"decimal","precision":38,"scale":9}"""
+        "decimal(10,0)" | """{"type":"decimal","precision":10,"scale":0}"""
+        "char(10)" | """{"type":"char","length":10}"""
+        "varchar(10)" | """{"type":"varchar","length":10}"""
+        "binary" | """{"type":"binary"}"""
+        "array<decimal(38,9)>" | """{"type":"array","elementType":{"type":"decimal","precision":38,"scale":9}}"""
+        "map<string,decimal(30,2)>" | """{"type":"map","keyType":"string","valueType":{"type":"decimal","precision":30,"scale":2}}"""
+        "struct<a:decimal(10,2),b:varchar(5),c:binary>" | """{"type":"row","fields":[{"name":"a","type":{"type":"decimal","precision":10,"scale":2}},{"name":"b","type":{"type":"varchar","length":5}},{"name":"c","type":{"type":"binary"}}]}"""
+    }
+
     def "Test treat void transforms partitions as non-partition field"() {
         given:
         // Initial schema with three fields
