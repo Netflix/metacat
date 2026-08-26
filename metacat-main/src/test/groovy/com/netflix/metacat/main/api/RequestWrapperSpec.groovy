@@ -21,7 +21,6 @@ import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.exception.MetacatBadRequestException
 import com.netflix.metacat.common.server.api.traffic_control.RequestGateway
 import com.netflix.metacat.common.server.properties.Config
-import com.netflix.metacat.common.server.usermetadata.AliasService
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import com.netflix.spectator.api.*
 import spock.lang.Specification
@@ -32,7 +31,6 @@ class RequestWrapperSpec extends Specification {
 
     def registry = new NoopRegistry()
     def config = Mock(Config)
-    def aliasService = Mock(AliasService)
     def requestGateway = Mock(RequestGateway)
     def counter = Mock(Counter)
     def supplier = Mock(Supplier)
@@ -40,7 +38,7 @@ class RequestWrapperSpec extends Specification {
 
     def setup() {
         this.supplier.get() >> null
-        requestWrapper = new RequestWrapper(registry, config, aliasService, requestGateway)
+        requestWrapper = new RequestWrapper(registry, requestGateway)
     }
 
     def "gateway is invoked for each request"() {
@@ -72,69 +70,9 @@ class RequestWrapperSpec extends Specification {
         MetacatContextManager.getContext().getRequestName() == "getTable"
     }
 
-    def "qualifyName resolves a table alias to its source table"() {
-        given:
-        def alias = QualifiedName.ofTable("c", "d", "the_alias")
-        def source = QualifiedName.ofTable("c", "d", "the_source")
-
-        when:
-        def result = requestWrapper.qualifyName({ alias })
-
-        then:
-        1 * config.isTableAliasEnabled() >> true
-        1 * aliasService.getTableName(alias) >> source
-        result == source
-    }
-
-    def "qualifyName does not consult the alias service when aliasing is disabled"() {
-        given:
-        def alias = QualifiedName.ofTable("c", "d", "the_alias")
-
-        when:
-        def result = requestWrapper.qualifyName({ alias })
-
-        then:
-        1 * config.isTableAliasEnabled() >> false
-        0 * aliasService.getTableName(_)
-        result == alias
-    }
-
-    def "qualifyName only resolves aliases for table names"() {
-        given:
-        def dbName = QualifiedName.ofDatabase("c", "d")
-
-        when:
-        def result = requestWrapper.qualifyName({ dbName })
-
-        then:
-        0 * aliasService.getTableName(_)
-        result == dbName
-    }
-
     def "qualifyName converts a failing supplier into a bad request"() {
         when:
         requestWrapper.qualifyName({ throw new IllegalArgumentException("bad name") })
-
-        then:
-        thrown(MetacatBadRequestException)
-    }
-
-    def "unresolvedQualifiedName leaves an alias alone, so the table service can decide what to do with it"() {
-        given:
-        def alias = QualifiedName.ofTable("c", "d", "the_alias")
-
-        when:
-        def result = requestWrapper.unresolvedQualifiedName({ alias })
-
-        then:
-        0 * aliasService.getTableName(_)
-        0 * aliasService.isAlias(_)
-        result == alias
-    }
-
-    def "unresolvedQualifiedName converts a failing supplier into a bad request"() {
-        when:
-        requestWrapper.unresolvedQualifiedName({ throw new IllegalArgumentException("bad name") })
 
         then:
         thrown(MetacatBadRequestException)

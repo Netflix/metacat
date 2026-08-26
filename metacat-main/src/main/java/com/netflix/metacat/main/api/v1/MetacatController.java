@@ -219,7 +219,7 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The table information", required = true)
         @Valid @RequestBody final TableDto table
     ) {
-        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
+        final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         if (MetacatServiceHelper.isIcebergTable(table)) {
@@ -387,7 +387,7 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The name of the table", required = true)
         @PathVariable("table-name") final String tableName
     ) {
-        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
+        final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
@@ -642,7 +642,7 @@ public class MetacatController implements MetacatV1 {
             name = "includeMetadataLocationOnly",
             defaultValue = "false") final boolean includeMetadataLocationOnly
     ) {
-        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
+        final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
@@ -997,10 +997,10 @@ public class MetacatController implements MetacatV1 {
         @Parameter(description = "The name of the table", required = true)
         @RequestParam("newTableName") final String newTableName
     ) {
-        final QualifiedName oldName = this.requestWrapper.unresolvedQualifiedName(
+        final QualifiedName oldName = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
-        final QualifiedName newName = this.requestWrapper.unresolvedQualifiedName(
+        final QualifiedName newName = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, newTableName)
         );
         this.requestWrapper.processRequest(
@@ -1208,7 +1208,7 @@ public class MetacatController implements MetacatV1 {
             name = "shouldThrowExceptionOnMetadataSaveFailure",
             defaultValue = "false") final boolean shouldThrowExceptionOnMetadataSaveFailure
     ) {
-        final QualifiedName name = this.requestWrapper.unresolvedQualifiedName(
+        final QualifiedName name = this.requestWrapper.qualifyName(
             () -> QualifiedName.ofTable(catalogName, databaseName, tableName)
         );
         return this.requestWrapper.processRequest(
