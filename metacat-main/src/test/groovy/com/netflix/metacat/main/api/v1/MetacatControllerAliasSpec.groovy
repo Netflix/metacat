@@ -40,7 +40,7 @@ class MetacatControllerAliasSpec extends Specification {
     def aliasService = Mock(AliasService)
     def requestGateway = Mock(RequestGateway)
     def tableService = Mock(TableService)
-    def requestWrapper = new RequestWrapper(new NoopRegistry(), config, aliasService, requestGateway)
+    def requestWrapper = new RequestWrapper(new NoopRegistry(), requestGateway)
     def controller = new MetacatController(
         Mock(CatalogService), Mock(DatabaseService), Mock(MViewService),
         tableService, requestWrapper, config)
