@@ -59,6 +59,7 @@ public class PolarisConnectorDatabaseService implements ConnectorDatabaseService
     @Override
     public void create(final ConnectorRequestContext context, final DatabaseInfo databaseInfo) {
         final QualifiedName name = databaseInfo.getName();
+        PolarisUtils.validateName(name.getDatabaseName());
         final String createdBy = PolarisUtils.getUserOrDefault(context);
 
         // check exists then create in non-transactional optimistic manner

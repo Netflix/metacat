@@ -94,6 +94,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
     @Override
     public void create(final ConnectorRequestContext requestContext, final TableInfo tableInfo) {
         final QualifiedName name = tableInfo.getName();
+        PolarisUtils.validateName(name.getTableName());
         final String createdBy = PolarisUtils.getUserOrDefault(requestContext);
         // check exists then create in non-transactional optimistic manner
         if (exists(requestContext, name)) {
@@ -126,6 +127,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
         final QualifiedName oldName,
         final QualifiedName newName
     ) {
+        PolarisUtils.validateName(newName.getTableName());
         // check exists then rename in non-transactional optimistic manner
         if (exists(context, newName)) {
             throw new TableAlreadyExistsException(newName);
