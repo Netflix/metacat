@@ -34,7 +34,7 @@ class MySqlLookupServiceSpec extends Specification{
 
     def setupSpec() {
         String jdbcUrl = "jdbc:mysql://localhost:3306/metacat"
-        String username = "metacat_user"
+        String username = "metacat_uzzzzer"
         String password = "metacat_user_password"
 
         DriverManagerDataSource dataSource = new DriverManagerDataSource()
