@@ -29,17 +29,19 @@ buildscript {
 
     dependencies {
         classpath("com.netflix.nebula:gradle-aggregate-javadocs-plugin:3.0.1")
+        // license-gradle-plugin pulls license-maven-plugin 3.0, whose placeholder
+        // expansion calls a spring-core constructor removed in Spring Framework 7 (which
+        // the Spring Boot 4 Gradle plugin puts on this classpath). 4.x dropped spring-core.
+        classpath("com.mycila:license-maven-plugin:4.1")
     }
 }
 
 plugins {
-    id 'com.github.kt3k.coveralls' version '2.10.1'
-    id 'nebula.netflixoss' version '10.6.0'
+    id 'com.github.kt3k.coveralls' version '2.12.2'
+    id 'com.netflix.nebula.netflixoss' version '11.6.0'
     id 'org.springframework.boot' version "${spring_boot_version}" apply false
-    id 'com.gorylenko.gradle-git-properties' version '2.3.2' apply false
-    id 'io.franzbecker.gradle-lombok' version '5.0.0'
-    id 'nebula.node' version '1.3.1' apply false
-    id 'com.github.spotbugs' version '5.2.5' apply false
+    id 'com.gorylenko.gradle-git-properties' version '2.5.7' apply false
+    id 'com.github.spotbugs' version '6.5.11' apply false
 }
 
 apply plugin: "nebula-aggregate-javadocs"
@@ -56,12 +58,14 @@ allprojects {
     apply plugin: "jacoco"
     apply plugin: "idea"
     apply plugin: "eclipse"
-    apply plugin: "nebula.netflixoss"
+    apply plugin: "com.netflix.nebula.netflixoss"
     apply plugin:  'java-library'
-    apply plugin: "io.franzbecker.gradle-lombok"
 
-    lombok {
-        version = '1.18.30'
+    dependencies {
+        compileOnly("org.projectlombok:lombok:${lombok_version}")
+        annotationProcessor("org.projectlombok:lombok:${lombok_version}")
+        testCompileOnly("org.projectlombok:lombok:${lombok_version}")
+        testAnnotationProcessor("org.projectlombok:lombok:${lombok_version}")
     }
 
     repositories {
@@ -94,12 +98,14 @@ configure(javaProjects) {
     apply plugin: "io.spring.dependency-management"
     apply plugin: "com.gorylenko.gradle-git-properties"
     apply plugin: "groovy"
-    apply plugin: "io.franzbecker.gradle-lombok"
 
     group = "com.netflix.${githubProjectName}"
 
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
 
     dependencyManagement {
         imports {
@@ -112,7 +118,7 @@ configure(javaProjects) {
             dependency("io.github.openfeign:feign-core:${openfeign_version}")
             dependency("io.github.openfeign:feign-jaxrs:${openfeign_version}")
             dependency("io.github.openfeign:feign-slf4j:${openfeign_version}")
-            dependency("com.github.spotbugs:spotbugs-annotations:4.8.2")
+            dependency("com.github.spotbugs:spotbugs-annotations:${spotbugs_version}")
             dependency("org.apache.groovy:groovy:4.0.24")
             dependency("org.apache.groovy:groovy-all:4.0.24")
             dependency("org.codehaus.groovy:groovy:3.0.9")
@@ -131,7 +137,7 @@ configure(javaProjects) {
             dependencySet(group: "com.netflix.spectator", version: "1.3.9") {
                 entry "spectator-api"
             }
-            dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+            dependency("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
             dependency("de.danielbechler:java-object-diff:0.91.1")
             dependency("io.airlift:testing-mysql-server:0.1")
             dependency("net.sf.dozer:dozer:5.5.1")
@@ -156,6 +162,11 @@ configure(javaProjects) {
     }
 
     configurations {
+        // Optional APIs that dependencies reference but do not bring onto the compile
+        // classpath (e.g. Spring Boot auto-configuration referencing Reactive Streams).
+        // SpotBugs exits with code 3 when it cannot resolve them, so it gets them here.
+        spotbugsAux
+
         all*.exclude module: "jcl-over-slf4j"
         all*.exclude module: "log4j-over-slf4j"
         all*.exclude module: "slf4j-jdk14"
@@ -180,6 +191,24 @@ configure(javaProjects) {
          *******************************/
         implementation('com.zaxxer:HikariCP')
         implementation('org.springframework.boot:spring-boot-starter-validation')
+
+        /*******************************
+         * SpotBugs Dependencies
+         *
+         * SpotBugs runs in its own JVM and needs newer ASM/commons-lang3 than the
+         * versions the project's BOMs pin for Hive and Pig compatibility. Declaring
+         * them directly on the spotbugs configuration overrides the managed versions,
+         * which also means the analyser itself has to be declared here.
+         *******************************/
+        spotbugsAux("org.reactivestreams:reactive-streams")
+
+        spotbugs("com.github.spotbugs:spotbugs:${spotbugs_version}")
+        spotbugs("org.apache.commons:commons-lang3:3.19.0")
+        spotbugs("org.ow2.asm:asm:9.9")
+        spotbugs("org.ow2.asm:asm-analysis:9.9")
+        spotbugs("org.ow2.asm:asm-commons:9.9")
+        spotbugs("org.ow2.asm:asm-tree:9.9")
+        spotbugs("org.ow2.asm:asm-util:9.9")
 
         /*******************************
          * Test Dependencies
@@ -217,16 +246,17 @@ configure(javaProjects) {
     }
 
     spotbugs {
-        toolVersion = '4.8.2'
+        toolVersion = spotbugs_version
         jvmArgs = ['-Xmx4g', '-XX:+HeapDumpOnOutOfMemoryError']
         excludeFilter = new File(project.parent.projectDir, "codequality/findbugs/excludeFilter.xml")
     }
     spotbugsTest.enabled = false
 
-    tasks.withType(SpotBugsTask) {
+    tasks.withType(SpotBugsTask).configureEach {
+        auxClassPaths.from(configurations.spotbugsAux)
         reports {
-            xml.enabled = false
-            html.enabled = true
+            xml.required = false
+            html.required = true
         }
     }
 
@@ -239,7 +269,7 @@ configure(javaProjects) {
     }
 
     // Print out full stack traces when our tests fail to assist debugging (e.g., when scanning Jenkins console output)
-    tasks.withType(Test) {
+    tasks.withType(Test).configureEach {
         useJUnitPlatform()
         testLogging {
             exceptionFormat = "full"

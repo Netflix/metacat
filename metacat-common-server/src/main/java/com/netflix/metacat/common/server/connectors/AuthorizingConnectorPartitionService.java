@@ -25,7 +25,6 @@ import com.netflix.metacat.common.server.connectors.model.PartitionListRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -160,7 +159,6 @@ public class AuthorizingConnectorPartitionService implements ConnectorPartitionS
     }
 
     @Override
-    @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
         authorize("exists", name);
         return delegate.exists(context, name);

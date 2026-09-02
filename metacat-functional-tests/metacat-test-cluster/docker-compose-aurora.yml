@@ -25,7 +25,7 @@ x-postgres-common: &postgres-common
 
 services:
   metacat:
-    image: tomcat:10.1-jre17
+    image: tomcat:11.0-jre17
     platform: linux/x86_64
     depends_on:
       - hive-metastore
