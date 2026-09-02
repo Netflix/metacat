@@ -25,12 +25,11 @@ x-postgres-common: &postgres-common
 
 services:
   metacat:
-    image: tomcat:10.1-jre17
+    image: tomcat:11.0-jre17
     platform: linux/x86_64
     depends_on:
       - hive-metastore
       - hive-metastore-db
-      - postgresql
       - polaris-aurora
       - polaris-aurora-reader
     ports:
@@ -107,18 +106,6 @@ services:
     labels:
       - "com.netflix.metacat.oss.test"
 
-  postgresql:
-    image: postgres:9.6
-    platform: linux/x86_64
-    volumes:
-      - ./datastores/postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-    environment:
-      - POSTGRES_USER=metacat_user
-      - POSTGRES_PASSWORD=metacat_user_password
-      - POSTGRES_DB=metacat
-    labels:
-      - "com.netflix.metacat.oss.test"
-
   hive-metastore:
     image: danielbwatson/metacat-test-hive-metastore:1.0.0
     platform: linux/x86_64
@@ -185,11 +172,10 @@ services:
     platform: linux/x86_64
     depends_on:
       - hive-metastore-db
-      - postgresql
       - polaris-aurora
       - polaris-aurora-reader
     environment:
-      - TARGETS=postgresql:5432,hive-metastore-db:3306,polaris-aurora:5432,polaris-aurora-reader:5432
+      - TARGETS=hive-metastore-db:3306,polaris-aurora:5432,polaris-aurora-reader:5432
     labels:
       - "com.netflix.metacat.oss.test"
 

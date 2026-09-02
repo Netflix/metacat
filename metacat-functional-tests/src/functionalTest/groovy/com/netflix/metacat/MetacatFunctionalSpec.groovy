@@ -338,8 +338,6 @@ class MetacatFunctionalSpec extends Specification {
             assert database.tables.containsAll(real_estateTables)
         } else if (name.databaseName == 'bills') {
             assert database.tables.containsAll(billsTables)
-        } else if (name.databaseName == 'public' || name.databaseName == 'pg_catalog') {
-            assert name.catalogName.contains("postgresql")
         } else if (name.databaseName == 'database') {
             assert name.catalogName.contains("druid")
         }

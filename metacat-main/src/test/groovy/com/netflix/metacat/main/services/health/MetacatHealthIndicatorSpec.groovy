@@ -8,7 +8,7 @@ import com.netflix.metacat.main.services.MetacatThriftService
 import com.netflix.metacat.main.services.init.MetacatCoreInitService
 import com.netflix.metacat.main.services.init.MetacatThriftInitService
 import com.netflix.metacat.thrift.CatalogThriftService
-import org.springframework.boot.actuate.health.Status
+import org.springframework.boot.health.contributor.Status
 import org.springframework.context.ApplicationContext
 import spock.lang.Specification
 
