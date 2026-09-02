@@ -21,7 +21,7 @@ import com.netflix.metacat.common.server.usermetadata.UserMetadataService
 import com.netflix.metacat.common.server.util.DataSourceManager
 import io.airlift.testing.mysql.TestingMySqlServer
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest
+import org.springframework.boot.jdbc.test.autoconfigure.JdbcTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.jdbc.core.JdbcTemplate
