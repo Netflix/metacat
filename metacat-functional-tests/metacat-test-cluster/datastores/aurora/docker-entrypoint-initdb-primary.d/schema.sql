@@ -30,6 +30,7 @@ CREATE TABLE TBLS (
                     tbl_name varchar(255) NOT NULL,
                     previous_metadata_location varchar(8192),
                     metadata_location varchar(8192),
+                    metadata_sha256 varchar(64),
                     params text,
                     created_by varchar(255),
                     created_date TIMESTAMP NOT NULL,

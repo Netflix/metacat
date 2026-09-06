@@ -74,7 +74,8 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE PolarisTableEntity t SET t.metadataLocation = :newLocation, "
-            + "t.audit.lastModifiedBy = :lastModifiedBy, t.audit.lastModifiedDate = :lastModifiedDate, "
+            + "t.metadataSha256 = null, t.audit.lastModifiedBy = :lastModifiedBy, "
+            + "t.audit.lastModifiedDate = :lastModifiedDate, "
             + "t.previousMetadataLocation = t.metadataLocation, t.version = t.version + 1 "
             + "WHERE t.metadataLocation = :expectedLocation "
         + "AND t.catalogName = :catalogName AND t.dbName = :dbName AND t.tblName = :tableName")
@@ -102,7 +103,8 @@ public interface PolarisTableRepository extends JpaRepository<PolarisTableEntity
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE PolarisTableEntity t SET t.metadataLocation = :newLocation, t.params = :newParams,"
-        + "t.audit.lastModifiedBy = :lastModifiedBy, t.audit.lastModifiedDate = :lastModifiedDate, "
+        + "t.metadataSha256 = null, t.audit.lastModifiedBy = :lastModifiedBy, "
+        + "t.audit.lastModifiedDate = :lastModifiedDate, "
         + "t.previousMetadataLocation = t.metadataLocation, t.version = t.version + 1 "
         + "WHERE t.metadataLocation = :expectedLocation "
         + "AND t.catalogName = :catalogName AND t.dbName = :dbName AND t.tblName = :tableName")

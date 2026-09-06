@@ -24,6 +24,7 @@ CREATE TABLE TBLS (
                     tbl_name VARCHAR(255) NOT NULL,
                     previous_metadata_location VARCHAR(8192),
                     metadata_location VARCHAR(8192),
+                    metadata_sha256 VARCHAR(64),
                     params TEXT,
                     created_by VARCHAR(255),
                     created_date TIMESTAMP NOT NULL,
