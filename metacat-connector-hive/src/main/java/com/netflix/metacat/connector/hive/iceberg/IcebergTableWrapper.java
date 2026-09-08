@@ -16,6 +16,7 @@
 
 package com.netflix.metacat.connector.hive.iceberg;
 
+import org.apache.iceberg.SnapshotRef;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.TableUtil;
 import lombok.Data;
@@ -69,7 +70,7 @@ public class IcebergTableWrapper {
      * @throws RuntimeException if unable to read table references
      */
     public Set<String> extractBranches() {
-        final var refs = table.refs();
+        final Map<String, SnapshotRef> refs = table.refs();
         if (refs == null || refs.isEmpty()) {
             return Collections.emptySet();
         }
@@ -84,7 +85,7 @@ public class IcebergTableWrapper {
      * @throws RuntimeException if unable to read table references
      */
     private Set<String> extractTags() {
-        final var refs = table.refs();
+        final Map<String, SnapshotRef> refs = table.refs();
             if (refs == null || refs.isEmpty()) {
                 return Collections.emptySet();
             }

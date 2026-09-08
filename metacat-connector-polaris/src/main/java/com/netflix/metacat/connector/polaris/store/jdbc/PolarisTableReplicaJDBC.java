@@ -29,6 +29,7 @@ public class PolarisTableReplicaJDBC {
             .tblName(rs.getString("tbl_name"))
             .previousMetadataLocation(rs.getString("previous_metadata_location"))
             .metadataLocation(rs.getString("metadata_location"))
+            .metadataSha256(rs.getString("metadata_sha256"))
             .audit(AuditEntity.builder()
                 .createdBy(rs.getString("created_by"))
                 .lastModifiedBy(rs.getString("last_updated_by"))

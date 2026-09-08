@@ -67,6 +67,10 @@ public class PolarisTableEntity {
     @Column(name = "metadata_location", nullable = true, updatable = true)
     private String metadataLocation;
 
+    @Basic
+    @Column(name = "metadata_sha256", nullable = true, updatable = true, length = 64)
+    private String metadataSha256;
+
     @Embedded
     private AuditEntity audit;
 

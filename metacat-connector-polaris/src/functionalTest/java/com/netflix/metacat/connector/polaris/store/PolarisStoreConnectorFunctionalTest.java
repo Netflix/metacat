@@ -308,6 +308,7 @@ public class PolarisStoreConnectorFunctionalTest {
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
         final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
+        e.setMetadataSha256("a".repeat(64));
         polarisConnector.saveTable(e);
 
         final String newLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/bar";
@@ -329,6 +330,7 @@ public class PolarisStoreConnectorFunctionalTest {
             getTable(CATALOG_NAME_TEST, dbName, tblName).orElseThrow(()
                         -> new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(updatedEntity.getPreviousMetadataLocation(), metadataLocation);
+        Assert.assertNull(updatedEntity.getMetadataSha256());
 
         // after the successful update, the same call should fail, since the current metadataLocation has changed.
         updatedSuccess = polarisConnector.updateTableMetadataLocation(
@@ -380,6 +382,7 @@ public class PolarisStoreConnectorFunctionalTest {
         final String metadataLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/foo";
         final PolarisTableEntity e = new PolarisTableEntity(CATALOG_NAME_TEST, dbName, tblName, "metacatuser");
         e.setMetadataLocation(metadataLocation);
+        e.setMetadataSha256("a".repeat(64));
         polarisConnector.saveTable(e);
 
         final String newLocation = "s3/s3n://dataoven-prod/hive/dataoven_prod/warehouse/bar";
@@ -411,6 +414,7 @@ public class PolarisStoreConnectorFunctionalTest {
                         new RuntimeException("Expected to find saved entity"));
         Assert.assertEquals(updatedEntity.getPreviousMetadataLocation(), metadataLocation);
         Assert.assertEquals(updatedEntity.getParams(), params);
+        Assert.assertNull(updatedEntity.getMetadataSha256());
 
         final Map<String, String> updatedParams = new HashMap<>(params);
         for (int i = 9; i >= 0; i--) {
