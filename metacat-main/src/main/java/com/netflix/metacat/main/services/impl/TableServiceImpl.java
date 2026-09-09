@@ -553,9 +553,6 @@ public class TableServiceImpl implements TableService {
         } else {
             table = new TableDto();
         }
-        if (table.getName() == null) {
-            table.setName(name);
-        }
 
         if (getTableServiceParameters.isIncludeDefinitionMetadata()) {
             Optional<ObjectNode> definitionMetadata =
@@ -598,6 +595,8 @@ public class TableServiceImpl implements TableService {
             }
         }
 
+        //Set the resolved name dto always
+        table.setName(name);
         return Optional.of(table);
     }
 
