@@ -552,6 +552,8 @@ public class TableServiceImpl implements TableService {
             table = tableInternal;
         } else {
             table = new TableDto();
+        }
+        if (table.getName() == null) {
             table.setName(name);
         }
 

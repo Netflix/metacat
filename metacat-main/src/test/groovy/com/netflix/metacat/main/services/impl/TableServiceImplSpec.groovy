@@ -171,6 +171,27 @@ class TableServiceImplSpec extends Specification {
         0 * usermetadataService.getDefinitionMetadataWithInterceptor(_,_) >> Optional.empty()
     }
 
+    def "get sets the table name for the snapshot janitor parameter combination"() {
+        given:
+        def requestName = QualifiedName.ofTable('polaris-metastore', 'test', 't3')
+        def metadataLocationOnlyDto = new TableDto()
+
+        when:
+        def result = service.get(requestName, GetTableServiceParameters.builder()
+            .includeInfo(true)
+            .includeDefinitionMetadata(true)
+            .includeDataMetadata(false)
+            .disableOnReadMetadataIntercetor(false)
+            .useCache(true)
+            .includeMetadataFromConnector(false)
+            .includeMetadataLocationOnly(true)
+            .build())
+
+        then:
+        1 * converterUtil.toTableDto(_) >> metadataLocationOnlyDto
+        result.get().getName() == requestName
+    }
+
     def "get resolves an alias for a definition-metadata-only read, but not for a read that touches the connector"() {
         given:
         def aliasName = QualifiedName.ofTable('a', 'b', 'the_alias')
