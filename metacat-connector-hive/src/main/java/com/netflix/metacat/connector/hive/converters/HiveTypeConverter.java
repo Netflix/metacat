@@ -20,11 +20,9 @@ import com.netflix.metacat.common.server.connectors.model.FieldInfo;
 import com.netflix.metacat.common.type.BaseType;
 import com.netflix.metacat.common.type.CharType;
 import com.netflix.metacat.common.type.DecimalType;
-import com.netflix.metacat.common.type.MapType;
-import com.netflix.metacat.common.type.ParametricType;
-import com.netflix.metacat.common.type.RowType;
 import com.netflix.metacat.common.type.Type;
 import com.netflix.metacat.common.type.TypeEnum;
+import com.netflix.metacat.common.type.TypeFormatter;
 import com.netflix.metacat.common.type.TypeRegistry;
 import com.netflix.metacat.common.type.TypeSignature;
 import com.netflix.metacat.common.type.TypeUtils;
@@ -186,36 +184,7 @@ public class HiveTypeConverter implements ConnectorTypeConverter {
 
     @Override
     public String fromMetacatType(final Type type) {
-        if (HiveTypeMapping.getCANONICAL_TO_HIVE().containsKey(type)) {
-            return HiveTypeMapping.getCANONICAL_TO_HIVE().get(type);
-        }
-        if (type instanceof DecimalType | type instanceof CharType | type instanceof VarcharType) {
-            return type.getDisplayName();
-        } else if (type.getTypeSignature().getBase().equals(TypeEnum.MAP)) {
-            final MapType mapType = (MapType) type;
-            return "map<" + fromMetacatType(mapType.getKeyType())
-                + "," + fromMetacatType(mapType.getValueType()) + ">";
-        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ROW)) {
-            final RowType rowType = (RowType) type;
-            final String typeString = rowType.getFields()
-                .stream()
-                .map(this::rowFieldToString)
-                .collect(Collectors.joining(","));
-            return "struct<" + typeString + ">";
-        } else if (type.getTypeSignature().getBase().equals(TypeEnum.ARRAY)) {
-            final String typeString = ((ParametricType) type).getParameters().stream().map(this::fromMetacatType)
-                .collect(Collectors.joining(","));
-            return "array<" + typeString + ">";
-        }
-        return null;
-    }
-
-    private String rowFieldToString(final RowType.RowField rowField) {
-        String prefix = "";
-        if (rowField.getName() != null) {
-            prefix = rowField.getName() + ":";
-        }
-        return prefix + fromMetacatType(rowField.getType());
+        return TypeFormatter.toHiveString(type);
     }
 
     /**
