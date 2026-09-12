@@ -32,7 +32,9 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
@@ -55,6 +57,28 @@ class IcebergTableDtoFactoryTest {
 
     private static TableDto dto(final TableMetadata metadata) {
         return IcebergTableDtoFactory.toTableDto(NAME, METADATA_LOCATION, metadata, null, null);
+    }
+
+    @Test
+    void schemaOverloadConvertsWithoutTableMetadata() {
+        final List<FieldDto> fields = IcebergTableDtoFactory.toFieldDtos(SCHEMA, Set.of());
+
+        assertThat(fields)
+            .extracting(FieldDto::getName, FieldDto::getPos, FieldDto::isPartition_key)
+            .containsExactly(
+                tuple("id", 0, false),
+                tuple("dateint", 1, false),
+                tuple("payload", 2, false));
+        assertThat(fields.get(0).getComment()).isEqualTo("the id");
+        assertThat(fields.get(0).getIsNullable()).isFalse();
+        assertThat(fields.get(0).getSource_type()).isEqualTo("long");
+    }
+
+    @Test
+    void schemaOverloadFlagsTheGivenPartitionKeys() {
+        assertThat(IcebergTableDtoFactory.toFieldDtos(SCHEMA, Set.of("dateint")))
+            .extracting(FieldDto::getName, FieldDto::isPartition_key)
+            .containsExactly(tuple("id", false), tuple("dateint", true), tuple("payload", false));
     }
 
     @Test
@@ -211,5 +235,58 @@ class IcebergTableDtoFactoryTest {
 
         assertThat(dto.getDefinitionMetadata()).isSameAs(definitionMetadata);
         assertThat(dto.getAudit().getCreatedBy()).isEqualTo("testuser");
+    }
+
+    private static TableDto viewDto(final Map<String, String> properties) {
+        return IcebergTableDtoFactory.toViewDto(NAME, METADATA_LOCATION, LOCATION, SCHEMA,
+            "SELECT id FROM testdb.testtable", properties, null, null);
+    }
+
+    @Test
+    void viewDtoCarriesTheSchemaAndSql() {
+        final TableDto dto = viewDto(Map.of());
+
+        assertThat(dto.getName().toString()).isEqualTo("testhive/testdb/testtable");
+        assertThat(dto.getFields())
+            .extracting(FieldDto::getName, FieldDto::getPos)
+            .containsExactly(tuple("id", 0), tuple("dateint", 1), tuple("payload", 2));
+        assertThat(dto.getFields()).filteredOn(FieldDto::isPartition_key).isEmpty();
+        assertThat(dto.getView().getViewOriginalText()).isEqualTo("SELECT id FROM testdb.testtable");
+        assertThat(dto.getView().getViewExpandedText()).isEqualTo("/** Common View **/");
+    }
+
+    @Test
+    void viewSerdeCarriesOnlyTheLocation() {
+        final TableDto dto = viewDto(Map.of());
+
+        assertThat(dto.getSerde().getUri()).isEqualTo(LOCATION);
+        assertThat(dto.getSerde().getInputFormat()).isNull();
+        assertThat(dto.getSerde().getOutputFormat()).isNull();
+        assertThat(dto.getSerde().getSerializationLib()).isNull();
+    }
+
+    @Test
+    void viewParamsAreThePropertiesPlusTheMetadataLocation() {
+        final TableDto dto = viewDto(Map.of(
+            "owner", "testuser",
+            "previous_metadata_location", LOCATION + "/metadata/00003.metadata.json"));
+
+        assertThat(dto.getMetadata())
+            .containsEntry("owner", "testuser")
+            .containsEntry("metadata_location", METADATA_LOCATION)
+            .doesNotContainKeys("previous_metadata_location", "table_type", "partition_spec",
+                "iceberg.has.tags");
+    }
+
+    @Test
+    void viewDefinitionMetadataAndAuditArePassedThrough() {
+        final ObjectNode definitionMetadata = JsonNodeFactory.instance.objectNode().put("owner", "testuser");
+        final AuditDto audit = new AuditDto();
+
+        final TableDto dto = IcebergTableDtoFactory.toViewDto(NAME, METADATA_LOCATION, LOCATION, SCHEMA,
+            "SELECT 1", Map.of(), definitionMetadata, audit);
+
+        assertThat(dto.getDefinitionMetadata()).isSameAs(definitionMetadata);
+        assertThat(dto.getAudit()).isSameAs(audit);
     }
 }

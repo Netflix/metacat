@@ -23,7 +23,9 @@ import com.netflix.metacat.common.dto.AuditDto;
 import com.netflix.metacat.common.dto.FieldDto;
 import com.netflix.metacat.common.dto.StorageDto;
 import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.dto.ViewDto;
 import org.apache.iceberg.PartitionField;
+import org.apache.iceberg.Schema;
 import org.apache.iceberg.SnapshotRef;
 import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.types.Types;
@@ -31,6 +33,7 @@ import org.apache.iceberg.types.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -39,8 +42,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Builds the {@link TableDto} Metacat produces for an Iceberg table. Data metadata is not covered:
- * it is keyed by storage uri in Metacat's user metadata store.
+ * Builds the {@link TableDto} Metacat produces for an Iceberg table or common view. Data metadata
+ * is not covered: it is keyed by storage uri in Metacat's user metadata store.
  */
 public final class IcebergTableDtoFactory {
 
@@ -56,6 +59,9 @@ public final class IcebergTableDtoFactory {
     private static final String CURRENT_SNAPSHOT_ID_PROP = TableDto.CURRENT_SNAPSHOT_ID_METADATA_KEY;
     private static final String BRANCHES_PROP = TableDto.BRANCHES_METADATA_KEY;
     private static final String TABLE_VERSION_PROP = TableDto.TABLE_VERSION_METADATA_KEY;
+
+    private static final String PREVIOUS_METADATA_LOCATION_PROP = "previous_metadata_location";
+    private static final String COMMON_VIEW_EXPANDED_TEXT = "/** Common View **/";
 
     private static final String VOID_TRANSFORM = "void";
 
@@ -81,9 +87,44 @@ public final class IcebergTableDtoFactory {
                                       final AuditDto audit) {
         final TableDto dto = new TableDto();
         dto.setName(name);
-        dto.setFields(toFieldDtos(metadata));
+        dto.setFields(toFieldDtos(metadata.schema(), partitionColumns(metadata)));
         dto.setSerde(toSerde(metadata.location()));
         dto.setMetadata(toParams(metadataLocation, metadata));
+        dto.setDefinitionMetadata(definitionMetadata);
+        dto.setAudit(audit);
+        return dto;
+    }
+
+    /**
+     * Builds the view DTO. A view gets none of the spec, snapshot and branch params.
+     *
+     * @param name               view name
+     * @param metadataLocation   metadata file this DTO describes
+     * @param location           serde uri
+     * @param schema             the view schema
+     * @param sql                the view sql
+     * @param properties         view properties; the previous metadata location is dropped
+     * @param definitionMetadata may be null
+     * @param audit              may be null
+     * @return the view DTO
+     */
+    public static TableDto toViewDto(final QualifiedName name,
+                                     final String metadataLocation,
+                                     final String location,
+                                     final Schema schema,
+                                     final String sql,
+                                     final Map<String, String> properties,
+                                     final ObjectNode definitionMetadata,
+                                     final AuditDto audit) {
+        final TableDto dto = new TableDto();
+        dto.setName(name);
+        dto.setFields(toFieldDtos(schema, Collections.emptySet()));
+        dto.setSerde(toViewSerde(location));
+        dto.setMetadata(toViewParams(metadataLocation, properties));
+        dto.setView(ViewDto.builder()
+            .viewOriginalText(sql)
+            .viewExpandedText(COMMON_VIEW_EXPANDED_TEXT)
+            .build());
         dto.setDefinitionMetadata(definitionMetadata);
         dto.setAudit(audit);
         return dto;
@@ -115,12 +156,18 @@ public final class IcebergTableDtoFactory {
         return audit;
     }
 
-    // Schema columns as field DTOs, flagging partition keys.
-    private static List<FieldDto> toFieldDtos(final TableMetadata metadata) {
-        final Set<String> partitionColumns = partitionColumns(metadata);
+    /**
+     * Schema columns as field DTOs.
+     *
+     * @param schema        the schema to convert
+     * @param partitionKeys columns to flag as partition keys, may be empty
+     * @return the field DTOs, in schema order
+     */
+    public static List<FieldDto> toFieldDtos(final Schema schema, final Collection<String> partitionKeys) {
+        final Set<String> partitionColumns = new LinkedHashSet<>(partitionKeys);
         final List<FieldDto> fields = new ArrayList<>();
         int position = 0;
-        for (final Types.NestedField column : metadata.schema().columns()) {
+        for (final Types.NestedField column : schema.columns()) {
             final FieldDto field = new FieldDto();
             field.setName(column.name());
             field.setType(IcebergTypeConverter.toTypeString(column.type()));
@@ -173,6 +220,21 @@ public final class IcebergTableDtoFactory {
             metadata.currentSnapshot() == null ? -1L : metadata.currentSnapshot().snapshotId()));
         params.put(BRANCHES_PROP, TableDto.encodeBranches(branches(metadata.refs())));
         params.put(TABLE_VERSION_PROP, String.valueOf(metadata.formatVersion()));
+        return params;
+    }
+
+    // Metacat drops the format defaults a table serde carries, keeping only the location.
+    private static StorageDto toViewSerde(final String viewLocation) {
+        final StorageDto serde = new StorageDto();
+        serde.setUri(viewLocation);
+        return serde;
+    }
+
+    private static Map<String, String> toViewParams(final String metadataLocation,
+                                                    final Map<String, String> properties) {
+        final Map<String, String> params = new HashMap<>(properties);
+        params.remove(PREVIOUS_METADATA_LOCATION_PROP);
+        params.put(METADATA_LOCATION_PROP, metadataLocation);
         return params;
     }
 
