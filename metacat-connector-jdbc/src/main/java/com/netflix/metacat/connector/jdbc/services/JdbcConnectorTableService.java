@@ -278,7 +278,12 @@ public class JdbcConnectorTableService implements ConnectorTableService {
             final String databaseName = name.getDatabaseName();
             connection.setSchema(databaseName);
             final DatabaseMetaData metaData = connection.getMetaData();
-            final ResultSet rs = metaData.getTables(databaseName, databaseName, name.getTableName(), TABLE_TYPE);
+            final ResultSet rs = metaData.getTables(
+                this.getJdbcCatalog(connection, databaseName),
+                databaseName,
+                name.getTableName(),
+                TABLE_TYPE
+            );
             if (rs.next()) {
                 result = true;
             }
@@ -304,16 +309,34 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         @Nullable final QualifiedName prefix
     ) throws SQLException {
         final String database = name.getDatabaseName();
+        final String jdbcCatalog = this.getJdbcCatalog(connection, database);
         final DatabaseMetaData metaData = connection.getMetaData();
         return prefix == null || StringUtils.isEmpty(prefix.getTableName())
-            ? metaData.getTables(database, database, null, TABLE_TYPES)
+            ? metaData.getTables(jdbcCatalog, database, null, TABLE_TYPES)
             : metaData
             .getTables(
-                database,
+                jdbcCatalog,
                 database,
                 prefix.getTableName() + JdbcConnectorUtils.MULTI_CHARACTER_SEARCH,
                 TABLE_TYPES
             );
+    }
+
+    /**
+     * Get the JDBC catalog to scope {@link DatabaseMetaData} lookups to. A Metacat database maps
+     * onto a JDBC catalog for some engines (MySQL) and onto a JDBC schema for others (PostgreSQL),
+     * so engines of the latter kind override this to return the connection's own catalog.
+     *
+     * @param connection The database connection to use
+     * @param database   The Metacat database name being looked up
+     * @return The value to pass as the catalog argument of the {@link DatabaseMetaData} methods
+     * @throws SQLException on query error
+     */
+    protected String getJdbcCatalog(
+        @Nonnull @NonNull final Connection connection,
+        @Nonnull @NonNull final String database
+    ) throws SQLException {
+        return database;
     }
 
     /**
@@ -333,7 +356,7 @@ public class JdbcConnectorTableService implements ConnectorTableService {
         final String database = name.getDatabaseName();
         final DatabaseMetaData metaData = connection.getMetaData();
         return metaData.getColumns(
-            database,
+            this.getJdbcCatalog(connection, database),
             database,
             name.getTableName(),
             JdbcConnectorUtils.MULTI_CHARACTER_SEARCH

@@ -12,7 +12,6 @@ import com.netflix.metacat.common.server.connectors.model.PartitionsSaveRequest;
 import com.netflix.metacat.common.server.connectors.model.PartitionsSaveResponse;
 import com.netflix.metacat.common.server.connectors.model.TableInfo;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -120,7 +119,6 @@ public class ThrottlingConnectorPartitionService implements ConnectorPartitionSe
     }
 
     @Override
-    @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
         checkThrottling(MetacatContextManager.getContext().getRequestName(), name);
         return delegate.exists(context, name);

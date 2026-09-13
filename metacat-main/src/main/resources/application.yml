@@ -41,17 +41,21 @@ netflix:
     name: metacat
     version: 1.1.0
 
-server:
-  error:
-    includeStacktrace: on_param
-    includeMessage: always
-
 spring:
   application:
     name: metacat
-  jackson:
+  http:
+    converters:
+      # Metacat's DTOs expose Jackson 2 JsonNode/ObjectNode directly, so HTTP message
+      # conversion has to stay on Jackson 2 rather than the Spring Boot 4 default.
+      preferred-json-mapper: jackson2
+  jackson2:
     default-property-inclusion: always
     deserialization:
       FAIL_ON_UNKNOWN_PROPERTIES: false
   main:
     allow-bean-definition-overriding: true
+  web:
+    error:
+      include-stacktrace: on_param
+      include-message: always

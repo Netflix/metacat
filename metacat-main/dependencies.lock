@@ -1,7 +1,7 @@
 {
     "annotationProcessor": {
         "org.projectlombok:lombok": {
-            "locked": "1.18.30"
+            "locked": "1.18.46"
         }
     },
     "checkstyle": {
@@ -14,7 +14,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.15.4"
+            "locked": "2.21.5"
         },
         "com.github.fge:json-patch": {
             "firstLevelTransitive": [
@@ -26,7 +26,7 @@
             "locked": "2.0.0"
         },
         "com.github.spotbugs:spotbugs-annotations": {
-            "locked": "4.8.2"
+            "locked": "4.9.8"
         },
         "com.google.guava:guava": {
             "firstLevelTransitive": [
@@ -71,7 +71,7 @@
             "locked": "1.3.9"
         },
         "com.zaxxer:HikariCP": {
-            "locked": "5.0.1"
+            "locked": "7.0.2"
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
@@ -111,65 +111,65 @@
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "10.1.33"
+            "locked": "11.0.24"
         },
         "org.elasticsearch.client:transport": {
             "locked": "5.4.1"
         },
         "org.projectlombok:lombok": {
-            "locked": "1.18.30"
+            "locked": "1.18.46"
         },
         "org.slf4j:slf4j-api": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "2.0.16"
+            "locked": "2.0.18"
         },
         "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.5.0"
+            "locked": "3.1.0"
         },
         "org.springframework.boot:spring-boot-configuration-processor": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-jackson2": {
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-actuator": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-starter-cache": {
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-hateoas": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-logging": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-validation": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
-        "org.springframework.boot:spring-boot-starter-web": {
-            "locked": "3.2.12"
-        },
-        "org.springframework.retry:spring-retry": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-metadata-mysql"
-            ],
-            "locked": "2.0.10"
+        "org.springframework.boot:spring-boot-starter-webmvc": {
+            "locked": "4.0.8"
         },
         "org.springframework:spring-jdbc": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "software.amazon.awssdk:sns": {
             "locked": "2.31.77"
@@ -177,12 +177,12 @@
     },
     "jacocoAgent": {
         "org.jacoco:org.jacoco.agent": {
-            "locked": "0.8.8"
+            "locked": "0.8.13"
         }
     },
     "jacocoAnt": {
         "org.jacoco:org.jacoco.ant": {
-            "locked": "0.8.8"
+            "locked": "0.8.13"
         }
     },
     "runtimeClasspath": {
@@ -208,7 +208,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.15.4"
+            "locked": "2.21.5"
         },
         "com.github.fge:json-patch": {
             "firstLevelTransitive": [
@@ -218,7 +218,8 @@
         },
         "com.github.rholder:guava-retrying": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "2.0.0"
         },
@@ -264,7 +265,7 @@
                 "com.netflix.metacat:metacat-connector-polaris",
                 "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "2.2.224"
+            "locked": "2.4.240"
         },
         "com.netflix.metacat:metacat-common": {
             "firstLevelTransitive": [
@@ -370,7 +371,7 @@
                 "com.netflix.metacat:metacat-metadata-mysql",
                 "com.netflix.metacat:metacat-thrift"
             ],
-            "locked": "5.0.1"
+            "locked": "7.0.2"
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
@@ -384,7 +385,7 @@
                 "com.netflix.metacat:metacat-connector-polaris",
                 "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "3.1.0"
+            "locked": "3.2.0"
         },
         "joda-time:joda-time": {
             "firstLevelTransitive": [
@@ -439,7 +440,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-druid"
             ],
-            "locked": "5.2.3"
+            "locked": "5.5.2"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
@@ -448,7 +449,7 @@
             "locked": "1.9.1"
         },
         "org.apache.logging.log4j:log4j-core": {
-            "locked": "2.21.1"
+            "locked": "2.25.5"
         },
         "org.apache.pig:pig": {
             "firstLevelTransitive": [
@@ -461,7 +462,7 @@
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "10.1.33"
+            "locked": "11.0.24"
         },
         "org.elasticsearch.client:transport": {
             "locked": "5.4.1"
@@ -472,7 +473,7 @@
                 "com.netflix.metacat:metacat-connector-s3",
                 "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "6.4.10.Final"
+            "locked": "7.2.24.Final"
         },
         "org.json:json": {
             "firstLevelTransitive": [
@@ -484,7 +485,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-postgresql"
             ],
-            "locked": "42.6.2"
+            "locked": "42.7.13"
         },
         "org.slf4j:slf4j-api": {
             "firstLevelTransitive": [
@@ -492,43 +493,50 @@
                 "com.netflix.metacat:metacat-connector-pig",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "2.0.16"
+            "locked": "2.0.18"
         },
         "org.springdoc:springdoc-openapi-starter-webmvc-ui": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.5.0"
+            "locked": "3.1.0"
         },
         "org.springframework.boot:spring-boot-configuration-processor": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-jackson2": {
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-actuator": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
-        "org.springframework.boot:spring-boot-starter-aop": {
+        "org.springframework.boot:spring-boot-starter-cache": {
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-starter-data-jpa": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-polaris"
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-hateoas": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-logging": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-validation": {
             "firstLevelTransitive": [
@@ -549,42 +557,28 @@
                 "com.netflix.metacat:metacat-metadata-mysql",
                 "com.netflix.metacat:metacat-thrift"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
-        "org.springframework.boot:spring-boot-starter-web": {
-            "locked": "3.2.12"
-        },
-        "org.springframework.data:spring-data-jpa": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-polaris",
-                "com.netflix.metacat:metacat-metadata"
-            ],
-            "locked": "3.2.12"
-        },
-        "org.springframework.retry:spring-retry": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-polaris",
-                "com.netflix.metacat:metacat-metadata-mysql"
-            ],
-            "locked": "2.0.10"
+        "org.springframework.boot:spring-boot-starter-webmvc": {
+            "locked": "4.0.8"
         },
         "org.springframework:spring-aspects": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-polaris"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "org.springframework:spring-jdbc": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "org.springframework:spring-web": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-druid"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "org.webjars:hal-browser": {
             "locked": "3325375"
@@ -595,17 +589,40 @@
     },
     "spotbugs": {
         "com.github.spotbugs:spotbugs": {
-            "locked": "4.8.2"
+            "locked": "4.9.8"
+        },
+        "org.apache.commons:commons-lang3": {
+            "locked": "3.19.0"
+        },
+        "org.ow2.asm:asm": {
+            "locked": "9.9"
+        },
+        "org.ow2.asm:asm-analysis": {
+            "locked": "9.9"
+        },
+        "org.ow2.asm:asm-commons": {
+            "locked": "9.9"
+        },
+        "org.ow2.asm:asm-tree": {
+            "locked": "9.9"
+        },
+        "org.ow2.asm:asm-util": {
+            "locked": "9.9"
+        }
+    },
+    "spotbugsAux": {
+        "org.reactivestreams:reactive-streams": {
+            "locked": "1.0.4"
         }
     },
     "spotbugsSlf4j": {
         "org.slf4j:slf4j-simple": {
-            "locked": "2.0.0"
+            "locked": "2.0.17"
         }
     },
     "testAnnotationProcessor": {
         "org.projectlombok:lombok": {
-            "locked": "1.18.30"
+            "locked": "1.18.46"
         }
     },
     "testCompileClasspath": {
@@ -616,7 +633,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.15.4"
+            "locked": "2.21.5"
         },
         "com.github.fge:json-patch": {
             "firstLevelTransitive": [
@@ -675,7 +692,7 @@
             "locked": "1.3.9"
         },
         "com.zaxxer:HikariCP": {
-            "locked": "5.0.1"
+            "locked": "7.0.2"
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
@@ -723,14 +740,14 @@
             "locked": "1.2.1"
         },
         "org.apache.logging.log4j:log4j-core": {
-            "locked": "2.21.1"
+            "locked": "2.25.5"
         },
         "org.apache.tomcat:tomcat-jdbc": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "10.1.33"
+            "locked": "11.0.24"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1"
@@ -742,14 +759,14 @@
             "locked": "3.2"
         },
         "org.projectlombok:lombok": {
-            "locked": "1.18.30"
+            "locked": "1.18.46"
         },
         "org.slf4j:slf4j-api": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "2.0.16"
+            "locked": "2.0.18"
         },
         "org.spockframework:spock-core": {
             "locked": "2.3-groovy-4.0"
@@ -764,46 +781,46 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.5.0"
+            "locked": "3.1.0"
+        },
+        "org.springframework.boot:spring-boot-jackson2": {
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-actuator": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-starter-cache": {
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-hateoas": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-logging": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-test": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-validation": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
-        "org.springframework.boot:spring-boot-starter-web": {
-            "locked": "3.2.12"
-        },
-        "org.springframework.retry:spring-retry": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-metadata-mysql"
-            ],
-            "locked": "2.0.10"
+        "org.springframework.boot:spring-boot-starter-webmvc": {
+            "locked": "4.0.8"
         },
         "org.springframework:spring-jdbc": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "software.amazon.awssdk:sns": {
             "locked": "2.31.77"
@@ -835,7 +852,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.15.4"
+            "locked": "2.21.5"
         },
         "com.github.fge:json-patch": {
             "firstLevelTransitive": [
@@ -845,7 +862,8 @@
         },
         "com.github.rholder:guava-retrying": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-hive"
+                "com.netflix.metacat:metacat-connector-hive",
+                "com.netflix.metacat:metacat-thrift"
             ],
             "locked": "2.0.0"
         },
@@ -891,7 +909,7 @@
                 "com.netflix.metacat:metacat-connector-polaris",
                 "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "2.2.224"
+            "locked": "2.4.240"
         },
         "com.netflix.metacat:metacat-common": {
             "firstLevelTransitive": [
@@ -1003,7 +1021,7 @@
                 "com.netflix.metacat:metacat-testdata-provider",
                 "com.netflix.metacat:metacat-thrift"
             ],
-            "locked": "5.0.1"
+            "locked": "7.0.2"
         },
         "commons-dbutils:commons-dbutils": {
             "firstLevelTransitive": [
@@ -1020,7 +1038,7 @@
                 "com.netflix.metacat:metacat-connector-polaris",
                 "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "3.1.0"
+            "locked": "3.2.0"
         },
         "joda-time:joda-time": {
             "firstLevelTransitive": [
@@ -1084,7 +1102,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-druid"
             ],
-            "locked": "5.2.3"
+            "locked": "5.5.2"
         },
         "org.apache.iceberg:iceberg-spark-runtime-3.5_2.13": {
             "firstLevelTransitive": [
@@ -1093,7 +1111,7 @@
             "locked": "1.9.1"
         },
         "org.apache.logging.log4j:log4j-core": {
-            "locked": "2.21.1"
+            "locked": "2.25.5"
         },
         "org.apache.pig:pig": {
             "firstLevelTransitive": [
@@ -1106,7 +1124,7 @@
                 "com.netflix.metacat:metacat-common-server",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "10.1.33"
+            "locked": "11.0.24"
         },
         "org.codehaus.gpars:gpars": {
             "locked": "1.2.1"
@@ -1120,7 +1138,7 @@
                 "com.netflix.metacat:metacat-connector-s3",
                 "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "6.4.10.Final"
+            "locked": "7.2.24.Final"
         },
         "org.hsqldb:hsqldb": {
             "locked": "2.7.3"
@@ -1138,7 +1156,7 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-postgresql"
             ],
-            "locked": "42.6.2"
+            "locked": "42.7.13"
         },
         "org.slf4j:slf4j-api": {
             "firstLevelTransitive": [
@@ -1146,7 +1164,7 @@
                 "com.netflix.metacat:metacat-connector-pig",
                 "com.netflix.metacat:metacat-metadata-mysql"
             ],
-            "locked": "2.0.16"
+            "locked": "2.0.18"
         },
         "org.spockframework:spock-core": {
             "locked": "2.3-groovy-4.0"
@@ -1161,40 +1179,47 @@
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common"
             ],
-            "locked": "2.5.0"
+            "locked": "3.1.0"
         },
         "org.springframework.boot:spring-boot-configuration-processor": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-jackson2": {
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-actuator": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
-        "org.springframework.boot:spring-boot-starter-aop": {
+        "org.springframework.boot:spring-boot-starter-cache": {
+            "locked": "4.0.8"
+        },
+        "org.springframework.boot:spring-boot-starter-data-jpa": {
             "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-polaris"
+                "com.netflix.metacat:metacat-connector-polaris",
+                "com.netflix.metacat:metacat-metadata"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-hateoas": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-logging": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-test": {
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
         "org.springframework.boot:spring-boot-starter-validation": {
             "firstLevelTransitive": [
@@ -1216,42 +1241,28 @@
                 "com.netflix.metacat:metacat-testdata-provider",
                 "com.netflix.metacat:metacat-thrift"
             ],
-            "locked": "3.2.12"
+            "locked": "4.0.8"
         },
-        "org.springframework.boot:spring-boot-starter-web": {
-            "locked": "3.2.12"
-        },
-        "org.springframework.data:spring-data-jpa": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-polaris",
-                "com.netflix.metacat:metacat-metadata"
-            ],
-            "locked": "3.2.12"
-        },
-        "org.springframework.retry:spring-retry": {
-            "firstLevelTransitive": [
-                "com.netflix.metacat:metacat-connector-polaris",
-                "com.netflix.metacat:metacat-metadata-mysql"
-            ],
-            "locked": "2.0.10"
+        "org.springframework.boot:spring-boot-starter-webmvc": {
+            "locked": "4.0.8"
         },
         "org.springframework:spring-aspects": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-polaris"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "org.springframework:spring-jdbc": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-common-server"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "org.springframework:spring-web": {
             "firstLevelTransitive": [
                 "com.netflix.metacat:metacat-connector-druid"
             ],
-            "locked": "6.1.15"
+            "locked": "7.0.9"
         },
         "org.webjars:hal-browser": {
             "locked": "3325375"

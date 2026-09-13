@@ -39,7 +39,7 @@ dependencies {
      * Provided Dependencies
      *******************************/
 
-    compileOnly("org.springframework.boot:spring-boot-starter-tomcat")
+    compileOnly("org.springframework.boot:spring-boot-starter-tomcat-runtime")
 
     /*******************************
      * Runtime Dependencies
