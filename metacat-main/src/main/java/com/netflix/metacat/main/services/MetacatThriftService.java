@@ -18,7 +18,11 @@ import com.netflix.metacat.thrift.CatalogThriftService;
 import com.netflix.metacat.thrift.CatalogThriftServiceFactory;
 
 import jakarta.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +34,8 @@ import java.util.stream.Collectors;
 public class MetacatThriftService {
     private final ConnectorManager connectorManager;
     private final CatalogThriftServiceFactory thriftServiceFactory;
+    private volatile List<CatalogThriftService> catalogThriftServices = Collections.emptyList();
+    private boolean started;
 
     /**
      * Constructor.
@@ -45,9 +51,25 @@ public class MetacatThriftService {
     }
 
     public List<CatalogThriftService> getCatalogThriftServices() {
-        return connectorManager.getCatalogConfigs()
+        return catalogThriftServices;
+    }
+
+    private List<CatalogThriftService> createCatalogThriftServices() {
+        final List<MetacatCatalogConfig> catalogs = connectorManager.getCatalogConfigs()
             .stream()
             .filter(MetacatCatalogConfig::isThriftInterfaceRequested)
+            .collect(Collectors.toList());
+        final Map<Integer, String> catalogByPort = new HashMap<>();
+        for (MetacatCatalogConfig catalog : catalogs) {
+            final String conflictingCatalog = catalogByPort.putIfAbsent(
+                catalog.getThriftPort(), catalog.getCatalogName());
+            if (conflictingCatalog != null) {
+                throw new IllegalStateException(String.format(
+                    "Catalogs %s and %s are both configured to use thrift port %d",
+                    conflictingCatalog, catalog.getCatalogName(), catalog.getThriftPort()));
+            }
+        }
+        return catalogs.stream()
             .map(catalog -> thriftServiceFactory.create(catalog.getCatalogName(), catalog.getThriftPort()))
             .collect(Collectors.toList());
     }
@@ -57,10 +79,24 @@ public class MetacatThriftService {
      *
      * @throws Exception error
      */
-    public void start() throws Exception {
-        for (CatalogThriftService service : getCatalogThriftServices()) {
-            service.start();
+    public synchronized void start() throws Exception {
+        if (started) {
+            return;
         }
+
+        final List<CatalogThriftService> services = createCatalogThriftServices();
+        final List<CatalogThriftService> startedServices = new ArrayList<>();
+        try {
+            for (CatalogThriftService service : services) {
+                service.start();
+                startedServices.add(service);
+            }
+        } catch (Exception startException) {
+            stopServices(startedServices, startException);
+            throw startException;
+        }
+        catalogThriftServices = Collections.unmodifiableList(services);
+        started = true;
     }
 
     /**
@@ -68,10 +104,37 @@ public class MetacatThriftService {
      *
      * @throws Exception error
      */
-    public void stop() throws Exception {
-        for (CatalogThriftService service : getCatalogThriftServices()) {
-            service.stop();
+    public synchronized void stop() throws Exception {
+        if (!started) {
+            return;
         }
+
+        Exception stopException = null;
+        try {
+            stopException = stopServices(catalogThriftServices, null);
+        } finally {
+            catalogThriftServices = Collections.emptyList();
+            started = false;
+        }
+        if (stopException != null) {
+            throw stopException;
+        }
+    }
+
+    private Exception stopServices(final List<CatalogThriftService> services, final Exception initialException) {
+        Exception exception = initialException;
+        for (int i = services.size() - 1; i >= 0; i--) {
+            try {
+                services.get(i).stop();
+            } catch (Exception stopException) {
+                if (exception == null) {
+                    exception = stopException;
+                } else {
+                    exception.addSuppressed(stopException);
+                }
+            }
+        }
+        return exception;
     }
 
 }

@@ -33,11 +33,15 @@ public class MetacatThriftInitService {
         log.info("Metacat application is stopped. Stopping services.");
         try {
             this.metacatThriftService.stop();
+        } catch (final Exception e) {
+            log.error("Unable to properly shutdown thrift services due to {}", e.getMessage(), e);
+        } finally {
             this.thriftStarted.set(false);
+        }
+        try {
             this.coreInitService.stop();
         } catch (final Exception e) {
-            // Just log it since we're shutting down anyway shouldn't matter to propagate it
-            log.error("Unable to properly shutdown services due to {}", e.getMessage(), e);
+            log.error("Unable to properly shutdown core services due to {}", e.getMessage(), e);
         }
         log.info("Finished stopping services.");
     }
