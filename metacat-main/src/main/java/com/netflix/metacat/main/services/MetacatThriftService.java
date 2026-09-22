@@ -92,7 +92,9 @@ public class MetacatThriftService {
                 startedServices.add(service);
             }
         } catch (Exception startException) {
-            stopServices(startedServices, startException);
+            for (Exception stopException : stopServices(startedServices)) {
+                startException.addSuppressed(stopException);
+            }
             throw startException;
         }
         catalogThriftServices = Collections.unmodifiableList(services);
@@ -109,32 +111,32 @@ public class MetacatThriftService {
             return;
         }
 
-        Exception stopException = null;
+        final List<Exception> stopExceptions;
         try {
-            stopException = stopServices(catalogThriftServices, null);
+            stopExceptions = stopServices(catalogThriftServices);
         } finally {
             catalogThriftServices = Collections.emptyList();
             started = false;
         }
-        if (stopException != null) {
+        if (!stopExceptions.isEmpty()) {
+            final Exception stopException = stopExceptions.get(0);
+            for (int i = 1; i < stopExceptions.size(); i++) {
+                stopException.addSuppressed(stopExceptions.get(i));
+            }
             throw stopException;
         }
     }
 
-    private Exception stopServices(final List<CatalogThriftService> services, final Exception initialException) {
-        Exception exception = initialException;
+    private List<Exception> stopServices(final List<CatalogThriftService> services) {
+        final List<Exception> stopExceptions = new ArrayList<>();
         for (int i = services.size() - 1; i >= 0; i--) {
             try {
                 services.get(i).stop();
             } catch (Exception stopException) {
-                if (exception == null) {
-                    exception = stopException;
-                } else {
-                    exception.addSuppressed(stopException);
-                }
+                stopExceptions.add(stopException);
             }
         }
-        return exception;
+        return stopExceptions;
     }
 
 }
