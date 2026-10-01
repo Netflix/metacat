@@ -19,6 +19,9 @@ package com.netflix.metacat.common.server.properties;
 
 import lombok.Data;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Properties related to Thrift.
  *
@@ -28,6 +31,7 @@ import lombok.Data;
 @Data
 //TODO: This should be in the Thrift module
 public class ThriftProperties {
+    private Set<String> catalogDenylist = new HashSet<>();
     private int serverMaxWorkerThreads = 100;
     private int serverSocketClientTimeoutInSeconds = 60;
 }

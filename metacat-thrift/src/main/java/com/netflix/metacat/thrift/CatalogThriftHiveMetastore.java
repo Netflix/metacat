@@ -43,6 +43,7 @@ import com.netflix.metacat.common.dto.TableDto;
 import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
 import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.exception.MetacatPreconditionFailedException;
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException;
 import com.netflix.metacat.common.server.api.v1.MetacatV1;
 import com.netflix.metacat.common.server.api.v1.PartitionV1;
 import com.netflix.metacat.common.server.monitoring.Metrics;
@@ -1834,6 +1835,9 @@ public class CatalogThriftHiveMetastore extends FacebookBase
 
     private <R> R requestWrapper(final String methodName, final Object[] args, final ThriftSupplier<R> supplier)
         throws TException {
+        if (config.getThriftCatalogDenylist().contains(catalogName)) {
+            throw new MetacatUnAuthorizedException("HMS Thrift API is denied for catalog: " + catalogName);
+        }
         final long start = registry.clock().wallTime();
         registry.counter(registry.createId(Metrics.CounterThrift.getMetricName() + "." + methodName)).increment();
         try {

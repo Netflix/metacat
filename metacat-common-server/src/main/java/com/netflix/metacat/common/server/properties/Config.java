@@ -222,6 +222,13 @@ public interface Config {
     String getTagServiceUserAdmin();
 
     /**
+     * Catalog denylist for the HMS Thrift API.
+     *
+     * @return denylisted catalog names
+     */
+    Set<String> getThriftCatalogDenylist();
+
+    /**
      * Thrift server max worker threads.
      *
      * @return Thrift server max worker threads
@@ -658,4 +665,3 @@ public interface Config {
      */
     boolean isDefinitionMetadataSelectForUpdateEnabled();
 }
-

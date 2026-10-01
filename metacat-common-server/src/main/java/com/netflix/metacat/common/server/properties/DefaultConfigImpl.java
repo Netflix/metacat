@@ -284,6 +284,14 @@ public class DefaultConfigImpl implements Config {
      * {@inheritDoc}
      */
     @Override
+    public Set<String> getThriftCatalogDenylist() {
+        return this.metacatProperties.getThrift().getCatalogDenylist();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getThriftServerMaxWorkerThreads() {
         return this.metacatProperties.getThrift().getServerMaxWorkerThreads();
     }

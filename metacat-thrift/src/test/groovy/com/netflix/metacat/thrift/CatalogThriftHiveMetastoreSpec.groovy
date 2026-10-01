@@ -19,11 +19,13 @@ import com.google.common.collect.Lists
 import com.google.common.collect.Maps
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
+import com.netflix.metacat.common.exception.MetacatUnAuthorizedException
 import com.netflix.metacat.common.server.api.v1.MetacatV1
 import com.netflix.metacat.common.server.api.v1.PartitionV1
 import com.netflix.metacat.common.server.properties.Config
 import com.netflix.metacat.common.server.util.MetacatContextManager
 import com.netflix.spectator.api.Clock
+import com.netflix.spectator.api.DefaultRegistry
 import com.netflix.spectator.api.Timer
 import com.netflix.spectator.api.Counter
 import com.netflix.spectator.api.Id
@@ -45,7 +47,48 @@ class CatalogThriftHiveMetastoreSpec extends Specification {
 
     def setup() {
         MetacatContextManager.context = catalogServerContext
+        config.getThriftCatalogDenylist() >> Collections.emptySet()
+    }
 
+    def 'denylisted catalog rejects #operation without calling Metacat'() {
+        given:
+        def metastore = new CatalogThriftHiveMetastore(
+                config, hiveConverters, metacatV1, partitionV1, catalogName, new DefaultRegistry())
+
+        when:
+        metastore."$operation"(*arguments)
+
+        then:
+        def exception = thrown(MetacatUnAuthorizedException)
+        exception.message == 'HMS Thrift API is denied for catalog: testcatalogname'
+        config.getThriftCatalogDenylist() >> ['testcatalogname'].toSet()
+        0 * metacatV1._
+        0 * partitionV1._
+
+        where:
+        operation           | arguments
+        'get_all_databases' | []
+        'create_database'   | [new Database(name: 'db1')]
+        'get_table'         | ['db1', 't1']
+        'get_partitions'    | ['db1', 't1', (short) 10]
+        'set_ugi'           | ['user', []]
+    }
+
+    def 'catalog access is allowed when catalog denylist is #catalogDenylist'() {
+        given:
+        def metastore = new CatalogThriftHiveMetastore(
+                config, hiveConverters, metacatV1, partitionV1, catalogName, new DefaultRegistry())
+
+        when:
+        def databases = metastore.get_all_databases()
+
+        then:
+        databases == ['db1']
+        config.getThriftCatalogDenylist() >> catalogDenylist.toSet()
+        1 * metacatV1.getCatalog('testcatalogname', true, false) >> new CatalogDto(databases: ['db1'])
+
+        where:
+        catalogDenylist << [[], ['othercatalog']]
     }
 
     def 'test abort_txn'() {
