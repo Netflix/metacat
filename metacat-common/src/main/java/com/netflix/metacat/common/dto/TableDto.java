@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.netflix.metacat.common.QualifiedName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -84,6 +85,8 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     @Schema(description = "Hive virtual view info.")
     //Naming as view required by dozer mapping
     private ViewDto view;
+    @JsonIgnore
+    private transient ImmutableClassToInstanceMap<Object> tableMetadata;
 
     @Nonnull
     @Override

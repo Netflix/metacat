@@ -17,7 +17,9 @@
  */
 package com.netflix.metacat.common.server.connectors.model;
 
+import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.netflix.metacat.common.QualifiedName;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -37,9 +39,12 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class TableInfo extends BaseInfo {
+    private static final long serialVersionUID = 628647542628316567L;
     private List<FieldInfo> fields;
     private StorageInfo serde;
     private ViewInfo view;
+    @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "In-memory only")
+    private transient ImmutableClassToInstanceMap<Object> tableMetadata;
 
     /**
      * Constructor.
@@ -57,11 +62,13 @@ public class TableInfo extends BaseInfo {
         final Map<String, String> metadata,
         final List<FieldInfo> fields,
         final StorageInfo serde,
-        final ViewInfo view
+        final ViewInfo view,
+        final ImmutableClassToInstanceMap<Object> tableMetadata
     ) {
         super(name, auditInfo, metadata);
         this.fields = fields;
         this.serde = serde;
         this.view = view;
+        this.tableMetadata = tableMetadata;
     }
 }

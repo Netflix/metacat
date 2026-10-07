@@ -13,6 +13,7 @@
 
 package com.netflix.metacat.common.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.reflect.ClassPath
@@ -70,6 +71,9 @@ class DtoVerificationSpec extends Specification {
             if (writeMethod) {
                 Class<?> type = descriptor.propertyType
                 Field field = clazz.declaredFields.find { it.name == descriptor.name }
+                if (field?.isAnnotationPresent(JsonIgnore)) {
+                    continue
+                }
                 if (field) {
                     def randomValue = getRandomValue(type, field)
                     writeMethod.invoke(dto, randomValue)

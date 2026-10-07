@@ -42,6 +42,8 @@ import com.netflix.metacat.common.server.events.MetacatCreateTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatLoadTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatLoadTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateIcebergTablePostEvent;
@@ -598,6 +600,21 @@ public class TableServiceImpl implements TableService {
         //Set the resolved name dto always
         table.setName(name);
         return Optional.of(table);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<TableDto> load(final QualifiedName name,
+            final GetTableServiceParameters getTableServiceParameters) {
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        validate(name);
+        eventBus.post(new MetacatLoadTablePreEvent(name, metacatRequestContext, this));
+        final Optional<TableDto> table = get(name, getTableServiceParameters);
+        table.ifPresent(dto ->
+            eventBus.post(new MetacatLoadTablePostEvent(dto.getName(), metacatRequestContext, this, dto)));
+        return table;
     }
 
     /**

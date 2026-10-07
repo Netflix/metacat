@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableClassToInstanceMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.netflix.metacat.common.QualifiedName;
@@ -46,6 +47,7 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.iceberg.Snapshot;
+import org.apache.iceberg.TableMetadata;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -223,6 +225,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             .metadata(tableParameters)
             .serde(storageInfoBuilder.build())
             .name(name).auditInfo(tableInfo.getAudit())
+            .tableMetadata(ImmutableClassToInstanceMap.of(TableMetadata.class, tableWrapper.getTableMetadata()))
             .build();
     }
 

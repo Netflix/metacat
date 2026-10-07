@@ -16,8 +16,10 @@
 
 package com.netflix.metacat.connector.hive.iceberg;
 
+import org.apache.iceberg.HasTableOperations;
 import org.apache.iceberg.SnapshotRef;
 import org.apache.iceberg.Table;
+import org.apache.iceberg.TableMetadata;
 import org.apache.iceberg.TableUtil;
 import lombok.Data;
 
@@ -62,6 +64,14 @@ public class IcebergTableWrapper {
      */
     public int getTableVersion() {
         return TableUtil.formatVersion(table);
+    }
+
+    /**
+     * Get the Iceberg table metadata.
+     * @return the table metadata
+     */
+    public TableMetadata getTableMetadata() {
+        return ((HasTableOperations) table).operations().current();
     }
 
     /**
