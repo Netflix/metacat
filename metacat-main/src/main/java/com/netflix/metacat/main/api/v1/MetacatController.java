@@ -656,7 +656,7 @@ public class MetacatController implements MetacatV1 {
                 .put("includeMetadataLocationOnly", String.valueOf(includeMetadataLocationOnly))
                 .build(),
             () -> {
-                final Optional<TableDto> table = this.tableService.get(
+                final Optional<TableDto> table = this.tableService.load(
                     name,
                     GetTableServiceParameters.builder()
                         .includeInfo(includeInfo)

@@ -1,6 +1,7 @@
 package com.netflix.metacat.common.server.converter
 
 import com.fasterxml.jackson.databind.node.TextNode
+import com.google.common.collect.ImmutableClassToInstanceMap
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.*
 import org.dozer.MappingException
@@ -48,15 +49,17 @@ class ConverterUtilSpec extends Specification {
 
     def testTableConversion() {
         given:
+        def extensions = ImmutableClassToInstanceMap.of(String, 'metadata')
         def dto = new TableDto(name: QualifiedName.ofTable('prodhive', 'amajumdar', 'part'),
             audit: new AuditDto('test', new Date(), 'test', new Date()),
             fields: [FieldDto.builder().name('esn').type('string').source_type('string').jsonType(new TextNode('string')).pos(0).build()] ,
-            serde: new StorageDto(owner: 'test'))
+            serde: new StorageDto(owner: 'test'), extensions: extensions)
         when:
         def info = converter.fromTableDto(dto)
         def resultDto = converter.toTableDto(info)
         then:
         dto == resultDto
+        resultDto.getExtensions().is(extensions)
     }
 
     def testTableViewConversion() {

@@ -43,6 +43,14 @@ public interface TableService extends MetacatService<TableDto> {
     Optional<TableDto> get(QualifiedName name, GetTableServiceParameters getTableServiceParameters);
 
     /**
+     * Loads the table with the given name on behalf of a client and publishes the load events.
+     * @param name qualified name of the table
+     * @param getTableServiceParameters  get table parameters
+     * @return Returns the table with the given name
+     */
+    Optional<TableDto> load(QualifiedName name, GetTableServiceParameters getTableServiceParameters);
+
+    /**
      * Rename the table from <code>oldName</code> to <code>newName</code>.
      * @param oldName old qualified name of the existing table
      * @param newName new qualified name of the table

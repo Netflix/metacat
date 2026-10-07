@@ -95,7 +95,8 @@ public class ConverterUtil {
                     .fields("sourceType", "source_type", FieldsMappingOptions.copyByReference())
                     .fields("type", "jsonType", FieldsMappingOptions.customConverterId(ID_JSON_TYPE_CONVERTER));
                 mapping(TableDto.class, TableInfo.class)
-                    .fields("name", "name", FieldsMappingOptions.copyByReference());
+                    .fields("name", "name", FieldsMappingOptions.copyByReference())
+                    .fields("extensions", "extensions", FieldsMappingOptions.copyByReference());
                 mapping(DatabaseDto.class, DatabaseInfo.class)
                     .fields("name", "name", FieldsMappingOptions.copyByReference());
                 mapping(PartitionDto.class, PartitionInfo.class)

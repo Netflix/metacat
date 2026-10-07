@@ -19,6 +19,7 @@ package com.netflix.metacat.connector.hive.converters
 import org.apache.iceberg.PartitionField
 import org.apache.iceberg.PartitionSpec
 import org.apache.iceberg.Schema
+import org.apache.iceberg.TableMetadata
 import org.apache.iceberg.transforms.Identity
 import org.apache.iceberg.types.Type
 import org.apache.iceberg.types.Types
@@ -509,6 +510,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         def nestedField = Mock(Types.NestedField)
         def nestedField2 = Mock(Types.NestedField)
         def type = Mock(Type)
+        def tableMetadata = Mock(TableMetadata)
         when:
         def tableInfo = converter.fromIcebergTableToTableInfo(QualifiedName.ofTable('c', 'd', 't'),
             icebergTableWrapper, "/tmp/test", TableInfo.builder().build() )
@@ -521,6 +523,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
             isTag() >> false
         }]
         1 * icebergTableWrapper.getTableVersion() >> 2
+        1 * icebergTableWrapper.getTableMetadata() >> tableMetadata
         1 * partSpec.fields() >> [ field]
         1 * icebergTable.schema() >> schema
         1 * schema.columns() >> [nestedField, nestedField2]
@@ -540,6 +543,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         tableInfo.getFields().size() == 2
         tableInfo.getFields().get(0).isPartitionKey() != tableInfo.getFields().get(1).isPartitionKey()
         tableInfo.getFields().get(0).getComment() == 'fieldName doc'
+        tableInfo.getExtensions().getInstance(TableMetadata).is(tableMetadata)
 
     }
 
@@ -555,6 +559,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
             "iceberg.has.tags": "false"
         ]
         1 * icebergTableWrapper.getExtraProperties() >> [:]
+        1 * icebergTableWrapper.getTableMetadata() >> Mock(TableMetadata)
         1 * icebergTable.properties() >> [:]
         1 * icebergTable.schema() >> Mock(Schema) {
             columns() >> []
@@ -578,6 +583,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         1 * icebergTableWrapper.getTable() >> icebergTable
         1 * icebergTableWrapper.populateBranchTagMetadata() >> [:]
         1 * icebergTableWrapper.getExtraProperties() >> [:]
+        1 * icebergTableWrapper.getTableMetadata() >> Mock(TableMetadata)
         1 * icebergTable.properties() >> [:]
         1 * icebergTable.currentSnapshot() >> snapshot
         1 * snapshot.snapshotId() >> 5186921321658503645L
@@ -597,6 +603,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         1 * icebergTableWrapper.getTable() >> icebergTable
         1 * icebergTableWrapper.populateBranchTagMetadata() >> [:]
         1 * icebergTableWrapper.getExtraProperties() >> [:]
+        1 * icebergTableWrapper.getTableMetadata() >> Mock(TableMetadata)
         1 * icebergTable.properties() >> [:]
         1 * icebergTable.currentSnapshot() >> null
         1 * icebergTable.schema() >> Mock(Schema) { columns() >> [] }
@@ -616,6 +623,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         1 * icebergTableWrapper.getTable() >> icebergTable
         1 * icebergTableWrapper.populateBranchTagMetadata() >> [:]
         1 * icebergTableWrapper.getExtraProperties() >> [:]
+        1 * icebergTableWrapper.getTableMetadata() >> Mock(TableMetadata)
         // A user-defined table property that collides with the derived key must not win.
         1 * icebergTable.properties() >> [(DirectSqlTable.PARAM_CURRENT_SNAPSHOT_ID): "999"]
         1 * icebergTable.currentSnapshot() >> snapshot

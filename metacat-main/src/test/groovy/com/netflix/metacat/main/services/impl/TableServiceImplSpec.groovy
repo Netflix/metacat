@@ -38,6 +38,8 @@ import com.netflix.metacat.common.server.connectors.exception.TableNotFoundExcep
 import com.netflix.metacat.common.server.converter.ConverterUtil
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatEventBus
+import com.netflix.metacat.common.server.events.MetacatLoadTablePostEvent
+import com.netflix.metacat.common.server.events.MetacatLoadTablePreEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePostEvent
 import com.netflix.metacat.common.server.events.MetacatUpdateTablePreEvent
 import com.netflix.metacat.common.server.model.ChildInfo
@@ -190,6 +192,21 @@ class TableServiceImplSpec extends Specification {
         then:
         1 * converterUtil.toTableDto(_) >> metadataLocationOnlyDto
         result.get().getName() == requestName
+    }
+
+    def "load publishes load events and get does not"() {
+        when:
+        service.load(name, GetTableServiceParameters.builder().includeInfo(true).build())
+
+        then:
+        1 * eventBus.post({ it instanceof MetacatLoadTablePreEvent && it.name == name })
+        1 * eventBus.post({ it instanceof MetacatLoadTablePostEvent && it.table.is(tableDto) })
+
+        when:
+        service.get(name, GetTableServiceParameters.builder().includeInfo(true).build())
+
+        then:
+        0 * eventBus.post(_)
     }
 
     def "get resolves an alias for a definition-metadata-only read, but not for a read that touches the connector"() {

@@ -72,7 +72,7 @@ class MetacatControllerAliasSpec extends Specification {
 
         then: "the controller no longer resolves aliases itself"
         0 * aliasService.getTableName(_)
-        1 * tableService.get(alias, _) >> Optional.of(tableDto(source))
+        1 * tableService.load(alias, _) >> Optional.of(tableDto(source))
         result.getName() == source
     }
 
@@ -81,7 +81,7 @@ class MetacatControllerAliasSpec extends Specification {
         controller.getTable("prodhive", "db", "the_alias", true, true, true, false, false)
 
         then: "the connector has no concept of aliases, so an unresolved alias name naturally 404s"
-        1 * tableService.get(alias, _) >> Optional.empty()
+        1 * tableService.load(alias, _) >> Optional.empty()
         thrown(MetacatNotFoundException)
     }
 
