@@ -225,7 +225,7 @@ public class HiveConnectorInfoConverter implements ConnectorInfoConverter<Databa
             .metadata(tableParameters)
             .serde(storageInfoBuilder.build())
             .name(name).auditInfo(tableInfo.getAudit())
-            .extensions(ImmutableClassToInstanceMap.of(TableMetadata.class, tableWrapper.getTableMetadata()))
+            .tableMetadata(ImmutableClassToInstanceMap.of(TableMetadata.class, tableWrapper.getTableMetadata()))
             .build();
     }
 

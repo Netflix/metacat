@@ -86,7 +86,7 @@ public class TableDto extends BaseDto implements HasDataMetadata, HasDefinitionM
     //Naming as view required by dozer mapping
     private ViewDto view;
     @JsonIgnore
-    private transient ImmutableClassToInstanceMap<Object> extensions;
+    private transient ImmutableClassToInstanceMap<Object> tableMetadata;
 
     @Nonnull
     @Override

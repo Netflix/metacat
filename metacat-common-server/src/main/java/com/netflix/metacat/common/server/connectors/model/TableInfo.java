@@ -44,7 +44,7 @@ public class TableInfo extends BaseInfo {
     private StorageInfo serde;
     private ViewInfo view;
     @SuppressFBWarnings(value = "SE_TRANSIENT_FIELD_NOT_RESTORED", justification = "In-memory only")
-    private transient ImmutableClassToInstanceMap<Object> extensions;
+    private transient ImmutableClassToInstanceMap<Object> tableMetadata;
 
     /**
      * Constructor.
@@ -63,12 +63,12 @@ public class TableInfo extends BaseInfo {
         final List<FieldInfo> fields,
         final StorageInfo serde,
         final ViewInfo view,
-        final ImmutableClassToInstanceMap<Object> extensions
+        final ImmutableClassToInstanceMap<Object> tableMetadata
     ) {
         super(name, auditInfo, metadata);
         this.fields = fields;
         this.serde = serde;
         this.view = view;
-        this.extensions = extensions;
+        this.tableMetadata = tableMetadata;
     }
 }

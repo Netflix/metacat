@@ -543,7 +543,7 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         tableInfo.getFields().size() == 2
         tableInfo.getFields().get(0).isPartitionKey() != tableInfo.getFields().get(1).isPartitionKey()
         tableInfo.getFields().get(0).getComment() == 'fieldName doc'
-        tableInfo.getExtensions().getInstance(TableMetadata).is(tableMetadata)
+        tableInfo.getTableMetadata().getInstance(TableMetadata).is(tableMetadata)
 
     }
 
