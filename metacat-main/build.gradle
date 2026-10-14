@@ -46,7 +46,9 @@ dependencies {
         exclude module: "guava"
     }
     api("org.springframework.boot:spring-boot-starter")
-    api("org.springframework.boot:spring-boot-starter-web")
+    api("org.springframework.boot:spring-boot-starter-webmvc")
+    api("org.springframework.boot:spring-boot-jackson2")
+    api("org.springframework.boot:spring-boot-starter-cache")
     api("org.springframework.boot:spring-boot-starter-actuator")
     api("org.springframework.boot:spring-boot-starter-hateoas")
     api("org.springframework.boot:spring-boot-starter-logging")
