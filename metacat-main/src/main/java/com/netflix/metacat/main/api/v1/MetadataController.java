@@ -235,6 +235,35 @@ public class MetadataController {
     }
 
     /**
+     * Renames the definition metadata and tags for a table without renaming the table itself.
+     *
+     * @param oldName current qualified table name
+     * @param newName new qualified table name in the same catalog and database
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/definition/rename")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+        summary = "Renames table definition metadata and tags without renaming the table"
+    )
+    public void renameDefinitionMetadata(
+        @Parameter(description = "Current qualified table name", required = true)
+        @RequestParam(name = "oldName") final String oldName,
+        @Parameter(description = "New qualified table name", required = true)
+        @RequestParam(name = "newName") final String newName
+    ) {
+        requestWrapper.processRequest(
+            "renameDefinitionMetadata",
+            () -> {
+                metadataService.renameDefinitionMetadata(
+                    QualifiedName.fromString(oldName),
+                    QualifiedName.fromString(newName)
+                );
+                return null;
+            }
+        );
+    }
+
+    /**
      * Deletes the data metadata marked for deletion.
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/data/cleanup")

@@ -33,6 +33,8 @@ import com.netflix.metacat.common.server.events.MetacatDeleteTablePartitionPreEv
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePostEvent;
 import com.netflix.metacat.common.server.events.MetacatDeleteTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatEventBus;
+import com.netflix.metacat.common.server.events.MetacatRenameTablePostEvent;
+import com.netflix.metacat.common.server.events.MetacatRenameTablePreEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPostEvent;
 import com.netflix.metacat.common.server.events.MetacatSaveTablePartitionPreEvent;
 import com.netflix.metacat.common.server.events.MetacatUpdateDatabasePostEvent;
@@ -198,7 +200,39 @@ public class MetacatServiceHelper {
         }
     }
 
+    /**
+     * Posts the pre table rename event.
+     *
+     * @param name                  old table name
+     * @param metacatRequestContext context
+     * @param newName               new table name
+     */
+    public void postPreRenameTableEvent(
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext,
+        final QualifiedName newName
+    ) {
+        this.eventBus.post(new MetacatRenameTablePreEvent(name, metacatRequestContext, this, newName));
+    }
 
+    /**
+     * Posts the post table rename event.
+     *
+     * @param name                  old table name
+     * @param metacatRequestContext context
+     * @param oldTable              old table
+     * @param currentTable          current table
+     */
+    public void postPostRenameTableEvent(
+        final QualifiedName name,
+        final MetacatRequestContext metacatRequestContext,
+        final TableDto oldTable,
+        final TableDto currentTable
+    ) {
+        this.eventBus.post(
+            new MetacatRenameTablePostEvent(name, metacatRequestContext, this, oldTable, currentTable)
+        );
+    }
 
     /**
      * Calls the right method of the event bus for the given qualified name.

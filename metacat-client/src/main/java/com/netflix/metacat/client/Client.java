@@ -192,6 +192,7 @@ public final class Client {
         private Request.Options requestOptions;
         private SSLSocketFactory sslSocketFactory;
         private HostnameVerifier hostnameVerifier;
+        private boolean eventsEnabled = true;
 
         /**
          * Sets the SSLSocketFactory. This field is ignored when the full Feign client is specified.
@@ -326,6 +327,17 @@ public final class Client {
         }
 
         /**
+         * Sets whether requests made by this client generate Metacat events.
+         *
+         * @param clientEventsEnabled whether events should be generated
+         * @return Builder
+         */
+        public Builder withEventsEnabled(final boolean clientEventsEnabled) {
+            this.eventsEnabled = clientEventsEnabled;
+            return this;
+        }
+
+        /**
          * Builds the Metacat client.
          *
          * @return Client that can be used to make metacat API calls.
@@ -348,6 +360,9 @@ public final class Client {
                 template.header(MetacatRequestContext.HEADER_KEY_CLIENT_APP_NAME, clientAppName);
                 template.header(MetacatRequestContext.HEADER_KEY_JOB_ID, jobId);
                 template.header(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT, dataTypeContext);
+                if (!eventsEnabled) {
+                    template.header(MetacatRequestContext.HEADER_KEY_EVENTS_ENABLED, Boolean.FALSE.toString());
+                }
                 if (requestInterceptor != null) {
                     requestInterceptor.apply(template);
                 }

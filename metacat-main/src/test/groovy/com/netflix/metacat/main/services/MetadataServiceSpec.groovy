@@ -1,7 +1,9 @@
 package com.netflix.metacat.main.services
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.netflix.metacat.common.QualifiedName
 import com.netflix.metacat.common.dto.DefinitionMetadataDto
+import com.netflix.metacat.common.dto.TableDto
 import com.netflix.metacat.common.server.properties.DefaultConfigImpl
 import com.netflix.metacat.common.server.properties.MetacatProperties
 import com.netflix.metacat.common.server.usermetadata.TagService
@@ -39,6 +41,25 @@ class MetadataServiceSpec extends Specification {
         1 * helper.getService(name) >> tableService
         0 * tableService.get(name)
         1 * mService.deleteDefinitionMetadata([name])
+    }
+
+    def "rename definition metadata moves metadata and tags and posts events"() {
+        given:
+        def newName = QualifiedName.ofTable('a', 'b', 'd')
+        def oldTable = new TableDto(name: newName)
+        def currentTable = new TableDto(name: newName)
+        mService.getDefinitionMetadata(name) >> Optional.of(JsonNodeFactory.instance.objectNode())
+        tableService.get(newName) >>> [oldTable, currentTable]
+
+        when:
+        service.renameDefinitionMetadata(name, newName)
+
+        then:
+        1 * helper.postPreRenameTableEvent(name, context, newName)
+        1 * mService.renameDefinitionMetadataKey(name, newName)
+        1 * tagService.renameTableTags(name, 'd')
+        1 * helper.postPostRenameTableEvent(name, context, oldTable, currentTable)
+        0 * tableService.rename(_, _, _)
     }
 
     def testDeleteObsoleteDefinitionMetadata() {

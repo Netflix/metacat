@@ -60,6 +60,11 @@ public class MetacatEventBus {
      */
     public void post(final ApplicationEvent event) {
         log.debug("Received request to post an event {}", event);
+        if (event instanceof MetacatEvent
+            && !((MetacatEvent) event).getRequestContext().isEventsEnabled()) {
+            log.debug("Event generation is disabled; dropping event {}", event);
+            return;
+        }
         this.eventPublishCounter.increment();
         this.applicationEventMulticaster.post(event);
     }

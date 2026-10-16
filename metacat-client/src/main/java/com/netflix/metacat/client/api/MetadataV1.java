@@ -120,4 +120,20 @@ public interface MetadataV1 {
         @QueryParam("force")
             Boolean force
     );
+
+    /**
+     * Rename the definition metadata and tags for a table without renaming the table itself.
+     *
+     * @param oldName current qualified table name
+     * @param newName new qualified table name in the same catalog and database
+     */
+    @POST
+    @Path("definition/rename")
+    void renameDefinitionMetadata(
+        @QueryParam("oldName")
+            String oldName,
+        @QueryParam("newName")
+            String newName
+    );
+
 }

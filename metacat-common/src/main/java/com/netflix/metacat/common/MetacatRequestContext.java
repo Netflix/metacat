@@ -54,6 +54,10 @@ public class MetacatRequestContext implements Serializable {
      * Request header representing the data type context.
      */
     public static final String HEADER_KEY_DATA_TYPE_CONTEXT = "X-Netflix.data.type.context";
+    /**
+     * Request header indicating whether the request should generate Metacat events.
+     */
+    public static final String HEADER_KEY_EVENTS_ENABLED = "X-Netflix.events.enabled";
 
     /**
      * Default if unknown.
@@ -77,6 +81,9 @@ public class MetacatRequestContext implements Serializable {
     // The general expectation is that these would be set zero or one times.
     @Setter
     private String userName;
+
+    @Setter
+    private boolean eventsEnabled = true;
 
     @Getter(AccessLevel.NONE)
     private Map<QualifiedName, String> tableTypeMap;
