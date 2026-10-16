@@ -152,6 +152,7 @@ public class MetacatRequestContext implements Serializable {
         sb.append(", scheme='").append(scheme).append('\'');
         sb.append(", additionalContext='").append(additionalContext).append('\'');
         sb.append(", requestName='").append(requestName).append('\'');
+        sb.append(", eventsEnabled=").append(eventsEnabled);
         sb.append('}');
         return sb.toString();
     }
