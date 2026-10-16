@@ -77,6 +77,9 @@ public class ApiFilter implements Filter {
         final String clientId = httpServletRequest.getHeader("X-Forwarded-For");
         final String jobId = httpServletRequest.getHeader(MetacatRequestContext.HEADER_KEY_JOB_ID);
         final String dataTypeContext = httpServletRequest.getHeader(MetacatRequestContext.HEADER_KEY_DATA_TYPE_CONTEXT);
+        final boolean eventsEnabled = !Boolean.FALSE.toString().equalsIgnoreCase(
+            httpServletRequest.getHeader(MetacatRequestContext.HEADER_KEY_EVENTS_ENABLED)
+        );
 
         final MetacatRequestContext context = buildRequestContext(
             userName, clientAppName, clientId, jobId, dataTypeContext,
@@ -84,6 +87,9 @@ public class ApiFilter implements Filter {
             httpServletRequest.getRequestURI(),
             httpServletRequest
         );
+        if (!eventsEnabled) {
+            context.setEventsEnabled(false);
+        }
 
         MetacatContextManager.setContext(context);
         log.info(context.toString());

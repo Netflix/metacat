@@ -19,9 +19,14 @@ import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.BaseDto;
 import com.netflix.metacat.common.dto.DefinitionMetadataDto;
+import com.netflix.metacat.common.dto.TableDto;
+import com.netflix.metacat.common.exception.MetacatAlreadyExistsException;
+import com.netflix.metacat.common.exception.MetacatBadRequestException;
+import com.netflix.metacat.common.exception.MetacatNotFoundException;
 import com.netflix.metacat.common.server.connectors.exception.NotFoundException;
 import com.netflix.metacat.common.server.monitoring.Metrics;
 import com.netflix.metacat.common.server.properties.Config;
+import com.netflix.metacat.common.server.usermetadata.AliasService;
 import com.netflix.metacat.common.server.usermetadata.TagService;
 import com.netflix.metacat.common.server.usermetadata.UserMetadataService;
 import com.netflix.metacat.common.server.util.MetacatContextManager;
@@ -49,6 +54,7 @@ public class MetadataService {
     private final PartitionService partitionService;
     private final UserMetadataService userMetadataService;
     private final TagService tagService;
+    private final AliasService aliasService;
     private final MetacatServiceHelper helper;
     private final Registry registry;
 
@@ -60,6 +66,7 @@ public class MetadataService {
      * @param partitionService    partition service
      * @param userMetadataService user metadata service
      * @param tagService          tag service
+     * @param aliasService        alias service
      * @param helper              service helper
      * @param registry            registry
      */
@@ -68,6 +75,7 @@ public class MetadataService {
                            final PartitionService partitionService,
                            final UserMetadataService userMetadataService,
                            final TagService tagService,
+                           final AliasService aliasService,
                            final MetacatServiceHelper helper,
                            final Registry registry) {
         this.config = config;
@@ -75,6 +83,7 @@ public class MetadataService {
         this.partitionService = partitionService;
         this.userMetadataService = userMetadataService;
         this.tagService = tagService;
+        this.aliasService = aliasService;
         this.helper = helper;
         this.registry = registry;
     }
@@ -206,6 +215,50 @@ public class MetadataService {
             throw e;
         }
         return false;
+    }
+
+    /**
+     * Renames the definition metadata and tags for a table without renaming the table itself.
+     *
+     * @param oldName current qualified table name
+     * @param newName new qualified table name in the same catalog and database
+     */
+    public void renameDefinitionMetadata(final QualifiedName oldName, final QualifiedName newName) {
+        if (!oldName.isTableDefinition() || !newName.isTableDefinition()) {
+            throw new MetacatBadRequestException("Definition metadata rename supports table names only");
+        }
+        if (oldName.toString().equalsIgnoreCase(newName.toString())) {
+            throw new MetacatBadRequestException("Old and new definition metadata names must be different");
+        }
+        if (!oldName.getCatalogName().equalsIgnoreCase(newName.getCatalogName())
+            || !oldName.getDatabaseName().equalsIgnoreCase(newName.getDatabaseName())) {
+            throw new MetacatBadRequestException(
+                "Definition metadata can only be renamed within the same catalog and database"
+            );
+        }
+        if (config.isTableAliasEnabled() && aliasService.isAlias(newName)) {
+            throw new MetacatAlreadyExistsException("Alias with name: " + newName + ", already exists.");
+        }
+        userMetadataService.getDefinitionMetadata(oldName)
+            .orElseThrow(() -> new MetacatNotFoundException("Definition metadata not found for " + oldName));
+
+        final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
+        final TableDto oldTable = tableService.get(newName);
+        if (oldTable == null) {
+            throw new MetacatNotFoundException("Table not found for " + newName);
+        }
+        oldTable.setName(oldName);
+        helper.postPreRenameTableEvent(oldName, metacatRequestContext, newName);
+
+        userMetadataService.renameDefinitionMetadataKey(oldName, newName);
+        tagService.renameTableTags(oldName, newName.getTableName());
+
+        final TableDto currentTable = tableService.get(newName);
+        if (currentTable == null) {
+            throw new MetacatNotFoundException("Table not found for " + newName);
+        }
+        helper.postPostRenameTableEvent(oldName, metacatRequestContext, oldTable, currentTable);
+        log.info("Renamed definition metadata and tags from {} to {}", oldName, newName);
     }
 
     /**

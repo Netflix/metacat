@@ -386,6 +386,7 @@ public class ServicesConfig {
      * @param partitionService    The partition service to use
      * @param userMetadataService The user metadata service to use
      * @param tagService          tag service
+     * @param aliasService        alias service
      * @param helper              Metacat service helper
      * @param registry            registry for spectator
      * @return The metadata service bean
@@ -397,11 +398,12 @@ public class ServicesConfig {
         final PartitionService partitionService,
         final UserMetadataService userMetadataService,
         final TagService tagService,
+        final AliasService aliasService,
         final MetacatServiceHelper helper,
         final Registry registry
     ) {
         return new MetadataService(config, tableService, partitionService, userMetadataService,
-            tagService, helper, registry);
+            tagService, aliasService, helper, registry);
     }
 
     /**
