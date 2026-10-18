@@ -75,9 +75,11 @@ import com.netflix.spectator.api.Registry;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.DigestUtils;
 import javax.annotation.Nullable;
 
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -1029,11 +1031,22 @@ public class TableServiceImpl implements TableService {
     private TableInfo getFromTableServiceProxy(final QualifiedName name,
                                                final GetTableServiceParameters getTableServiceParameters,
                                                final boolean useCache) {
-        return getTableServiceParameters.isIncludeMetadataLocationOnly()
-                ? connectorTableServiceProxy.getWithMetadataLocationOnly(name, getTableServiceParameters, useCache)
-                : (getTableServiceParameters.isIncludeMetadataFromConnector()
-                        ? connectorTableServiceProxy.getWithInfoDetails(name, getTableServiceParameters, useCache)
-                        : connectorTableServiceProxy.get(name, getTableServiceParameters, useCache));
+        if (getTableServiceParameters.isIncludeMetadataLocationOnly()) {
+            return connectorTableServiceProxy.getWithMetadataLocationOnly(name, getTableServiceParameters);
+        }
+        final Map<String, String> metadata = useCache
+                ? connectorTableServiceProxy.getWithMetadataLocationOnly(name,
+                        GetTableServiceParameters.builder().includeMetadataLocationOnly(true).build())
+                    .getMetadata()
+                : null;
+        final String metadataLocation = metadata == null ? null : metadata.get("metadata_location");
+        final String locationHash = metadataLocation == null
+                ? null
+                : DigestUtils.md5DigestAsHex(metadataLocation.getBytes(StandardCharsets.UTF_8));
+        return getTableServiceParameters.isIncludeMetadataFromConnector()
+                ? connectorTableServiceProxy.getWithInfoDetails(name, getTableServiceParameters, locationHash,
+                        useCache)
+                : connectorTableServiceProxy.get(name, getTableServiceParameters, locationHash, useCache);
     }
 
     private void deleteCommonViewStorageTable(final QualifiedName viewName,

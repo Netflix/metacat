@@ -34,6 +34,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -80,8 +81,7 @@ public class ConnectorTableServiceProxy {
      */
     @Caching(evict = {
             @CacheEvict(cacheNames = "metacat", key = "'table.' + #name", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
+            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true)
     })
     public void delete(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
@@ -93,17 +93,13 @@ public class ConnectorTableServiceProxy {
     }
 
     /**
-     * Returns an info object that's populated only with the metadata location. Fetches from the cache if
-     * useCache is set to true.
+     * Returns an info object that's populated only with the metadata location.
      * @param name the table name
      * @param getTableServiceParameters the table service parameters
-     * @param useCache true, if the location can be retrieved from the cache
      * @return The table info object with the metadata location.
      */
-    @Cacheable(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #name", condition = "#useCache")
     public TableInfo getWithMetadataLocationOnly(final QualifiedName name,
-                                                 final GetTableServiceParameters getTableServiceParameters,
-                                                 final boolean useCache) {
+                                                 final GetTableServiceParameters getTableServiceParameters) {
 
         return getInternal(name, getTableServiceParameters);
     }
@@ -112,12 +108,15 @@ public class ConnectorTableServiceProxy {
      * Returns an info object that's populated with info details. Fetches from the cache if useCache is set to true.
      * @param name the table name
      * @param getTableServiceParameters the table service parameters
+     * @param locationHash md5 hash of the table metadata location, included in the cache key
      * @param useCache true, if the location can be retrieved from the cache
      * @return The table info object
      */
-    @Cacheable(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", condition = "#useCache")
+    @Cacheable(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name + '.' + #locationHash",
+        condition = "#useCache && #locationHash != null")
     public TableInfo getWithInfoDetails(final QualifiedName name,
                                         final GetTableServiceParameters getTableServiceParameters,
+                                        @Nullable final String locationHash,
                                         final boolean useCache) {
         return getInternal(name, getTableServiceParameters);
     }
@@ -128,12 +127,15 @@ public class ConnectorTableServiceProxy {
      * or object does not exists in the cache, it is retrieved from the store.
      * @param name table name
      * @param getTableServiceParameters  get table parameters
+     * @param locationHash md5 hash of the table metadata location, included in the cache key
      * @param useCache true, if table can be retrieved from cache
      * @return table dto
      */
-    @Cacheable(cacheNames = "metacat", key = "'table.' + #name", condition = "#useCache")
+    @Cacheable(cacheNames = "metacat", key = "'table.' + #name + '.' + #locationHash",
+        condition = "#useCache && #locationHash != null")
     public TableInfo get(final QualifiedName name,
                          final GetTableServiceParameters getTableServiceParameters,
+                         @Nullable final String locationHash,
                          final boolean useCache) {
         return getInternal(name, getTableServiceParameters);
     }
@@ -167,11 +169,6 @@ public class ConnectorTableServiceProxy {
                 cacheNames = "metacat",
                 key = "'table.includeInfoDetails.' + #oldName",
                 beforeInvocation = true
-            ),
-            @CacheEvict(
-                cacheNames = "metacat",
-                key = "'table.metadataLocationOnly.' + #oldName",
-                beforeInvocation = true
             )
     })
     public void rename(
@@ -199,8 +196,7 @@ public class ConnectorTableServiceProxy {
      */
     @Caching(evict = {
             @CacheEvict(cacheNames = "metacat", key = "'table.' + #name", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.metadataLocationOnly.' + #name", beforeInvocation = true)
+            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true)
     })
     public boolean update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();

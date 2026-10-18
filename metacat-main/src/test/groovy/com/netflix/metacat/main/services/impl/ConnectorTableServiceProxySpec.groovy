@@ -79,12 +79,12 @@ class ConnectorTableServiceProxySpec extends Specification {
 
     def testGet() {
         when:
-        service.get(name, GetTableServiceParameters.builder().build(),false)
+        service.get(name, GetTableServiceParameters.builder().build(), null, false)
         then:
         noExceptionThrown()
         1 * connectorTableService.get(_,_)
         when:
-        service.get(name, GetTableServiceParameters.builder().build(), false)
+        service.get(name, GetTableServiceParameters.builder().build(), null, false)
         then:
         thrown(ConnectorException)
         1 * connectorTableService.get(_,_) >> { throw new ConnectorException("Exception") }
