@@ -166,8 +166,7 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             final String tableLoc = HiveTableUtil.getIcebergTableMetadataLocation(info);
 
             // Return the iceberg table with just the metadata location included if requested.
-            if (isSecureView || (connectorContext.getConfig().shouldFetchOnlyMetadataLocationEnabled()
-                    && requestContext.isIncludeMetadataLocationOnly())) {
+            if (isSecureView || requestContext.isIncludeMetadataLocationOnly()) {
                 return TableInfo.builder()
                         .auditInfo(info.getAudit())
                         .metadata(Maps.newHashMap(info.getMetadata()))

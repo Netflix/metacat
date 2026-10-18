@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.hash.Hashing;
 import com.netflix.metacat.common.MetacatRequestContext;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.DatabaseDto;
@@ -1029,11 +1030,17 @@ public class TableServiceImpl implements TableService {
     private TableInfo getFromTableServiceProxy(final QualifiedName name,
                                                final GetTableServiceParameters getTableServiceParameters,
                                                final boolean useCache) {
+        final Map<String, String> metadata = useCache && !getTableServiceParameters.isIncludeMetadataLocationOnly()
+            ? connectorTableServiceProxy.getWithMetadataLocationOnly(name,
+                GetTableServiceParameters.builder().includeMetadataLocationOnly(true).build(), false).getMetadata()
+            : null;
+        final String location = metadata == null ? null : metadata.get("metadata_location");
+        final String hash = location == null ? null : Hashing.sha256().hashUnencodedChars(location).toString();
         return getTableServiceParameters.isIncludeMetadataLocationOnly()
                 ? connectorTableServiceProxy.getWithMetadataLocationOnly(name, getTableServiceParameters, useCache)
                 : (getTableServiceParameters.isIncludeMetadataFromConnector()
-                        ? connectorTableServiceProxy.getWithInfoDetails(name, getTableServiceParameters, useCache)
-                        : connectorTableServiceProxy.get(name, getTableServiceParameters, useCache));
+                        ? connectorTableServiceProxy.getWithInfoDetails(name, getTableServiceParameters, hash, useCache)
+                        : connectorTableServiceProxy.get(name, getTableServiceParameters, hash, useCache));
     }
 
     private void deleteCommonViewStorageTable(final QualifiedName viewName,

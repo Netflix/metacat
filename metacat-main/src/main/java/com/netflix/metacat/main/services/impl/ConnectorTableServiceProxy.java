@@ -112,12 +112,18 @@ public class ConnectorTableServiceProxy {
      * Returns an info object that's populated with info details. Fetches from the cache if useCache is set to true.
      * @param name the table name
      * @param getTableServiceParameters the table service parameters
+     * @param locationHash hash of the table metadata location, part of the cache key
      * @param useCache true, if the location can be retrieved from the cache
      * @return The table info object
      */
-    @Cacheable(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", condition = "#useCache")
+    @Cacheable(
+        cacheNames = "metacat",
+        key = "'table.includeInfoDetails.' + #name + '.' + #locationHash",
+        condition = "#useCache"
+    )
     public TableInfo getWithInfoDetails(final QualifiedName name,
                                         final GetTableServiceParameters getTableServiceParameters,
+                                        final String locationHash,
                                         final boolean useCache) {
         return getInternal(name, getTableServiceParameters);
     }
@@ -128,12 +134,14 @@ public class ConnectorTableServiceProxy {
      * or object does not exists in the cache, it is retrieved from the store.
      * @param name table name
      * @param getTableServiceParameters  get table parameters
+     * @param locationHash hash of the table metadata location, part of the cache key
      * @param useCache true, if table can be retrieved from cache
      * @return table dto
      */
-    @Cacheable(cacheNames = "metacat", key = "'table.' + #name", condition = "#useCache")
+    @Cacheable(cacheNames = "metacat", key = "'table.' + #name + '.' + #locationHash", condition = "#useCache")
     public TableInfo get(final QualifiedName name,
                          final GetTableServiceParameters getTableServiceParameters,
+                         final String locationHash,
                          final boolean useCache) {
         return getInternal(name, getTableServiceParameters);
     }
