@@ -30,9 +30,7 @@ import com.netflix.metacat.main.services.GetTableNamesServiceParameters;
 import com.netflix.metacat.main.services.GetTableServiceParameters;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -79,10 +77,6 @@ public class ConnectorTableServiceProxy {
      * Calls the connector table service delete method.
      * @param name table name
      */
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "metacat", key = "'table.' + #name", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true)
-    })
     public void delete(final QualifiedName name) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
@@ -163,14 +157,6 @@ public class ConnectorTableServiceProxy {
      * @param newName new table name
      * @param isMView true, if the object is a view
      */
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "metacat", key = "'table.' + #oldName", beforeInvocation = true),
-            @CacheEvict(
-                cacheNames = "metacat",
-                key = "'table.includeInfoDetails.' + #oldName",
-                beforeInvocation = true
-            )
-    })
     public void rename(
         final QualifiedName oldName,
         final QualifiedName newName,
@@ -194,10 +180,6 @@ public class ConnectorTableServiceProxy {
      * @param tableInfo table object
      * @return true if errors after this should be ignored.
      */
-    @Caching(evict = {
-            @CacheEvict(cacheNames = "metacat", key = "'table.' + #name", beforeInvocation = true),
-            @CacheEvict(cacheNames = "metacat", key = "'table.includeInfoDetails.' + #name", beforeInvocation = true)
-    })
     public boolean update(final QualifiedName name, final TableInfo tableInfo) {
         final MetacatRequestContext metacatRequestContext = MetacatContextManager.getContext();
         final ConnectorTableService service = connectorManager.getTableService(name);
