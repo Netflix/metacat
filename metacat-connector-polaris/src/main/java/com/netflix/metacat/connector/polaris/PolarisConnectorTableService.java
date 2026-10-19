@@ -168,6 +168,8 @@ public class PolarisConnectorTableService implements ConnectorTableService {
             // Return the iceberg table with just the metadata location included if requested.
             if (isSecureView || requestContext.isIncludeMetadataLocationOnly()) {
                 return TableInfo.builder()
+                        .name(info.getName())
+                        .serde(info.getSerde())
                         .auditInfo(info.getAudit())
                         .metadata(Maps.newHashMap(info.getMetadata()))
                         .fields(Collections.emptyList())
