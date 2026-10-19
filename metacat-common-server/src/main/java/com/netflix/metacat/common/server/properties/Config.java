@@ -609,13 +609,6 @@ public interface Config {
     boolean disablePartitionDefinitionMetadata();
 
     /**
-     * Whether the request flag to only fetch the iceberg metadata location should be respected.
-     *
-     * @return True if it should be.
-     */
-    boolean shouldFetchOnlyMetadataLocationEnabled();
-
-    /**
      * Whether we allow parent child relationship to be created.
      *
      * @return True if it should be.
