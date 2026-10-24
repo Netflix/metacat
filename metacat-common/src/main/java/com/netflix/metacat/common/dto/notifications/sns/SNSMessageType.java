@@ -45,6 +45,11 @@ public enum SNSMessageType {
     TABLE_RENAME,
 
     /**
+     * When a table is updated using an alias.
+     */
+    TABLE_UPDATE_ALIAS,
+
+    /**
      * When the partitions for a table are either created or deleted.
      */
     TABLE_PARTITIONS_UPDATE,
