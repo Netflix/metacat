@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,4 +34,25 @@ public interface PolarisAliasRepository extends JpaRepository<PolarisAliasEntity
         @Param("catalogName") String catalogName,
         @Param("dbName") String dbName,
         @Param("aliasName") String aliasName);
+
+    /**
+     * Finds the aliases pointing at a table.
+     *
+     * @param catalogName catalog of the source table
+     * @param dbName      database of the source table
+     * @param tblName     the source table
+     * @return List of aliases
+     */
+    @Query("SELECT new com.netflix.metacat.connector.polaris.store.repos.PolarisAliasName("
+        + "d.catalogName, d.dbName, a.name) "
+        + "FROM PolarisAliasEntity a "
+        + "JOIN PolarisDatabaseEntity d ON d.dbId = a.dbId "
+        + "JOIN PolarisTableEntity t ON t.tblId = a.sourceTblId "
+        + "WHERE t.catalogName = :catalogName "
+        + "AND t.dbName = :dbName "
+        + "AND t.tblName = :tblName")
+    List<PolarisAliasName> findAliases(
+        @Param("catalogName") String catalogName,
+        @Param("dbName") String dbName,
+        @Param("tblName") String tblName);
 }

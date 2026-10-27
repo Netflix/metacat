@@ -67,6 +67,19 @@ class ConnectorAliasServiceSpec extends Specification {
         result
     }
 
+    def "delegates getAliases to the catalog's connector"() {
+        given:
+        def polarisAliasService = Mock(AliasService)
+        connectorManager.getConnectorFactory(source) >> springFactoryProviding(polarisAliasService)
+
+        when:
+        def result = connectorAliasService.getAliases(source)
+
+        then:
+        1 * polarisAliasService.getAliases(source) >> [alias]
+        result == [alias]
+    }
+
     def "passes the name through when the connector provides no alias service"() {
         given:
         connectorManager.getConnectorFactory(alias) >> springFactoryProviding(null)
@@ -74,6 +87,7 @@ class ConnectorAliasServiceSpec extends Specification {
         expect:
         connectorAliasService.getTableName(alias) == alias
         !connectorAliasService.isAlias(alias)
+        connectorAliasService.getAliases(alias).isEmpty()
     }
 
     def "passes the name through for a non-spring connector"() {
@@ -83,6 +97,7 @@ class ConnectorAliasServiceSpec extends Specification {
         expect:
         connectorAliasService.getTableName(alias) == alias
         !connectorAliasService.isAlias(alias)
+        connectorAliasService.getAliases(alias).isEmpty()
     }
 
     def "passes the name through for an unknown catalog rather than raising"() {
@@ -92,5 +107,6 @@ class ConnectorAliasServiceSpec extends Specification {
         expect:
         connectorAliasService.getTableName(alias) == alias
         !connectorAliasService.isAlias(alias)
+        connectorAliasService.getAliases(alias).isEmpty()
     }
 }

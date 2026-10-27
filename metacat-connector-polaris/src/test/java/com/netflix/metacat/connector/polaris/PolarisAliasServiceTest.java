@@ -3,11 +3,13 @@ package com.netflix.metacat.connector.polaris;
 import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.server.properties.Config;
 import com.netflix.metacat.connector.polaris.store.entities.PolarisTableEntity;
+import com.netflix.metacat.connector.polaris.store.repos.PolarisAliasName;
 import com.netflix.metacat.connector.polaris.store.repos.PolarisAliasRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,5 +79,13 @@ public class PolarisAliasServiceTest {
         givenAlias("prodhive", "other_db", "the_source");
         when(config.isTableAliasEnabled()).thenReturn(false);
         assertThat(service.isAlias(QualifiedName.ofTable("prodhive", "other_db", "the_source"))).isFalse();
+    }
+
+    @Test
+    public void testGetAliases() {
+        when(aliasRepository.findAliases("prodhive", "db", "the_source"))
+            .thenReturn(List.of(new PolarisAliasName("prodhive", "db", "the_alias")));
+        assertThat(service.getAliases(source)).containsExactly(alias);
+        assertThat(service.getAliases(QualifiedName.ofTable("prodhive", "db", "foobar"))).isEmpty();
     }
 }

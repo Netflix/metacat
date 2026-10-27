@@ -27,6 +27,8 @@ import com.netflix.metacat.main.manager.ConnectorManager;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -57,6 +59,16 @@ public class ConnectorAliasService implements AliasService {
         return forCatalog(name)
             .map(aliasService -> aliasService.isAlias(name))
             .orElse(false);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<QualifiedName> getAliases(@NonNull final QualifiedName tableName) {
+        return forCatalog(tableName)
+            .map(aliasService -> aliasService.getAliases(tableName))
+            .orElse(Collections.emptyList());
     }
 
     private Optional<AliasService> forCatalog(final QualifiedName name) {
