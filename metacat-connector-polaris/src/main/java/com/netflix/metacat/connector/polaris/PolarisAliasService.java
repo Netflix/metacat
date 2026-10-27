@@ -7,7 +7,10 @@ import com.netflix.metacat.connector.polaris.store.repos.PolarisAliasRepository;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Resolves table aliases against the polaris store.
@@ -45,6 +48,26 @@ public class PolarisAliasService implements AliasService {
     @Override
     public boolean isAlias(@NonNull final QualifiedName name) {
         return config.isTableAliasEnabled() && resolve(name).isPresent();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<QualifiedName> getAliases(@NonNull final QualifiedName tableName) {
+        if (!config.isTableAliasEnabled() || tableName.getType() != QualifiedName.Type.TABLE) {
+            return Collections.emptyList();
+        }
+        try {
+            return aliasRepository
+                .findAliases(tableName.getCatalogName(), tableName.getDatabaseName(), tableName.getTableName())
+                .stream()
+                .map(alias -> QualifiedName.ofTable(alias.catalog(), alias.db(), alias.table()))
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to find aliases for {}", tableName, e);
+            throw new IllegalStateException("Failed to find aliases for " + tableName, e);
+        }
     }
 
     private Optional<QualifiedName> resolve(final QualifiedName name) {

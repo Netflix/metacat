@@ -20,6 +20,9 @@ package com.netflix.metacat.common.server.usermetadata;
 import com.netflix.metacat.common.QualifiedName;
 import lombok.NonNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Alias Service API.
  *
@@ -45,5 +48,15 @@ public interface AliasService {
      */
     default boolean isAlias(@NonNull final QualifiedName name) {
         return !name.equals(getTableName(name));
+    }
+
+    /**
+     * Returns the aliases of the given table.
+     *
+     * @param tableName the source table name.
+     * @return the aliases pointing at the table, or an empty list if none.
+     */
+    default List<QualifiedName> getAliases(@NonNull final QualifiedName tableName) {
+        return Collections.emptyList();
     }
 }
