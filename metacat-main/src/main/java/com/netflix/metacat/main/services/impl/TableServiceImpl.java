@@ -530,11 +530,6 @@ public class TableServiceImpl implements TableService {
     public Optional<TableDto> get(final QualifiedName requestedName,
             final GetTableServiceParameters getTableServiceParameters) {
         final boolean isAliasRead = isAlias(requestedName);
-        // The connector knows nothing about aliases, and an alias serves definition metadata only,
-        // so a read that wants table info finds nothing under one.
-        if (isAliasRead && readsTableInfo(getTableServiceParameters)) {
-            return Optional.empty();
-        }
         // Only an alias needs resolving; any other name already names the table it reads.
         final QualifiedName name = isAliasRead ? resolveAlias(requestedName) : requestedName;
 
@@ -558,9 +553,10 @@ public class TableServiceImpl implements TableService {
             table = new TableDto();
         }
 
-        if (getTableServiceParameters.isIncludeDefinitionMetadata()) {
+        // Aliases always serve stored definition metadata, without invoking connector interceptors.
+        if (isAliasRead || getTableServiceParameters.isIncludeDefinitionMetadata()) {
             Optional<ObjectNode> definitionMetadata =
-                (getTableServiceParameters.isDisableOnReadMetadataIntercetor())
+                (isAliasRead || getTableServiceParameters.isDisableOnReadMetadataIntercetor())
                     ? userMetadataService.getDefinitionMetadata(name)
                     : userMetadataService.getDefinitionMetadataWithInterceptor(name,
                     GetMetadataInterceptorParameters.builder().hasMetadata(tableInternal).build());
@@ -582,9 +578,9 @@ public class TableServiceImpl implements TableService {
             definitionMetadata.ifPresent(table::setDefinitionMetadata);
         }
 
-        if (getTableServiceParameters.isIncludeDataMetadata() && catalogConfig.isHasDataExternal()) {
+        if (!isAliasRead && getTableServiceParameters.isIncludeDataMetadata() && catalogConfig.isHasDataExternal()) {
             TableDto dto = table;
-            if (!isAliasRead && tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
+            if (tableInternal == null && !getTableServiceParameters.isIncludeInfo()) {
                 try {
                     final boolean useCache = getTableServiceParameters.isUseCache() && config.isCacheEnabled();
                     dto = converterUtil.toTableDto(
@@ -1089,19 +1085,6 @@ public class TableServiceImpl implements TableService {
 
     private QualifiedName resolveAlias(final QualifiedName name) {
         return config.isTableAliasEnabled() ? aliasService.getTableName(name) : name;
-    }
-
-    /**
-     * Whether the read asks for anything the connector owns, as opposed to user metadata. Three
-     * separate parameters select a connector read, see {@link #getFromTableServiceProxy}.
-     *
-     * @param getTableServiceParameters params from request
-     * @return true if the read wants the table itself
-     */
-    private static boolean readsTableInfo(final GetTableServiceParameters getTableServiceParameters) {
-        return getTableServiceParameters.isIncludeInfo()
-            || getTableServiceParameters.isIncludeMetadataLocationOnly()
-            || getTableServiceParameters.isIncludeMetadataFromConnector();
     }
 
     /**
