@@ -32,7 +32,6 @@ dependencies {
     api("com.google.guava:guava")
     api("org.apache.tomcat:tomcat-jdbc")
     api("org.slf4j:slf4j-api")
-    api('org.springframework.retry:spring-retry')
     /*******************************
      * Provided Dependencies
      *******************************/
@@ -51,6 +50,7 @@ dependencies {
         exclude module:"bval-jsr303"
         exclude module:"validation-api"
     }
+    testImplementation("org.springframework.boot:spring-boot-starter-jdbc-test")
     testImplementation(project(":metacat-testdata-provider"))
     testImplementation("commons-logging:commons-logging")
 }

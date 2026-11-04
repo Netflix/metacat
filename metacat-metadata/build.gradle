@@ -16,7 +16,7 @@
  *
  */
 
-apply plugin: 'nebula.facet'
+apply plugin: 'com.netflix.nebula.facet'
 
 facets {
     functionalTest {
@@ -31,7 +31,7 @@ dependencies {
      *******************************/
     api(project(":metacat-connector-jdbc"))
     api(project(":metacat-common-server"))
-    api('org.springframework.data:spring-data-jpa')
+    api('org.springframework.boot:spring-boot-starter-data-jpa')
     api("com.h2database:h2")
 
     /*******************************
@@ -49,6 +49,7 @@ dependencies {
      * Test Dependencies
      *******************************/
     testImplementation('org.springframework:spring-test')
+    testImplementation('org.springframework.boot:spring-boot-starter-data-jpa-test')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 
     testImplementation 'org.postgresql:postgresql'

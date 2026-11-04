@@ -21,7 +21,6 @@ import com.netflix.metacat.common.QualifiedName;
 import com.netflix.metacat.common.dto.Pageable;
 import com.netflix.metacat.common.dto.Sort;
 import com.netflix.metacat.common.server.connectors.model.DatabaseInfo;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -80,7 +79,6 @@ public class AuthorizingConnectorDatabaseService implements ConnectorDatabaseSer
     }
 
     @Override
-    @SuppressFBWarnings
     public boolean exists(final ConnectorRequestContext context, final QualifiedName name) {
         authorize("exists", name);
         return delegate.exists(context, name);

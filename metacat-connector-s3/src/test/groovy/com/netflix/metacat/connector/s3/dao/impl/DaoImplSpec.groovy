@@ -40,6 +40,22 @@ class DaoImplSpec extends BaseSpec {
     @Inject
     EntityManager em
 
+    def setup() {
+        // Every feature starts from an empty schema with a freshly built entity graph.
+        // Persisting stamps generated ids and @Version values onto the models, and
+        // Hibernate 6.5+ fails a merge of a detached entity whose row has since been
+        // deleted rather than re-inserting it.
+        def tx = em.getTransaction()
+        if (tx.isActive()) {
+            tx.rollback()
+        }
+        em.clear()
+        tx.begin()
+        sourceDao.getAll().each { sourceDao.delete(it) }
+        tx.commit()
+        setModels()
+    }
+
     def testDatabase() {
         given:
         def source = sources.get('s3')

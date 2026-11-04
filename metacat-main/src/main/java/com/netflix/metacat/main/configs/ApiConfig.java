@@ -20,16 +20,14 @@ package com.netflix.metacat.main.configs;
 import com.netflix.metacat.main.api.ApiFilter;
 import com.netflix.metacat.main.api.MetacatErrorController;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
+import org.springframework.boot.autoconfigure.web.WebProperties;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-import org.springframework.boot.web.servlet.error.DefaultErrorAttributes;
-import org.springframework.boot.web.servlet.error.ErrorAttributes;
+import org.springframework.boot.webmvc.error.DefaultErrorAttributes;
+import org.springframework.boot.webmvc.error.ErrorAttributes;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
-import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Map;
@@ -42,31 +40,6 @@ import java.util.Map;
  */
 @Configuration
 public class ApiConfig implements WebMvcConfigurer {
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Turn off {@literal .} Turn off suffix-based content negotiation. The table name may have extension, e.g. knp,
-     * , which is a type and will be rejected by spring
-     *
-     * @see <a href="https://stackoverflow.com/questions/30793717">Stack Overflow Issue</a>
-     */
-    @Override
-    public void configureContentNegotiation(final ContentNegotiationConfigurer configurer) {
-        configurer.favorPathExtension(false);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Turn off {@literal .} recognition in paths. Needed due to table's name potentially having '.' as character.
-     *
-     * @see <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/html/mvc.html">SpringDoc</a>
-     */
-    @Override
-    public void configurePathMatch(final PathMatchConfigurer configurer) {
-        configurer.setUseSuffixPatternMatch(false);
-    }
-
     /**
      * The rest filter registration bean.
      *
@@ -117,12 +90,12 @@ public class ApiConfig implements WebMvcConfigurer {
     /**
      * Returns the error controller.
      * @param errorAttributes error attributes
-     * @param serverProperties server properties
+     * @param webProperties web properties
      * @return error controller
      */
     @Bean
     public MetacatErrorController metacatErrorController(final ErrorAttributes errorAttributes,
-                                                         final ServerProperties serverProperties) {
-        return new MetacatErrorController(errorAttributes, serverProperties.getError());
+                                                         final WebProperties webProperties) {
+        return new MetacatErrorController(errorAttributes, webProperties.getError());
     }
 }
