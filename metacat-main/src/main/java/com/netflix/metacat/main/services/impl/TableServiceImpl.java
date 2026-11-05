@@ -536,7 +536,7 @@ public class TableServiceImpl implements TableService {
             return Optional.empty();
         }
         // Only an alias needs resolving; any other name already names the table it reads.
-        final QualifiedName name = isAliasRead ? resolveAlias(requestedName) : requestedName;
+        final QualifiedName name = isAliasRead ? resolveAlias("get", requestedName) : requestedName;
 
         validate(name);
         TableDto tableInternal = null;
@@ -929,7 +929,7 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableDto updateAndReturn(final QualifiedName requestedName, final TableDto tableDto,
                                     final boolean shouldThrowExceptionOnMetadataSaveFailure) {
-        final QualifiedName name = resolveAlias(requestedName);
+        final QualifiedName name = resolveAlias("update", requestedName);
         validate(name);
 
         if (isAlias(requestedName) && carriesTableInfo(tableDto)) {
@@ -1087,8 +1087,22 @@ public class TableServiceImpl implements TableService {
             || tableDto.getSerde() != null;
     }
 
-    private QualifiedName resolveAlias(final QualifiedName name) {
-        return config.isTableAliasEnabled() ? aliasService.getTableName(name) : name;
+    private QualifiedName resolveAlias(final String operation, final QualifiedName name) {
+        if (!config.isTableAliasEnabled()) {
+            return name;
+        }
+        final QualifiedName tableName = aliasService.getTableName(name);
+        if (!tableName.equals(name)) {
+            final MetacatRequestContext context = MetacatContextManager.getContext();
+            final String clientAppName = context.getClientAppName() == null ? "UNKNOWN" : context.getClientAppName();
+            log.info("Resolved alias: {}, to: {}, for: {}, user: {}, client app: {}",
+                name, tableName, operation, context.getUserName(), clientAppName);
+            registry.counter(registry.createId(Metrics.CounterTableAliasResolved.getMetricName())
+                .withTags(name.parts())
+                .withTag("operation", operation)
+                .withTag("caller", clientAppName)).increment();
+        }
+        return tableName;
     }
 
     /**
@@ -1106,7 +1120,7 @@ public class TableServiceImpl implements TableService {
 
     /**
      * Whether the name is a table alias. False whenever table aliasing is disabled, so that this
-     * agrees with {@link #resolveAlias(QualifiedName)} without relying on every {@link AliasService}
+     * agrees with {@link #resolveAlias(String, QualifiedName)} without relying on every {@link AliasService}
      * implementation to check the flag itself.
      *
      * @param name the requested name
