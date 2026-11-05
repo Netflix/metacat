@@ -31,6 +31,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
@@ -68,7 +69,22 @@ public class MySqlUserMetadataConfig {
     }
 
     /**
-     * User Metadata service.
+     * User Metadata service, with reads retried on connection failures.
+     *
+     * @param mysqlUserMetadataService transactional user metadata service
+     * @return User metadata service based on MySql
+     */
+    @Bean
+    @Primary
+    public UserMetadataService userMetadataService(
+        @Qualifier("mysqlUserMetadataService") final UserMetadataService mysqlUserMetadataService
+    ) {
+        return UserMetadataReadRetry.wrap(mysqlUserMetadataService);
+    }
+
+    /**
+     * Transactional user metadata service, wrapped by {@link #userMetadataService} so that a retry runs outside the
+     * transaction and gets a new connection.
      *
      * @param jdbcTemplate JDBC template
      * @param config       System config to use
@@ -78,7 +94,7 @@ public class MySqlUserMetadataConfig {
      * @return User metadata service based on MySql
      */
     @Bean
-    public UserMetadataService userMetadataService(
+    public UserMetadataService mysqlUserMetadataService(
         @Qualifier("metadataJdbcTemplate") final JdbcTemplate jdbcTemplate,
         final Config config,
         final MetacatJson metacatJson,
