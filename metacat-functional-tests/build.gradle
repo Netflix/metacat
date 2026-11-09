@@ -24,7 +24,7 @@ ext {
     logger.info("metacat-functional-tests: stop cluster = '${stopCluster}'")
 }
 
-apply plugin: 'nebula.facet'
+apply plugin: 'com.netflix.nebula.facet'
 
 facets {
     functionalTest {

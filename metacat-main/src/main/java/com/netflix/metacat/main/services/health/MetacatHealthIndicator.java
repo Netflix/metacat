@@ -4,8 +4,8 @@ import com.netflix.metacat.main.services.init.MetacatCoreInitService;
 import com.netflix.metacat.main.services.init.MetacatThriftInitService;
 import lombok.RequiredArgsConstructor;
 import org.apache.thrift.transport.TSocket;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 
 /**
  * Metacat health indicator.
