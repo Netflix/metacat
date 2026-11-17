@@ -31,6 +31,7 @@ import com.netflix.metacat.common.server.connectors.model.FieldInfo
 import com.netflix.metacat.common.server.connectors.model.PartitionInfo
 import com.netflix.metacat.common.server.connectors.model.StorageInfo
 import com.netflix.metacat.common.server.connectors.model.TableInfo
+import com.netflix.metacat.common.type.BaseType
 import com.netflix.metacat.common.type.VarcharType
 import com.netflix.metacat.connector.hive.iceberg.IcebergTableWrapper
 import com.netflix.metacat.connector.hive.sql.DirectSqlTable
@@ -166,9 +167,9 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         table.createTime == Instant.parse('2016-02-25T14:47:27').getMillis() / 1000
         table.sd.cols.size() == fields.size() - 2
         table.sd.cols.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'varchar(1)'
         }
         table.sd.location == location
         table.sd.inputFormat == inputFormat
@@ -179,9 +180,9 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         table.sd.parameters == storageParams
         table.partitionKeys.size() == 2
         table.partitionKeys.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'varchar(1)'
         }
         table.parameters == tableParams
         table.tableType == 'EXTERNAL_TABLE'
@@ -236,9 +237,9 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         tableInfo.serde.parameters == sdParams
         tableInfo.fields.size() == columns.size() + partitonKeys.size()
         tableInfo.fields.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == VarcharType.VARCHAR
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == BaseType.STRING
         }
         tableInfo.fields.findAll { it.partitionKey }.size() == 2
         tableInfo.metadata == tableParams
@@ -320,9 +321,9 @@ class HiveConnectorInfoConvertorSpec extends Specification{
         partition.lastAccessTime == Instant.parse('2016-02-25T14:47:27').getMillis() / 1000
         partition.sd.cols.size() == fields.size() - 2
         partition.sd.cols.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'varchar(1)'
         }
         partition.sd.location == location
         partition.sd.inputFormat == inputFormat

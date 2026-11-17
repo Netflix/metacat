@@ -156,9 +156,9 @@ class HiveConvertersSpec extends Specification {
         table.createTime == Instant.parse('2016-02-25T14:47:27').getMillis() / 1000
         table.sd.cols.size() == fields.size() - 2
         table.sd.cols.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'VARCHAR'
         }
         table.sd.location == location
         table.sd.inputFormat == inputFormat
@@ -169,9 +169,9 @@ class HiveConvertersSpec extends Specification {
         table.sd.parameters == storageParams
         table.partitionKeys.size() == 2
         table.partitionKeys.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'VARCHAR'
         }
         table.parameters == tableParams
         table.tableType == 'EXTERNAL_TABLE'
@@ -227,9 +227,9 @@ class HiveConvertersSpec extends Specification {
         dto.serde.parameters == sdParams
         dto.fields.size() == columns.size() + partitonKeys.size()
         dto.fields.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'VARCHAR'
         }
         dto.fields.findAll { it.partition_key }.size() == 2
         dto.metadata == tableParams
@@ -313,9 +313,9 @@ class HiveConvertersSpec extends Specification {
         partition.lastAccessTime == Instant.parse('2016-02-25T14:47:27').getMillis() / 1000
         partition.sd.cols.size() == fields.size() - 2
         partition.sd.cols.each {
-            it.name.startsWith('field_')
-            it.comment.startsWith('comment_')
-            it.type == 'VARCHAR'
+            assert it.name.startsWith('field_')
+            assert it.comment.startsWith('comment_')
+            assert it.type == 'VARCHAR'
         }
         partition.sd.location == location
         partition.sd.inputFormat == inputFormat

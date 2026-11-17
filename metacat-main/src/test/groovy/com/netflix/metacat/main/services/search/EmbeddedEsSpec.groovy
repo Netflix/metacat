@@ -162,10 +162,10 @@ class EmbeddedEsSpec extends Specification {
         def result = es.get(Type.table.name(), id, esIndex)
         expect:
         if (softDelete) {
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
+            assert result.isDeleted()
+            assert id == ((TableDto) result.getDto()).getName().toString()
         } else {
-            result == null
+            assert result == null
         }
         where:
         catalogName | databaseName | tableName | id                        | softDelete
@@ -183,10 +183,10 @@ class EmbeddedEsSpec extends Specification {
         def result = es.get(Type.table.name(), id)
         expect:
         if (softDelete) {
-            result.isDeleted()
-            id == ((TableDto) result.getDto()).getName().toString()
+            assert result.isDeleted()
+            assert id == ((TableDto) result.getDto()).getName().toString()
         } else {
-            result == null
+            assert result == null
         }
         where:
         catalogName | databaseName | tableName | id                        | softDelete
