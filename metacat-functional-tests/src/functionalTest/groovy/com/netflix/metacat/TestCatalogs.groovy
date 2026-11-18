@@ -86,21 +86,6 @@ class TestCatalogs {
             type: 'mysql',
         ),
         new TestCatalog(
-            name: 'postgresql-96-db',
-            deleteTable: false,
-            preExistingDatabases: [
-                QualifiedName.ofDatabase('postgresql-96-db', 'public'),
-                QualifiedName.ofDatabase('postgresql-96-db', 'pg_catalog'),
-            ],
-            preExistingTables: [
-                QualifiedName.ofTable('postgresql-96-db', 'public', 'City'),
-                QualifiedName.ofTable('postgresql-96-db', 'public', 'Country'),
-                QualifiedName.ofTable('postgresql-96-db', 'public', 'countrylanguage'),
-            ],
-            validateCreatedDate: false,
-            type: 'postgresql',
-        ),
-        new TestCatalog(
            name: 'polaris-metastore',
            type: 'polaris',
            createDatabase: true,

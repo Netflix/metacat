@@ -1,1 +1,0 @@
-\ir world/world.sql
