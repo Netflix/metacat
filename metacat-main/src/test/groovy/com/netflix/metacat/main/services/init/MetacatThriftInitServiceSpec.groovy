@@ -18,9 +18,7 @@ class MetacatThriftInitServiceSpec extends Specification {
 
         then:
         1 * coreInitService.start()
-
-        then:
-        thriftService.stop();
+        1 * thriftService.start()
 
         when:
         initializationService.stop()
@@ -30,6 +28,24 @@ class MetacatThriftInitServiceSpec extends Specification {
 
         then:
         1 * coreInitService.stop()
+    }
+
+    def "stops core services even when stopping thrift fails"() {
+        given:
+        def coreInitService = Mock(MetacatCoreInitService)
+        def thriftService = Mock(MetacatThriftService)
+        def initializationService = new MetacatThriftInitService(thriftService, coreInitService)
+        initializationService.thriftStarted().set(true)
+
+        when:
+        initializationService.stop()
+
+        then:
+        1 * thriftService.stop() >> { throw new IllegalStateException("stop failed") }
+
+        then:
+        1 * coreInitService.stop()
+        !initializationService.thriftStarted().get()
     }
 
     def "does not start service on exception"() {

@@ -93,6 +93,33 @@ class AbstractThriftServerTest extends Specification {
         stopwatch.elapsed(TimeUnit.SECONDS) < 5
     }
 
+    def 'retries binding until a transient port conflict clears'() {
+        given:
+        def portOwner = new ServerSocket(0)
+        int port = portOwner.localPort
+        config.thriftServerMaxWorkerThreads >> 10
+        config.thriftServerSocketClientTimeoutInSeconds >> 5
+        def server = new TestThriftServer(config, port, { TProtocol tProtocol, TProtocol out -> false })
+        def releasePort = Thread.start {
+            Thread.sleep(500)
+            portOwner.close()
+        }
+
+        when:
+        def stopwatch = Stopwatch.createStarted()
+        server.start()
+
+        then:
+        notThrown(Throwable)
+        stopwatch.elapsed(TimeUnit.MILLISECONDS) >= 500
+        stopwatch.elapsed(TimeUnit.SECONDS) < 5
+
+        cleanup:
+        portOwner.close()
+        releasePort.join()
+        server.stop()
+    }
+
     def 'the server will not stop responding with it runs out of worker threads'() {
         given:
         int port = randomPort

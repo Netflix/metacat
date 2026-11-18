@@ -35,6 +35,9 @@ import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportException;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -48,11 +51,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @Slf4j
 public abstract class AbstractThriftServer {
-    private static final int MAX_SOCKET_BIND_ATTEMPTS = 5;
+    private static final int MAX_SOCKET_BIND_ATTEMPTS = 7;
+    private static final long INITIAL_SOCKET_BIND_WAIT_MILLIS = TimeUnit.SECONDS.toMillis(1);
     private static final long MAX_SOCKET_BIND_WAIT_SECONDS = 120;
     private static final Retryer<TServerTransport> RETRY_THRIFT_SOCKET = RetryerBuilder.<TServerTransport>newBuilder()
         .retryIfExceptionOfType(TTransportException.class)
-        .withWaitStrategy(WaitStrategies.exponentialWait(1, MAX_SOCKET_BIND_WAIT_SECONDS, TimeUnit.SECONDS))
+        .withWaitStrategy(WaitStrategies.exponentialWait(
+            INITIAL_SOCKET_BIND_WAIT_MILLIS, MAX_SOCKET_BIND_WAIT_SECONDS, TimeUnit.SECONDS))
         .withStopStrategy(StopStrategies.stopAfterAttempt(MAX_SOCKET_BIND_ATTEMPTS))
         .build();
 
@@ -113,6 +118,22 @@ public abstract class AbstractThriftServer {
      */
     public void start() throws Exception {
         log.info("initializing thrift server {}", getServerName());
+        final int timeout = config.getThriftServerSocketClientTimeoutInSeconds() * 1000;
+        final AtomicInteger bindAttempts = new AtomicInteger();
+        final TServerTransport serverTransport;
+        try {
+            serverTransport = RETRY_THRIFT_SOCKET.call(() -> {
+                final int attempt = bindAttempts.incrementAndGet();
+                log.info("Attempting to bind thrift server {} to port {} (attempt {}/{})",
+                    getServerName(), portNumber, attempt, MAX_SOCKET_BIND_ATTEMPTS);
+                return bindServerTransport(timeout);
+            });
+        } catch (Exception e) {
+            log.error("Failed to bind thrift server {} to port {} after {} attempts",
+                getServerName(), portNumber, bindAttempts.get(), e);
+            throw e;
+        }
+
         final ThreadFactory threadFactory = new ThreadFactoryBuilder()
             .setNameFormat(threadPoolNameFormat)
             .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread: {}", t.getName(), e))
@@ -126,19 +147,33 @@ public abstract class AbstractThriftServer {
             threadFactory
         );
         RegistryUtil.registerThreadPool(registry, threadPoolNameFormat, (ThreadPoolExecutor) executorService);
-        final int timeout = config.getThriftServerSocketClientTimeoutInSeconds() * 1000;
-        final TServerTransport serverTransport;
-        try {
-            serverTransport = RETRY_THRIFT_SOCKET.call(() -> {
-                log.info("Attempting to bind thrift server {} to port {}", getServerName(), portNumber);
-                return new TServerSocket(portNumber, timeout);
-            });
-        } catch (Exception e) {
-            log.error("Failed to bind thrift server {} to port {} after {} attempts",
-                getServerName(), portNumber, MAX_SOCKET_BIND_ATTEMPTS, e);
-            throw e;
-        }
         startServing(executorService, serverTransport);
+    }
+
+    private TServerTransport bindServerTransport(final int clientTimeout) throws TTransportException {
+        ServerSocket serverSocket = null;
+        try {
+            serverSocket = new ServerSocket();
+            serverSocket.setReuseAddress(true);
+            serverSocket.bind(new InetSocketAddress(portNumber));
+            return new TServerSocket(serverSocket, clientTimeout);
+        } catch (TTransportException e) {
+            closeServerSocket(serverSocket, e);
+            throw e;
+        } catch (IOException e) {
+            closeServerSocket(serverSocket, e);
+            throw new TTransportException(e);
+        }
+    }
+
+    private void closeServerSocket(final ServerSocket serverSocket, final Exception originalException) {
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException closeException) {
+                originalException.addSuppressed(closeException);
+            }
+        }
     }
 
     private void startServing(final ExecutorService executorService, final TServerTransport serverTransport) {
