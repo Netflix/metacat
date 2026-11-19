@@ -17,11 +17,11 @@
  */
 package com.netflix.metacat.main.api;
 
-import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
+import org.springframework.boot.webmvc.autoconfigure.error.AbstractErrorController;
 import org.springframework.boot.web.error.ErrorAttributeOptions;
-import org.springframework.boot.web.servlet.error.ErrorAttributes;
+import org.springframework.boot.webmvc.error.ErrorAttributes;
 import org.springframework.boot.autoconfigure.web.ErrorProperties;
-import org.springframework.boot.autoconfigure.web.servlet.error.ErrorViewResolver;
+import org.springframework.boot.webmvc.autoconfigure.error.ErrorViewResolver;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +37,7 @@ import java.util.Map;
  * @author amajumdar
  * @since 1.2.0
  */
-@RequestMapping("${server.error.path:${error.path:/error}}")
+@RequestMapping("${spring.web.error.path:${error.path:/error}}")
 public class MetacatErrorController extends AbstractErrorController {
     private final ErrorProperties errorProperties;
     /**
